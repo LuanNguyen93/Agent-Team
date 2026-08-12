@@ -1,0 +1,77 @@
+---
+name: tdd-discipline
+description: Enforce red-green-refactor when writing or changing code. Requires seeing a test fail for the right reason before any implementation exists. Use whenever implementing a plan, fixing a bug, or adding behaviour.
+when_to_use: Any code-writing task. Do NOT use for pure reads, config-only edits, or generated files.
+---
+
+# TDD discipline
+
+The point is not "tests exist". The point is that **you watched the test fail
+for the reason you predicted**. A test that has never failed proves nothing —
+it may assert against the wrong module, be skipped by config, or pass vacuously.
+
+## The loop
+
+### RED — write one failing test
+Write the smallest test that captures the next unimplemented behaviour. Then
+**run it and read the output.**
+
+The failure must be the one you expected. Check the actual message:
+
+| Failure you see | What it means |
+|---|---|
+| Assertion failed, expected X got Y | Correct. Proceed to GREEN. |
+| `ModuleNotFoundError` / `is not a function` | Correct for a not-yet-written unit. Proceed. |
+| Syntax error in the test | Your test is broken. Fix the test, stay in RED. |
+| Test passed | **Stop.** Either the behaviour already exists, or your test asserts nothing. Diagnose before writing any code. |
+| "0 tests ran" / skipped | Your test is not being collected. Fix the runner wiring, stay in RED. |
+
+Never write implementation while in RED.
+
+### GREEN — make it pass, minimally
+Write the least code that turns the test green. Not the elegant version, not
+the general version. Resist adding the parameter you "know" you will need.
+
+Run the test. It must pass. Run the **whole** suite. Nothing else may break.
+
+### REFACTOR — clean up under a green bar
+Now improve names, extract duplication, simplify. Re-run after each change.
+If the bar goes red, undo and go smaller. Refactoring means changing structure
+without changing behaviour — if a test needed updating, it was not a refactor.
+
+## What counts as one cycle
+
+One behaviour, not one function. "Rejects an empty email" is a cycle. "Implements
+the login form" is not — it is six.
+
+Commit at the end of each green REFACTOR. Small commits make bisect useful.
+
+## Bug fixes
+
+A bug fix is a TDD cycle where RED reproduces the bug:
+
+1. Write a test asserting the **correct** behaviour. It fails, demonstrating the bug.
+2. Confirm the failure matches the reported symptom. If it does not, you have not
+   reproduced the bug — you have found a different one. Keep looking.
+3. Fix. The test goes green.
+
+That failing test is the fix's proof. A bug fix without one will regress.
+
+## Honest reporting
+
+State what actually happened, with the real output:
+
+- "Test failed as expected: `AssertionError: expected 400, got 200`" — good.
+- "Tests are passing" when you never ran them — never do this.
+- If you could not run tests (no runner, missing deps), **say so explicitly**
+  and do not claim the code works.
+
+## When TDD does not apply
+
+Be honest rather than performing ritual. Skip the cycle, and say you skipped it, for:
+
+- Pure config, migrations with no logic, generated code
+- Exploratory spikes you intend to throw away
+- Code with no reachable test harness — flag this as a gap, do not fake a test
+
+Everywhere else, the cycle holds.

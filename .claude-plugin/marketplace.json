@@ -1,0 +1,19 @@
+{
+  "name": "agent-team",
+  "owner": {
+    "name": "Luan Nguyen",
+    "url": "https://github.com/LuanNguyen93"
+  },
+  "metadata": {
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "agent-team",
+      "source": "agent-team",
+      "description": "Scale-adaptive agent team for building any project: brief -> PRD -> architecture -> plan -> TDD -> review -> verified ship, with gates enforced by hooks.",
+      "author": { "name": "Luan Nguyen" },
+      "keywords": ["agents", "workflow", "tdd", "code-review", "ui-ux", "planning"]
+    }
+  ]
+}
