@@ -45,9 +45,41 @@ if [ -f .agent-team.json ] && command -v node >/dev/null 2>&1; then
   fi
 fi
 
-# 2. Otherwise discover from package.json.
-[ -f package.json ] || exit 0
-command -v node >/dev/null 2>&1 || exit 0
+# 2. Rust, via Cargo.
+if [ -f Cargo.toml ]; then
+  if ! command -v cargo >/dev/null 2>&1; then
+    printf 'Gate FAILED: Cargo.toml is present but cargo is not on PATH\n'
+    printf 'The gates for this project cannot be verified, so it must not be\n'
+    printf 'reported as passing. Install the Rust toolchain, or declare the real\n'
+    printf 'commands in .agent-team.json.\n'
+    exit 1
+  fi
+  command -v rustfmt >/dev/null 2>&1 && { run_gate fmt "cargo fmt --check" || exit 1; }
+  cargo clippy --version >/dev/null 2>&1 && { run_gate clippy "cargo clippy --all-targets -- -D warnings" || exit 1; }
+  [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || { run_gate test "cargo test" || exit 1; }
+  [ "${AGENT_TEAM_RUN_BUILD:-}" = "1" ] && { run_gate build "cargo build --release" || exit 1; }
+fi
+
+# 3. Dart and Flutter, via pubspec.yaml.
+if [ -f pubspec.yaml ]; then
+  DART=dart
+  grep -q '^ *flutter:' pubspec.yaml && DART=flutter
+  if ! command -v "$DART" >/dev/null 2>&1; then
+    printf 'Gate FAILED: pubspec.yaml is present but %s is not on PATH\n' "$DART"
+    printf 'The gates cannot be verified, so this must not be reported as a pass.\n'
+    exit 1
+  fi
+  if command -v dart >/dev/null 2>&1; then
+    run_gate format "dart format --set-exit-if-changed ." || exit 1
+  fi
+  run_gate analyze "$DART analyze" || exit 1
+  [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || { run_gate test "$DART test" || exit 1; }
+fi
+
+# 4. JavaScript and TypeScript, via package.json.
+if [ ! -f package.json ] || ! command -v node >/dev/null 2>&1; then
+  exit 0
+fi
 
 # A package.json that cannot be parsed is a real problem, and it must not be
 # mistaken for "this project has no gates" - that silently reports a pass.

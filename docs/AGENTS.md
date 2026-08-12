@@ -79,7 +79,7 @@ once rather than duplicated across nine system prompts.
 | `planner` | `architecture-discipline`, `code-navigation` |
 | `implementer` | `tdd-discipline`, `architecture-discipline`, `quality-gates`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
 | `reviewer` | `quality-gates`, `architecture-discipline`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
-| `qa-verifier` | `quality-gates`, `browser-verify` |
+| `qa-verifier` | `quality-gates`, `browser-verify`, `app-verify` |
 | `debugger` | `debug-rca`, `tdd-discipline`, `code-navigation` |
 
 Every agent additionally carries `handoff-contract` — see below.
@@ -217,3 +217,34 @@ already has a `.codegraph/` directory — indexing is the user's decision, not a
 agent's. `references/without-an-index.md` reproduces each habit with compilers,
 `rg`, and `git log -S`, and is explicit that the result is an approximation to
 be labelled as one.
+
+## Stacks beyond JavaScript
+
+The doctrine skills are language-agnostic, but three things were not, and a
+Rust + Flutter project exposed all three:
+
+**The gate runner only knew `package.json`.** A Rust or Flutter project has no
+such file, so discovery fell through to `exit 0` — the `TaskCompleted` hook
+enforced nothing while looking like it did, which is the worst possible failure
+for a gate. It now discovers `Cargo.toml` (`cargo fmt --check`, `clippy -D
+warnings`, `cargo test`) and `pubspec.yaml` (`dart format`, `analyze`, `test`)
+as well, and a project with several manifests runs all of them.
+
+A manifest present with its toolchain missing — `Cargo.toml` and no `cargo` —
+**fails** rather than passing. It is the same rule as an absent gate: what
+cannot be verified is not a pass.
+
+**`browser-verify` assumes a browser.** `qa-verifier` loaded it unconditionally,
+so on a Flutter app it would run the gates and stop, losing half its value.
+`app-verify` covers mobile, desktop, CLI, and services: cold start rather than
+hot reload, the failure path triggered on purpose, permissions on a device that
+has not granted them, and "no device available" reported as **blocked** rather
+than passed. `qa-verifier` now picks the skill that matches the surface.
+
+**Stack profiles existed only for React.** `stacks/rust.md` and
+`stacks/flutter.md` carry what a general reviewer misses — a `std::sync::Mutex`
+held across an `.await`, `unsafe` with no `// SAFETY:` comment, a `BuildContext`
+used after an `await`, a missing `dispose()`, a `ListView` with fixed children.
+
+`backend-discipline` also gained `**/handlers/**` to its `paths`, because that
+is where Axum and Actix put what Express calls `routes/`.

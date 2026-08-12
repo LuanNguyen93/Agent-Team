@@ -79,7 +79,7 @@ Wrong for any doctrine skill.
 ## 6. Description length cap
 
 `description` plus `when_to_use` is truncated at 1,536 characters in the skill
-listing. Put the key use case first. All fourteen skills here are well under.
+listing. Put the key use case first. All fifteen skills here are well under.
 
 ## 7. Directory layout is strict
 

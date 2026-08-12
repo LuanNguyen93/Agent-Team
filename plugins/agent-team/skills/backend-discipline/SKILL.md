@@ -5,6 +5,7 @@ when_to_use: Writing or reviewing an endpoint, background job, queue consumer, d
 paths:
   - "**/api/**"
   - "**/routes/**"
+  - "**/handlers/**"
   - "**/server/**"
   - "**/migrations/**"
   - "**/*.sql"
