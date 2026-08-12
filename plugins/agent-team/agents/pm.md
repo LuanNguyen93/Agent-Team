@@ -2,7 +2,6 @@
 name: pm
 description: Turns a project brief into a PRD with numbered functional requirements, measurable acceptance criteria, and a story breakdown. Use after the analyst has produced a brief on a PROJECT. Do NOT use for QUICK fixes or when no brief exists.
 tools: Read, Grep, Glob, Write, Skill
-model: opus
 color: blue
 skills:
   - artifact-templates

@@ -6,15 +6,41 @@ traceable.
 
 | Agent | Consumes | Produces | Model | Tool access |
 |---|---|---|---|---|
-| `analyst` | The raw request | `docs/brief.md` | opus | read + write docs |
-| `pm` | brief | `docs/prd.md`, `docs/stories/*.md` | opus | read + write docs |
-| `architect` | PRD | `docs/architecture.md`, ADRs, diagrams | opus | read + write + bash |
-| `ux-designer` | PRD | `docs/design-system.md`, `docs/ui-spec.md` | opus | read + write docs |
-| `planner` | story + architecture | an implementation plan | opus | **read-only** |
+| `analyst` | The raw request | `docs/brief.md` | inherit | read + write docs |
+| `pm` | brief | `docs/prd.md`, `docs/stories/*.md` | inherit | read + write docs |
+| `architect` | PRD | `docs/architecture.md`, ADRs, diagrams | **opus** | read + write + bash |
+| `ux-designer` | PRD | `docs/design-system.md`, `docs/ui-spec.md` | inherit | read + write docs |
+| `planner` | story + architecture | an implementation plan | inherit | **read-only** |
 | `implementer` | plan | code + tests | inherit | full |
-| `reviewer` | diff + spec | findings by severity | opus | **read-only** |
+| `reviewer` | diff + spec | findings by severity | **opus** | **read-only** |
 | `qa-verifier` | the change | gate table + verification evidence | inherit | read + bash |
-| `debugger` | a failure | root cause + fix | opus | read + bash + edit |
+| `debugger` | a failure | root cause + fix | **opus** | read + bash + edit |
+
+## Why only three agents pin a model
+
+Six of the nine omit `model`, so they inherit the session's model and the user's
+choice governs. Pinning `opus` everywhere would override that choice and make a
+PROJECT run expensive without changing the output much.
+
+The three exceptions are the roles where reasoning depth changes the result, not
+just the prose:
+
+- **`debugger`** — root cause analysis is exactly where a weaker model stops at
+  the first plausible theory. A confident wrong diagnosis costs more than no
+  diagnosis.
+- **`reviewer`** — it is the safety net, and its failures are silent. A missed
+  defect looks identical to a clean review.
+- **`architect`** — structural decisions are expensive to reverse, and the cost
+  lands months later.
+
+The other six do structured work that the skills already specify: `analyst` asks
+questions, `pm` transforms a brief against a template, `ux-designer` applies a
+documented checklist, `planner` reads code and writes it down. Putting the
+knowledge in skills is what makes this possible — the agent does not have to
+carry the doctrine in raw capability.
+
+Override any of them per project by copying the agent into `.claude/agents/`,
+or per invocation when spawning.
 
 ## Why two agents are read-only
 
