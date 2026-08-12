@@ -73,7 +73,8 @@ the rules that fail most often are in `quality-gates` → `references/sonarqube.
 ## When the plan is split, this is not your job
 
 If the plan carries a contract section with a backend track and a frontend
-track, stop and hand back. That work belongs to `backend-implementer` and
+track, stop and hand back **to whoever dispatched you** — you do not spawn the
+two implementers yourself. That work belongs to `backend-implementer` and
 `frontend-implementer`, spawned together so they run in parallel; executing it
 yourself is correct code delivered sequentially, which is exactly the cost the
 split exists to avoid.

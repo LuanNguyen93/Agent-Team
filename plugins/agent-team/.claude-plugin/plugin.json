@@ -1,7 +1,7 @@
 {
   "name": "agent-team",
   "displayName": "Agent Team",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scale-adaptive agent team: routes work by size, plans before coding, enforces TDD and quality gates through hooks, and verifies in a real browser.",
   "author": { "name": "Luan Nguyen", "url": "https://github.com/LuanNguyen93" },
   "repository": "https://github.com/LuanNguyen93/Agent-Team",

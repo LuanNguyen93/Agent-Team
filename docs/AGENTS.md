@@ -67,6 +67,36 @@ The agent that wrote the code cannot review it. It will defend its own choices,
 and it cannot see the assumptions it made, because those assumptions are what
 it used to write the code. `reviewer` is always spawned fresh.
 
+## Who decides when a boundary is disputed
+
+`reviewer` can report that an agent has absorbed the next role's job. It cannot
+rule on it — it is read-only by design, and ruling is not reporting. The context
+that wrote the code cannot rule either; it would be judging its own boundary.
+
+So: **a role-boundary finding escalates to `architect`, which rules by writing an
+ADR in `docs/adr/`.** `architect` already owns component boundaries and already
+writes ADRs, so this is an existing job pointed at the agent team itself rather
+than a new one.
+
+The trigger is narrow, and staying narrow is what keeps this from being
+ceremony. It applies only to a finding about **which agent owns something** — a
+skill two agents both want, a section of prose that belongs to another agent's
+file, a responsibility that two roles both claim or both disclaim. A finding
+about code is a finding about code and goes back the normal way.
+
+The ruling names the option not taken and the cost the chosen option pays, like
+any other ADR. Its value is that the dispute stops being re-argued by whoever
+reads the files next. `docs/adr/0001-role-boundary-rule-and-arbitration.md` is
+the first, and sets two precedents worth knowing before you open a new one:
+
+- **A shared skill is scoped, not owned.** Two agents may carry the same skill
+  when the downstream one states the narrower scope in its own file and reports
+  the decisions it had to make.
+- **An agent's file names the obligation it owns, never the routing that
+  consumes it.** Stating a condition, a list, or a procedure that a skill already
+  carries is the duplication `CLAUDE.md` forbids; one clause of motivation
+  carrying no criteria has no surface to drift against.
+
 ## Skills per agent
 
 Skills carry the knowledge; agents carry the role. This keeps doctrine defined
@@ -81,7 +111,7 @@ once rather than duplicated across eleven system prompts.
 | `planner` | `architecture-discipline`, `code-navigation` |
 | `implementer` | `tdd-discipline`, `architecture-discipline`, `quality-gates`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
 | `backend-implementer` | as `implementer`, plus `backend-discipline` always on |
-| `frontend-implementer` | as `implementer`, plus `react-performance` and `design-intelligence` always on |
+| `frontend-implementer` | as `implementer`, plus `react-performance` and `design-intelligence` always on (the latter scoped to conformance — see ADR-0001) |
 | `reviewer` | `quality-gates`, `architecture-discipline`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
 | `qa-verifier` | `quality-gates`, `browser-verify`, `app-verify` |
 | `debugger` | `debug-rca`, `tdd-discipline`, `code-navigation` |
