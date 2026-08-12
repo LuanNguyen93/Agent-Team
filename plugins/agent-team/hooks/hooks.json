@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/gate-task-complete.sh",
+            "shell": "bash",
+            "timeout": 600,
+            "statusMessage": "Running quality gates before completing task"
+          }
+        ]
+      }
+    ]
+  }
+}
