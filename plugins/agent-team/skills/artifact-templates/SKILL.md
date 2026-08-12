@@ -31,9 +31,8 @@ Full templates live alongside this skill. Read the one you need:
 
 ## Rules that apply to all of them
 
-**Write in the user's language.** Communicate and write artifacts in Vietnamese
-unless the user writes to you in another language. Keep code identifiers,
-file paths, and technical terms in English.
+**Write in English.** All artifacts, headings, and body text are English, so
+the documents stay portable across teams and tools.
 
 **Acceptance criteria must be checkable.** "Fast" is not a criterion; "responds
 under 300ms at p95 with 1k rows" is. If you cannot describe how to check it, you

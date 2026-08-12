@@ -5,33 +5,33 @@ Written by `analyst` after grilling. Consumed by `pm`. Aim for one page.
 ```markdown
 # Brief: <name>
 
-## Vấn đề
+## Problem
 What hurts today, in the user's words. Who feels it, how often, what they do
 instead. No solution language here.
 
-## Bằng chứng
-What makes us believe this is real — a quote, a metric, an observed workaround.
-If there is none, say so: `[OPEN: chưa có bằng chứng]`.
+## Evidence
+What makes us believe this is real - a quote, a metric, an observed workaround.
+If there is none, say so: `[OPEN: no evidence yet]`.
 
-## Nếu không làm gì
-The cost of inaction. If this is "nothing much", question whether to build.
+## Cost of doing nothing
+If this is "not much", question whether to build at all.
 
-## Tiêu chí thành công
+## Success criteria
 Observable and checkable. How we would know, some weeks later, that this worked.
 
 - [ ] ...
 - [ ] ...
 
-## Ràng buộc
-Technical, business, timeline, compliance. Include the ones that are inconvenient.
+## Constraints
+Technical, business, timeline, compliance. Include the inconvenient ones.
 
-## Ngoài phạm vi
+## Out of scope
 Explicit exclusions. The most valuable section, and the one most often skipped.
 
-## Từ vựng chung
-| Thuật ngữ | Nghĩa | Định danh (cái gì làm hai bản ghi là một) |
+## Glossary
+| Term | Meaning | Identity rule (what makes two records the same one) |
 |---|---|---|
 
-## Câu hỏi mở
+## Open questions
 Named unknowns, addressed to whoever can answer them.
 ```

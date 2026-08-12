@@ -5,47 +5,47 @@ Written by `pm` from the brief. Consumed by `architect` and `planner`.
 ```markdown
 # PRD: <name>
 
-## Bối cảnh
+## Context
 Two or three sentences linking back to the brief. Link, do not restate.
 
-## Người dùng và nhu cầu
-| Vai trò | Cần gì | Vì sao |
+## Users and needs
+| Role | Needs | Why |
 |---|---|---|
 
-## Phạm vi
-### Trong phạm vi
-### Ngoài phạm vi
+## Scope
+### In scope
+### Out of scope
 
-## Yêu cầu chức năng
+## Functional requirements
 Numbered so stories and tests can cite them.
 
-**FR-1 — <title>**
-- Mô tả:
-- Tiêu chí chấp nhận:
+**FR-1 - <title>**
+- Description:
+- Acceptance criteria:
   - [ ] Given <state>, when <action>, then <observable result>
-  - [ ] Edge: empty / one / many / too many
-  - [ ] Lỗi: what the user sees when it fails
+  - [ ] Edge: empty / one / many / far too many
+  - [ ] Failure: what the user sees when it breaks
 
-## Yêu cầu phi chức năng
-Only the ones with a real target. Delete the rest rather than writing "should be
-fast".
+## Non-functional requirements
+Only the ones with a real target. Delete the rest rather than writing
+"should be fast".
 
-| Loại | Mục tiêu | Cách đo |
+| Type | Target | How measured |
 |---|---|---|
-| Hiệu năng | | |
-| Bảo mật | | |
-| Truy cập (a11y) | WCAG 2.1 AA | |
+| Performance | | |
+| Security | | |
+| Accessibility | WCAG 2.1 AA | |
 
-## Dữ liệu
+## Data
 Entities, ownership, source of truth, retention, migration of existing rows.
 
-## Epic và story
-| Epic | Story | FR liên quan | Ưu tiên |
+## Epics and stories
+| Epic | Story | Related FR | Priority |
 |---|---|---|---|
 
-## Rủi ro
-| Rủi ro | Ảnh hưởng | Giảm thiểu |
+## Risks
+| Risk | Impact | Mitigation |
 |---|---|---|
 
-## Câu hỏi mở
+## Open questions
 ```

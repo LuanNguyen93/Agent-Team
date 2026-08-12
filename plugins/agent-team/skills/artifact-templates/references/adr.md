@@ -1,31 +1,31 @@
 # ADR template
 
-One decision per file: `docs/adr/0001-<slug>.md`. Never edit a decided ADR —
+One decision per file: `docs/adr/0001-<slug>.md`. Never edit a decided ADR -
 supersede it with a new one and link both ways.
 
 ```markdown
 # ADR-0001: <decision in one line>
 
-- **Trạng thái**: đề xuất | đã chốt | đã thay thế bởi [ADR-0007](...)
-- **Ngày**: YYYY-MM-DD
-- **Người quyết định**:
+- **Status**: proposed | accepted | superseded by [ADR-0007](...)
+- **Date**: YYYY-MM-DD
+- **Deciders**:
 
-## Bối cảnh
-What forced a choice now. The facts as they were known at this date — including
+## Context
+What forced a choice now. The facts as they were known at this date, including
 what was uncertain. This is the section future readers actually need.
 
-## Quyết định
-What we chose, stated actively: "Chúng tôi dùng X để ...".
+## Decision
+What we chose, stated actively: "We use X to ...".
 
-## Phương án đã cân nhắc
-| Phương án | Ưu | Nhược | Vì sao không chọn |
+## Options considered
+| Option | Pros | Cons | Why not chosen |
 |---|---|---|---|
 
-## Hệ quả
-### Tích cực
-### Tiêu cực
+## Consequences
+### Positive
+### Negative
 Name the real costs. An ADR with no downsides was not a decision.
 
-### Việc này khiến khó làm gì về sau
+### What this makes harder later
 The most valuable line in the document.
 ```
