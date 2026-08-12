@@ -40,7 +40,7 @@ Skip planning artifacts entirely. Go straight to `implementer`, then
 ### FEATURE
 1. `analyst` — grill the request until the problem is clear (skill: `brainstorm-grilling`)
 2. `planner` — produce a plan naming real file paths
-3. `implementer` — TDD against the plan
+3. `implementer` — TDD against the plan, or the parallel split below
 4. `reviewer` + `qa-verifier` — in parallel, both on fresh context
 
 Skip `analyst` only when the user has already stated the problem, the constraints,
@@ -55,6 +55,39 @@ and the acceptance criteria.
 
 Get the user's sign-off after step 2 before spending tokens on steps 3-4. A PRD
 built on a misunderstood brief is worse than no PRD.
+
+## Split the implementation when it spans both surfaces
+
+A change that touches both the server and the client can be built by two agents
+at once — but only against a written contract.
+
+**The condition.** The plan contains a contract section naming, per endpoint:
+method, path, request shape, success response with real field names, and the
+error cases with their statuses and body shapes. No contract, or a contract with
+no error cases, means **no split** — run the single `implementer` sequentially
+and say why. Two halves guessing at the same shape costs more than doing it in
+order.
+
+**The split.** When the condition holds, hand the same plan to
+`backend-implementer` and `frontend-implementer`, and **spawn them in one
+message with two tool calls**. Two consecutive messages run sequentially; the
+parallelism comes from the single dispatch, not from the intent.
+
+Neither half waits for the other. The frontend builds against stubs that return
+the contract's shapes. Neither half may change the contract on its own — a
+contract that turns out wrong comes back to `planner` or `architect`, and both
+halves are re-briefed together.
+
+**Then converge.** The split is not finished when both halves report green —
+green on the frontend side only means the stub worked. The frontend track's last
+step is replacing that stub with the real call and running it against the landed
+backend; if its report does not say it did, the work is incomplete, not done.
+
+Only then do `reviewer` and `qa-verifier` run. `qa-verifier` checks the wire
+independently, because a leftover fixture renders a screen that looks correct.
+
+Do not split a one-sided change, or a change small enough that the coordination
+costs more than the work.
 
 ## Rules that hold at every tier
 

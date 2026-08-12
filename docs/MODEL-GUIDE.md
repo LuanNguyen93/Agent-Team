@@ -72,7 +72,7 @@ breakdown by skill / subagent / MCP server) and `/context`.
 
 ## What this plugin does, and why
 
-Six of the nine agents omit `model`, so they inherit your session. Three pin
+Eight of the eleven agents omit `model`, so they inherit your session. Three pin
 `opus`: `debugger`, `reviewer`, `architect`.
 
 **This is a deliberate departure from Anthropic's subagent guidance**, which is:

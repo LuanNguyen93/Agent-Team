@@ -78,10 +78,15 @@ sign-off after the PRD.
 `/ship` is user-invocable only — Claude will not decide on its own that the code
 looks ready to commit.
 
-## The nine agents
+## The eleven agents
 
 `analyst` · `pm` · `architect` · `ux-designer` · `planner` · `implementer` ·
-`reviewer` · `qa-verifier` · `debugger`
+`backend-implementer` · `frontend-implementer` · `reviewer` · `qa-verifier` ·
+`debugger`
+
+`backend-implementer` and `frontend-implementer` are the parallel split: when a
+change spans both surfaces **and** the plan carries a contract with its error
+cases, they run at the same time, neither waiting for the other.
 
 Each has a role boundary and an explicit list of what it does **not** do.
 `planner` and `reviewer` have Edit and Write removed by configuration rather

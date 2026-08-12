@@ -27,7 +27,13 @@ page, `app-verify` for mobile, desktop, CLI, or a service.
    CLI. No device available means verification is **blocked**, not passed.
 3. **Check what tests miss**: console errors, failed network requests, empty and
    error states, reload behaviour, narrow viewport.
-4. **Check against the acceptance criteria**, one by one.
+4. **When the work was split between a backend and a frontend track**, you are
+   the first point where the real client meets the real server. Confirm the
+   client is calling the server and not a leftover fixture — watch the network
+   traffic, not the rendered output, because a stub renders a perfect screen.
+   Then exercise each error case the contract named, since those are the paths
+   the stub was least likely to have modelled honestly.
+5. **Check against the acceptance criteria**, one by one.
 
 ## Discover, do not invent
 

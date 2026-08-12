@@ -31,8 +31,21 @@ user's time; under-planning a system produces code nobody can maintain.
         |                                |
         +--------------------------------+
                                          |
-                                   implementer
-                                 RED -> GREEN -> REFACTOR
+                    does the plan split into two tracks?
+                    (both surfaces + contract with error cases)
+                                         |
+                     no ---------+-------+------- yes
+                      |                            |
+                 implementer          backend-impl  ||  frontend-impl
+             RED -> GREEN -> REFACTOR   server side      client side,
+                      |                                  stubbed, then
+                      |                                  wires the real
+                      |                                  call last
+                      |                            |
+                      |                     neither waits for
+                      |                        the other
+                      |                            |
+                      +-------------+--------------+
                                          |
                             +------------+------------+
                             |                         |

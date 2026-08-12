@@ -57,6 +57,23 @@ Rollback:
 
 A step naming a path you did not open is `[assumed]`, not `[observed]`.
 
+## planner → backend-implementer + frontend-implementer
+
+Used only when the change spans both surfaces. The same document goes to both
+halves, unchanged.
+
+```
+Contract:              per endpoint - method, path, request, response
+Errors:                per failure - name, status, body shape, what the user sees
+Owns shared files:     which track may edit each file both would touch
+Backend track:         ordered steps, each executable without the frontend
+Frontend track:        ordered steps, each executable against stubs only
+Parallel safe:         yes / no, and what would make it no
+```
+
+An `Errors` row that says "standard error handling" is not a contract. If the
+list is empty, the tracks are not safe to run in parallel — say so.
+
 ## implementer → qa-verifier, reviewer
 
 ```

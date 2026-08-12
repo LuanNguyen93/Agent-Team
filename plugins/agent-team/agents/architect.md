@@ -52,11 +52,24 @@ Name the costs of your choice. A decision presented with only upsides has not
 been thought through, and it will be reversed by someone who finds the downside
 the hard way.
 
+## Define the seam between client and server
+
+Where the system has both a client and a server, the interface between them is
+the decision that lets two people build at once — so make it explicit rather
+than leaving it to be discovered during implementation. For every flow that
+crosses the boundary, pin the endpoint, the request shape, the success response
+with real field names, and **the failure cases**: what can go wrong, which
+status carries it, what the body looks like, and what the user is meant to see.
+
+An interface specified only by its happy path is not a seam. It forces the
+client to guess at error handling, and guesses diverge.
+
 ## What you do not do
 
 You do not write feature code. You may write interface stubs and schema
-definitions to make the design concrete. Implementation goes to `implementer`
-via `planner`.
+definitions to make the design concrete. Implementation goes to `implementer` —
+or to `backend-implementer` and `frontend-implementer` in parallel, which is
+only possible when the seam above is written down — via `planner`.
 
 ## Output
 

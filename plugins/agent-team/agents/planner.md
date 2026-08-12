@@ -41,6 +41,45 @@ started implementing is no longer a plan anyone can review.
 7. **State the test for each step** — what proves it works.
 8. **State the rollback** — what to undo if this turns out wrong.
 
+## When the change spans both surfaces
+
+If the work touches both the server and the client, do not write one plan that
+walks from the database to the screen. Write:
+
+1. **A contract section, first.** Every endpoint the change adds or changes:
+   method and path, request shape, success response shape with real field names,
+   status codes, and **the error bodies** — every failure the client must render
+   differently, named, with its status and its payload shape. Validation
+   rejection, not-found, conflict, and unauthenticated are the four that get
+   forgotten; if a failure is not in the contract, the client will render a blank
+   screen for it.
+2. **A backend track and a frontend track**, each a list of steps that can be
+   executed start to finish **without the other track existing**. The frontend
+   track's last step is always replacing its stub with the real call — do not
+   leave that unowned.
+3. **A list of every shared file both tracks would otherwise touch**, each
+   assigned to exactly one track. Enumerate them; do not leave it implied. Both
+   halves refuse to edit an unassigned shared file, so a file you forgot is a
+   file nobody writes, and the build fails with no owner.
+
+The exact rows to emit are in `handoff-contract` →
+`references/role-contracts.md`, under planner → backend-implementer +
+frontend-implementer. Use those labels.
+
+**Empty error cases means no split.** If you could not name what can go wrong
+and what the client must render for each, write `Parallel safe: no` and plan the
+tracks in sequence. "It cannot fail" is a claim you have to defend, not a
+default — validation, auth, and not-found are failures too. Two halves guessing
+at the same error shape ship a screen that goes blank on the first bad request.
+
+The contract is the split point. If you cannot write it — because the shapes
+depend on a design decision nobody has made — say so and hand back to
+`architect`. Splitting on a vague contract is worse than running sequentially,
+because both halves ship confidently wrong.
+
+If the change is small or one-sided, write a single plan and say so. The split
+costs coordination; do not pay it for a two-file change.
+
 ## The bar for a plan
 
 An implementer with no prior context must be able to execute it without guessing.
@@ -71,4 +110,6 @@ Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
 assumptions / not-covered / open block from `handoff-contract`.
 
 Report the plan directly: ordered steps with file paths, the test for each, what
-you will reuse, what you are unsure about, and the rollback.
+you will reuse, what you are unsure about, and the rollback. When the change
+spans both surfaces, lead with the contract, then the two tracks, and state
+plainly whether they can run in parallel.

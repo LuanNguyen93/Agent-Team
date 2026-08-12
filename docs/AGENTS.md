@@ -1,6 +1,6 @@
 # Agents
 
-Nine agents, each with a role boundary. The boundary is the point: an agent that
+Eleven agents, each with a role boundary. The boundary is the point: an agent that
 absorbs the next role's job breaks the handoff chain that makes the output
 traceable.
 
@@ -12,13 +12,15 @@ traceable.
 | `ux-designer` | PRD | `docs/design-system.md`, `docs/ui-spec.md` | inherit | read + write docs |
 | `planner` | story + architecture | an implementation plan | inherit | **read-only** |
 | `implementer` | plan | code + tests | inherit | full |
+| `backend-implementer` | plan + contract | server code + tests | inherit | full |
+| `frontend-implementer` | plan + contract | client code + tests, stubbed then wired | inherit | full |
 | `reviewer` | diff + spec | findings by severity | **opus** | **read-only** |
 | `qa-verifier` | the change | gate table + verification evidence | inherit | read + bash |
 | `debugger` | a failure | root cause + fix | **opus** | read + bash + edit |
 
 ## Why only three agents pin a model
 
-Six of the nine omit `model`, so they inherit the session's model and the user's
+Eight of the eleven omit `model`, so they inherit the session's model and the user's
 choice governs. Pinning `opus` everywhere would override that choice and make a
 PROJECT run expensive without changing the output much.
 
@@ -33,7 +35,7 @@ just the prose:
 - **`architect`** — structural decisions are expensive to reverse, and the cost
   lands months later.
 
-The other six do structured work that the skills already specify: `analyst` asks
+The other eight do structured work that the skills already specify: `analyst` asks
 questions, `pm` transforms a brief against a template, `ux-designer` applies a
 documented checklist, `planner` reads code and writes it down. Putting the
 knowledge in skills is what makes this possible — the agent does not have to
@@ -68,7 +70,7 @@ it used to write the code. `reviewer` is always spawned fresh.
 ## Skills per agent
 
 Skills carry the knowledge; agents carry the role. This keeps doctrine defined
-once rather than duplicated across nine system prompts.
+once rather than duplicated across eleven system prompts.
 
 | Agent | Skills |
 |---|---|
@@ -78,6 +80,8 @@ once rather than duplicated across nine system prompts.
 | `ux-designer` | `design-intelligence`, `artifact-templates` |
 | `planner` | `architecture-discipline`, `code-navigation` |
 | `implementer` | `tdd-discipline`, `architecture-discipline`, `quality-gates`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
+| `backend-implementer` | as `implementer`, plus `backend-discipline` always on |
+| `frontend-implementer` | as `implementer`, plus `react-performance` and `design-intelligence` always on |
 | `reviewer` | `quality-gates`, `architecture-discipline`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
 | `qa-verifier` | `quality-gates`, `browser-verify`, `app-verify` |
 | `debugger` | `debug-rca`, `tdd-discipline`, `code-navigation` |
