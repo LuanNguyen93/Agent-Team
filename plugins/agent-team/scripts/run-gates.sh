@@ -46,6 +46,18 @@ fi
 [ -f package.json ] || exit 0
 command -v node >/dev/null 2>&1 || exit 0
 
+# A package.json that cannot be parsed is a real problem, and it must not be
+# mistaken for "this project has no gates" - that silently reports a pass.
+if ! node -e 'require("./package.json")' 2>/dev/null; then
+  printf 'Gate FAILED: package.json is present but could not be parsed
+'
+  printf 'Command: node -e '"'"'require("./package.json")'"'"'
+
+'
+  node -e 'require("./package.json")' 2>&1 | head -10
+  exit 1
+fi
+
 PM=npm
 [ -f pnpm-lock.yaml ] && PM=pnpm
 [ -f yarn.lock ] && PM=yarn

@@ -140,6 +140,30 @@ All three seeded defects were found, plus plaintext password storage,
 non-constant-time comparison, unbounded session growth, and the observation that
 the existing test would still pass if `login` returned a constant.
 
+## Optimization pass
+
+Measured the plugin's context cost before changing anything. The always-on
+surface — ten skill descriptions, nine agent descriptions, and the SessionStart
+directive — is about **1,500 tokens**, and it sits in the cached prefix, so its
+marginal cost is at cache-read rates. Skill bodies run 580–1,150 tokens and load
+only on trigger; reference files are behind progressive disclosure. **Nothing
+here needed shrinking**, so nothing was shrunk.
+
+The real defects were precision and correctness, not size:
+
+| Defect | Fix |
+|---|---|
+| `react-performance` declared `paths` of `**/*.ts` and `**/*.js`, which match any Node project. A ~1,150-token React skill auto-loaded on codebases with no React. | Narrowed to `**/*.tsx` and `**/*.jsx`. |
+| The gate hook ran the full test suite on **every** `TaskCompleted`, including tasks that only read files or wrote docs — minutes of latency per task on a large suite, for no signal. | Skip when `git status --porcelain` is empty. Falls through and runs the gates when git is unavailable or the directory is not a repo. |
+| **A malformed `package.json` silently reported a pass.** Script discovery failed to parse it, found no gates, and exited 0 — indistinguishable from a project that legitimately has none. | An unparseable `package.json` now fails the gate loudly with the parser error. |
+
+That last one was found by a broken test fixture rather than by inspection, and
+it is the most serious of the three: it is the exact failure the `quality-gates`
+skill exists to prevent — a gate that reports success it did not earn.
+
+Verified across four states: clean tree skips, a modified tracked file blocks,
+an untracked file blocks, and a malformed `package.json` blocks.
+
 ## Not yet verified
 
 - `browser-verify` against a running web app

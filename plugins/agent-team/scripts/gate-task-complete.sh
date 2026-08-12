@@ -13,6 +13,18 @@ cat > /dev/null   # drain the hook payload; the gates only need the project dir
 
 [ "${AGENT_TEAM_SKIP_GATES:-}" = "1" ] && exit 0
 
+# Gates only tell you something when code changed. A task that read files,
+# answered a question, or wrote docs pays a full test run for no signal - on a
+# large suite that is minutes of latency per task. Skip a clean tree.
+#
+# Not a git repo, or git unavailable: fall through and run the gates.
+ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
+if command -v git >/dev/null 2>&1 && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  if [ -z "$(git -C "$ROOT" status --porcelain 2>/dev/null)" ]; then
+    exit 0
+  fi
+fi
+
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT=$("$DIR/run-gates.sh" 2>&1)
 STATUS=$?

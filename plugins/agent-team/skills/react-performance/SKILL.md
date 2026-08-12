@@ -5,8 +5,6 @@ when_to_use: Writing, refactoring, or reviewing React/Next.js code, or diagnosin
 paths:
   - "**/*.tsx"
   - "**/*.jsx"
-  - "**/*.ts"
-  - "**/*.js"
 ---
 
 # React performance and correctness
