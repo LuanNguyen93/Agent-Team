@@ -76,11 +76,11 @@ once rather than duplicated across nine system prompts.
 | `pm` | `artifact-templates` |
 | `architect` | `artifact-templates`, `diagram-excalidraw`, `architecture-discipline` |
 | `ux-designer` | `design-intelligence`, `artifact-templates` |
-| `planner` | `architecture-discipline` (+ reads the code directly) |
-| `implementer` | `tdd-discipline`, `architecture-discipline`, `quality-gates` (+ `react-performance`, `backend-discipline` via `paths`) |
-| `reviewer` | `quality-gates`, `architecture-discipline` (+ `react-performance`, `backend-discipline` via `paths`) |
+| `planner` | `architecture-discipline`, `code-navigation` |
+| `implementer` | `tdd-discipline`, `architecture-discipline`, `quality-gates`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
+| `reviewer` | `quality-gates`, `architecture-discipline`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
 | `qa-verifier` | `quality-gates`, `browser-verify` |
-| `debugger` | `debug-rca`, `tdd-discipline` |
+| `debugger` | `debug-rca`, `tdd-discipline`, `code-navigation` |
 
 Every agent additionally carries `handoff-contract` — see below.
 
@@ -178,3 +178,42 @@ diff.
 The gate is **opt-in locally** — `AGENT_TEAM_RUN_SONAR=1` — because analysis
 needs a server and a token and is far slower than the local chain. Without a
 configured scanner the gate is **absent**, which is a result, not a pass.
+
+## Finding code by structure, not by crawling
+
+`code-navigation` distils what a code index (CodeGraph, in the case this was
+drawn from) does, into rules that hold whether or not the repository has one.
+
+The measured claim behind it: on seven open-source repos, an agent answering an
+architecture question **with** an index used 2–3 tool calls and read **zero**
+files, against 5–57 calls and up to 4.3M tokens without. The reason is not
+speed — it is that the crawl reconstructs a call graph by hand and gets it
+subtly wrong.
+
+Four rules survive the tool:
+
+- **Order of discovery**: index → language tooling → search → reading files.
+  Most crawling is search and reading doing the index's job.
+- **A search that found nothing has proved nothing.** Text search cannot follow
+  dynamic dispatch, DI, string-keyed registries, reflection, generated code, or
+  convention-based routing. An empty `rg` supports "there may be no *static*
+  callers" and nothing stronger — which is why the skill requires the searched
+  scope to be reported alongside the result.
+- **Blast radius before a shared change.** `planner` names the callers,
+  `implementer` asks which of them assumed the old behaviour, `reviewer` treats
+  an unexamined caller as a finding. A signature that still compiles but means
+  something different is the failure mode.
+- **Do not delegate a structural question to a file-reading subagent.** It pays
+  the crawl twice: the subagent burns context rebuilding what one query returns,
+  and its summary still has to be verified. This is CodeGraph's own documented
+  caveat, and it generalises.
+
+Plus one that ties back to `handoff-contract`: **an index can be stale**. Any
+derived view is `[observed]` only when its freshness was checked; otherwise it
+is `[inferred]`.
+
+`references/codegraph.md` carries the commands, and only applies when the repo
+already has a `.codegraph/` directory — indexing is the user's decision, not an
+agent's. `references/without-an-index.md` reproduces each habit with compilers,
+`rg`, and `git log -S`, and is explicit that the result is an approximation to
+be labelled as one.

@@ -89,7 +89,7 @@ than by instruction.
 
 See [`docs/AGENTS.md`](docs/AGENTS.md) and [`docs/FLOW.md`](docs/FLOW.md).
 
-## The thirteen skills
+## The fourteen skills
 
 Doctrine lives in skills so it is defined once rather than duplicated across
 nine system prompts.
@@ -97,7 +97,8 @@ nine system prompts.
 `workflow-router` · `brainstorm-grilling` · `artifact-templates` ·
 `tdd-discipline` · `quality-gates` · `debug-rca` · `design-intelligence` ·
 `react-performance` · `browser-verify` · `diagram-excalidraw` ·
-`handoff-contract` · `backend-discipline` · `architecture-discipline`
+`handoff-contract` · `backend-discipline` · `architecture-discipline` ·
+`code-navigation`
 
 `react-performance` and `backend-discipline` auto-activate on matching paths
 rather than costing context every session.
