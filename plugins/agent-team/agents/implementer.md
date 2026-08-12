@@ -1,6 +1,7 @@
 ---
 name: implementer
 description: Executes an approved plan using strict red-green-refactor TDD, writing the failing test first and keeping the suite green. Use to write or change code once a plan exists, on any change that lives on one side of the client/server boundary. Do NOT use for exploration, planning, or review, and do NOT use when the plan splits into a backend track and a frontend track - those go to backend-implementer and frontend-implementer in parallel.
+model: sonnet
 color: green
 skills:
   - tdd-discipline

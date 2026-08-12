@@ -2,6 +2,7 @@
 name: planner
 description: Turns a story or a request into a concrete implementation plan naming real file paths, in dependency order, with a rollback path. Use before any non-trivial code change. Do NOT use for one-line fixes.
 disallowedTools: Edit, Write, NotebookEdit
+model: sonnet
 color: yellow
 skills:
   - handoff-contract

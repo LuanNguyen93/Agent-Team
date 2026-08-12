@@ -1,6 +1,7 @@
 ---
 name: backend-implementer
 description: Executes the backend track of an approved plan using strict red-green-refactor TDD - endpoints, jobs, queries, migrations - against a written contract. Use when a change spans both surfaces and the contract exists, so it can run in parallel with frontend-implementer. Do NOT use for exploration, planning, review, or single-surface changes that the plain implementer covers.
+model: sonnet
 color: green
 skills:
   - tdd-discipline

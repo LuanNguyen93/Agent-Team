@@ -6,25 +6,27 @@ traceable.
 
 | Agent | Consumes | Produces | Model | Tool access |
 |---|---|---|---|---|
-| `analyst` | The raw request | `docs/brief.md` | inherit | read + write docs |
-| `pm` | brief | `docs/prd.md`, `docs/stories/*.md` | inherit | read + write docs |
+| `analyst` | The raw request | `docs/brief.md` | sonnet | read + write docs |
+| `pm` | brief | `docs/prd.md`, `docs/stories/*.md` | sonnet | read + write docs |
 | `architect` | PRD | `docs/architecture.md`, ADRs, diagrams | **opus** | read + write + bash |
-| `ux-designer` | PRD | `docs/design-system.md`, `docs/ui-spec.md` | inherit | read + write docs |
-| `planner` | story + architecture | an implementation plan | inherit | **read-only** |
-| `implementer` | plan | code + tests | inherit | full |
-| `backend-implementer` | plan + contract | server code + tests | inherit | full |
-| `frontend-implementer` | plan + contract | client code + tests, stubbed then wired | inherit | full |
+| `ux-designer` | PRD | `docs/design-system.md`, `docs/ui-spec.md` | sonnet | read + write docs |
+| `planner` | story + architecture | an implementation plan | sonnet | **read-only** |
+| `implementer` | plan | code + tests | sonnet | full |
+| `backend-implementer` | plan + contract | server code + tests | sonnet | full |
+| `frontend-implementer` | plan + contract | client code + tests, stubbed then wired | sonnet | full |
 | `reviewer` | diff + spec | findings by severity | **opus** | **read-only** |
-| `qa-verifier` | the change | gate table + verification evidence | inherit | read + bash |
+| `qa-verifier` | the change | gate table + verification evidence | sonnet | read + bash |
 | `debugger` | a failure | root cause + fix | **opus** | read + bash + edit |
 
-## Why only three agents pin a model
+## Why every agent pins a model
 
-Eight of the eleven omit `model`, so they inherit the session's model and the user's
-choice governs. Pinning `opus` everywhere would override that choice and make a
-PROJECT run expensive without changing the output much.
+None of the eleven inherits the session's model. Eight pin `sonnet`, because
+inheritance couples the whole team's cost to whatever the session is on — one
+forgotten `/model` after an expensive-model session bills the entire pipeline
+through the heaviest agents. `docs/MODEL-GUIDE.md` carries the full rationale
+and how to raise the tier deliberately.
 
-The three exceptions are the roles where reasoning depth changes the result, not
+Three pin `opus` — the roles where reasoning depth changes the result, not
 just the prose:
 
 - **`debugger`** — root cause analysis is exactly where a weaker model stops at
@@ -37,9 +39,9 @@ just the prose:
 
 The other eight do structured work that the skills already specify: `analyst` asks
 questions, `pm` transforms a brief against a template, `ux-designer` applies a
-documented checklist, `planner` reads code and writes it down. Putting the
-knowledge in skills is what makes this possible — the agent does not have to
-carry the doctrine in raw capability.
+documented checklist, `planner` reads code and writes it down, the implementers
+execute an approved plan. Putting the knowledge in skills is what makes `sonnet`
+sufficient — the agent does not have to carry the doctrine in raw capability.
 
 Override any of them per project by copying the agent into `.claude/agents/`,
 or per invocation when spawning.

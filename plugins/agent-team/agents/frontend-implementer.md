@@ -1,6 +1,7 @@
 ---
 name: frontend-implementer
 description: Executes the frontend track of an approved plan using strict red-green-refactor TDD - components, client state, screens - against a written contract, stubbing the server until it lands. Use when a change spans both surfaces and the contract exists, so it can run in parallel with backend-implementer. Do NOT use for exploration, planning, review, or single-surface changes that the plain implementer covers.
+model: sonnet
 color: green
 skills:
   - tdd-discipline

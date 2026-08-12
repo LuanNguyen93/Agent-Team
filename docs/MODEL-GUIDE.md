@@ -72,8 +72,22 @@ breakdown by skill / subagent / MCP server) and `/context`.
 
 ## What this plugin does, and why
 
-Eight of the eleven agents omit `model`, so they inherit your session. Three pin
-`opus`: `debugger`, `reviewer`, `architect`.
+Every agent pins a `model` — none inherits the session. Three pin `opus`
+(`debugger`, `reviewer`, `architect`); the other eight pin `sonnet`.
+
+Earlier versions let those eight inherit so the user's `/model` choice governed
+the whole team. That was reversed deliberately: inheritance couples every
+subagent's cost to whatever the session happens to be on, so one forgotten
+`/model` after a Fable session bills the entire pipeline — and `implementer`,
+the heaviest token consumer, is exactly where it lands. A hook cannot catch
+this (hook input does not carry the session model), so the pin is the only
+deterministic guard. The `sonnet` choice follows the decision framework above:
+those eight roles do routine, precisely-specified work whose knowledge lives in
+skills.
+
+The cost of the reversal: `/model` now changes only the main conversation. To
+raise the whole team's tier, edit the `model:` lines in
+`plugins/agent-team/agents/` — one line each.
 
 **This is a deliberate departure from Anthropic's subagent guidance**, which is:
 
