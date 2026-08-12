@@ -6,6 +6,9 @@
 # Gates can be declared explicitly in .agent-team.json:
 #   { "gates": ["pnpm typecheck", "pnpm lint", "pnpm test"] }
 # Otherwise they are discovered from package.json scripts.
+#
+# AGENT_TEAM_RUN_SONAR=1 adds the static-analysis gate when the project has a
+# "sonar" script or a sonar-project.properties plus sonar-scanner on PATH.
 
 set -uo pipefail
 
@@ -84,5 +87,15 @@ for script in typecheck type-check tsc lint test build; do
     run_gate "$script" "$PM run $script" || exit 1
   fi
 done
+
+# Static analysis is opt-in: it needs a server and a token, and it is far slower
+# than the local gates. Absent stays absent - never substitute a scanner run.
+if [ "${AGENT_TEAM_RUN_SONAR:-}" = "1" ]; then
+  if has_script sonar; then
+    run_gate sonar "$PM run sonar" || exit 1
+  elif [ -f sonar-project.properties ] && command -v sonar-scanner >/dev/null 2>&1; then
+    run_gate sonar sonar-scanner || exit 1
+  fi
+fi
 
 exit 0

@@ -20,6 +20,13 @@ latency budget, cost ceiling. If a constraint did not change a decision, cut it.
 
 The second column matters more than the first. It is what prevents drift.
 
+## Dependency rule
+Which layer may import which, as a table - or a recorded "no layering, and why".
+This is the row every later change is checked against, so it is not optional.
+
+| Layer | May import | Must never import |
+|---|---|---|
+
 ## Data model
 Entities, relationships, identity rules, and where each field's source of truth
 lives. Note which fields are denormalised and what keeps them in sync.

@@ -24,7 +24,8 @@ Applies when `package.json` lists `next` or `react`.
 
 ## Skills that apply
 
-- `react-performance` — auto-activates on `.tsx`/`.jsx`/`.ts`/`.js`
+- `react-performance` — auto-activates on `.tsx`/`.jsx`
+- `backend-discipline` — auto-activates under `app/api/`, `server/`, migrations
 - `design-intelligence` — for any UI work
 - `browser-verify` — verification drives the real app
 

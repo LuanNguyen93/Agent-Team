@@ -66,8 +66,9 @@ them. Plugin-level `hooks/hooks.json` is a separate mechanism and does work.
 
 ## 4. `paths` auto-activates a skill
 
-`react-performance` sets `paths` globs so it loads only when JS/TS files are in
-play, rather than costing context on every session.
+`react-performance` and `backend-discipline` set `paths` globs so each loads
+only when matching files are in play — `.tsx`/`.jsx` for the first, server and
+migration paths for the second — rather than costing context on every session.
 
 ## 5. `disable-model-invocation` also blocks preloading
 
@@ -78,7 +79,7 @@ Wrong for any doctrine skill.
 ## 6. Description length cap
 
 `description` plus `when_to_use` is truncated at 1,536 characters in the skill
-listing. Put the key use case first. All ten skills here are well under.
+listing. Put the key use case first. All thirteen skills here are well under.
 
 ## 7. Directory layout is strict
 

@@ -1,6 +1,6 @@
 ---
 name: quality-gates
-description: Run typecheck, lint, test, and build as a sequential blocking chain where a failure stops the line. Use before marking work complete, before committing, and during review.
+description: Run typecheck, lint, test, build, and the project static-analysis or SonarQube gate as a sequential blocking chain where a failure stops the line. Use before marking work complete, before committing, and during review.
 when_to_use: Before any commit, before reporting a task done, or when asked to verify a change is safe. Do NOT use as a substitute for actually running the app.
 ---
 
@@ -10,11 +10,17 @@ Gates run **in order**, and a failure **stops the line**. Do not run the next
 gate, do not "fix it later", do not mark the task complete.
 
 ```
-typecheck  →  lint  →  test  →  build
+typecheck  →  lint  →  test  →  build  →  static analysis
 ```
 
 The order is deliberate: each gate is cheaper and more localised than the next,
 so failures surface with the clearest possible message.
+
+The last one runs only where the project has configured it — a SonarQube /
+SonarCloud gate, or an equivalent analyser. It is judged on **new code**, and
+its thresholds, the forbidden ways to pass it, and the rules that fail most
+often are in `references/sonarqube.md`. If the project has no such analysis
+configured, the gate is **absent**, not passed.
 
 ## Discover the real commands
 
@@ -22,7 +28,9 @@ Never guess. Read the project's own definitions, in this order:
 
 1. `package.json` scripts / `Makefile` / `justfile` / `Taskfile.yml`
 2. `pyproject.toml`, `Cargo.toml`, `go.mod`, `*.csproj`
-3. CI config — `.github/workflows/*.yml` is the most reliable source, because it
+3. `sonar-project.properties`, `sonar.projectKey` in a build file, or a Sonar
+   step in CI — for the static analysis gate
+4. CI config — `.github/workflows/*.yml` is the most reliable source, because it
    is what actually gates merges
 
 If the project defines no gate for a step, **say the gate is absent**. Do not
@@ -48,7 +56,10 @@ paraphrase. Then route to `debugger` for root-cause analysis.
 
 Do not:
 - weaken an assertion to make a test pass
-- add `// @ts-ignore`, `# type: ignore`, or an eslint-disable to clear a gate
+- add `// @ts-ignore`, `# type: ignore`, an eslint-disable, or `// NOSONAR` to
+  clear a gate
+- mark a Sonar issue "won't fix" or a security hotspot "safe", or exclude a path
+  from analysis or coverage, to move a number
 - delete or skip a failing test
 - widen a type to `any` to satisfy typecheck
 
@@ -72,6 +83,7 @@ Give the user a plain table:
 | lint | `pnpm lint` | PASS |
 | test | `pnpm test` | **FAIL** — 2 of 47 |
 | build | `pnpm build` | not run (blocked) |
+| static analysis | `sonar-scanner` | not run (blocked) |
 
 Never report a gate as passing that you did not run. "Not run" is a legitimate
 and useful result; a fabricated pass is not.

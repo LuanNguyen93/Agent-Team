@@ -89,17 +89,18 @@ than by instruction.
 
 See [`docs/AGENTS.md`](docs/AGENTS.md) and [`docs/FLOW.md`](docs/FLOW.md).
 
-## The ten skills
+## The thirteen skills
 
 Doctrine lives in skills so it is defined once rather than duplicated across
 nine system prompts.
 
 `workflow-router` · `brainstorm-grilling` · `artifact-templates` ·
 `tdd-discipline` · `quality-gates` · `debug-rca` · `design-intelligence` ·
-`react-performance` · `browser-verify` · `diagram-excalidraw`
+`react-performance` · `browser-verify` · `diagram-excalidraw` ·
+`handoff-contract` · `backend-discipline` · `architecture-discipline`
 
-`react-performance` auto-activates on JS/TS files rather than costing context
-every session.
+`react-performance` and `backend-discipline` auto-activate on matching paths
+rather than costing context every session.
 
 ## Configuration
 
@@ -115,6 +116,7 @@ otherwise from `package.json` scripts:
 | `AGENT_TEAM_SKIP_GATES=1` | Disable the enforcement hook |
 | `AGENT_TEAM_SKIP_TESTS=1` | Skip the test gate (keep typecheck and lint) |
 | `AGENT_TEAM_RUN_BUILD=1` | Include the build gate |
+| `AGENT_TEAM_RUN_SONAR=1` | Include the static-analysis gate (`sonar` script, or `sonar-project.properties` + `sonar-scanner`) |
 
 ## Agent teams
 
