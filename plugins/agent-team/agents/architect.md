@@ -1,7 +1,6 @@
 ---
 name: architect
 description: Designs the technical shape of a system - components, data model, key flows, failure modes - and records decisions as ADRs with diagrams. Use on a PROJECT after the PRD exists, or when a change needs a structural decision. Do NOT use for changes that fit the existing architecture.
-tools: Read, Grep, Glob, Write, Bash, WebSearch, WebFetch, Skill
 model: opus
 color: cyan
 skills:

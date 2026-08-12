@@ -1,7 +1,6 @@
 ---
 name: reviewer
 description: Reviews a change on fresh context along two axes - engineering standards and compliance with the stated spec. Read-only. Use after implementation, always in a context that did not write the code. Do NOT use to fix what it finds.
-tools: Read, Grep, Glob, Bash, Skill
 disallowedTools: Edit, Write, NotebookEdit
 model: opus
 color: orange

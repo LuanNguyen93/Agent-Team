@@ -25,15 +25,38 @@ Blocking hook events available for this kind of work:
 
 Exit 2 takes precedence over a JSON `permissionDecision: allow`.
 
-## 2. The `skills` frontmatter field is dropped for agent-team teammates
+## 2. Teammate skills: docs say dropped, observation says loaded
 
-From the agent teams documentation: the `skills` and `mcpServers` fields in a
-subagent definition are **not applied** when that definition runs as a teammate.
+The agent teams documentation states that the `skills` and `mcpServers` fields
+in a subagent definition are **not applied** when it runs as a teammate.
 
-This fails silently — the agent runs, just without its doctrine. Every agent
-here therefore does both: declares `skills:` in frontmatter for the subagent
-path, and carries a "Step 0: load these skills via the Skill tool" instruction
-in its body for the teammate path.
+**Measured on v2.1.228, that did not reproduce.** A teammate spawned with the
+`reviewer` agent type reported `quality-gates` fully present in its context,
+arriving pre-injected in its first user message rather than through a Skill tool
+call it made itself.
+
+Do not rely on either behaviour. Every agent here declares `skills:` in
+frontmatter *and* carries a "Step 0: load these skills via the Skill tool"
+instruction in its body, so the doctrine arrives on whichever path holds.
+
+## 2b. An explicit `tools:` allowlist starves a teammate of coordination tools
+
+The documentation says team coordination tools such as `SendMessage` and the
+task-management tools "are always available to a teammate even when `tools`
+restricts other tools".
+
+**Measured, that did not hold.** With `tools: Read, Grep, Glob, Bash, Skill` on
+the `reviewer` agent, a teammate had exactly those five and no `SendMessage` —
+it could not talk to its peers at all. In a separate run, teammates reported
+`TaskList`/`TaskUpdate`/`TaskGet` missing and the lead had to drive the shared
+task list itself.
+
+Removing the allowlist restored `SendMessage`. The task-management tools were
+still not observed on the teammate, so the lead remains the one driving tasks.
+
+This is why no agent here declares `tools:`. The only tool constraint left is
+`disallowedTools` on `planner` and `reviewer`, which removes Edit and Write
+outright and was verified to hold in team mode.
 
 ## 3. Plugin subagents ignore three fields
 

@@ -1,7 +1,6 @@
 ---
 name: ux-designer
 description: Produces the design system (tokens, type scale, spacing, colour) and per-screen UI specs including loading, empty, error and edge states. Use when a project or feature has a user interface. Do NOT use for backend-only work or for charts - charts use the dataviz skill.
-tools: Read, Grep, Glob, Write, Skill
 color: pink
 skills:
   - design-intelligence

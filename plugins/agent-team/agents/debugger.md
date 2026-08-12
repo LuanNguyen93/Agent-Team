@@ -1,7 +1,6 @@
 ---
 name: debugger
 description: Finds the root cause of a bug, test failure, or gate failure through reproduce-locate-explain-fix, and refuses to attempt a fix before the mechanism is understood. Use for any failure whose cause is not obvious. Do NOT use for adding new behaviour.
-tools: Read, Grep, Glob, Bash, Edit, Skill
 model: opus
 color: red
 skills:

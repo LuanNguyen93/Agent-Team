@@ -1,7 +1,6 @@
 ---
 name: analyst
 description: Clarifies a vague, large, or solution-shaped request before any design work begins, and produces a project brief. Use at the start of a FEATURE or PROJECT when the problem is not yet sharply defined. Do NOT use for well-specified small changes or when the user has said to just build it.
-tools: Read, Grep, Glob, Write, WebSearch, WebFetch, Skill
 color: purple
 skills:
   - brainstorm-grilling

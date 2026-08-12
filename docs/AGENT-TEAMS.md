@@ -29,14 +29,34 @@ The feature is experimental and disabled by default.
 
 Token use scales roughly linearly with teammate count. Start with 3–5.
 
-## The one thing that will surprise you
+## What testing actually found
 
-**`skills` and `mcpServers` in a subagent definition are ignored when it runs as
-a teammate.** The agent still runs — just without its doctrine, silently.
+**Do not declare a `tools:` allowlist on an agent you may run as a teammate.**
+The documentation says coordination tools always survive a `tools` restriction.
+They do not. With an allowlist, a teammate had no `SendMessage` and could not
+talk to its peers; removing the allowlist restored it. No agent in this plugin
+declares `tools:` for this reason.
 
-Every agent in this plugin therefore carries a `Step 0: load these skills via
-the Skill tool` instruction in its body. Keep that instruction if you write new
-agents, or they will behave differently as teammates than as subagents.
+The task-management tools were still absent from the teammate afterwards, so the
+**lead drives the shared task list**, not the teammates.
+
+**Skills did arrive.** The docs say `skills:` is ignored for teammates; measured
+on v2.1.228, a `reviewer` teammate had `quality-gates` fully in context. Since
+the two disagree, every agent here declares `skills:` *and* instructs itself to
+load them via the Skill tool. Keep both if you write new agents.
+
+**Read-only held.** A `reviewer` teammate had no Edit or Write.
+
+**Peer review did real work.** In a two-teammate run over the same file, one
+finding — a credential-free admin bypass — was invisible to the security pass
+and surfaced only from the correctness reading, and five duplicate findings were
+reconciled before reporting.
+
+**Claude may quietly use subagents instead.** Asking for "three teammates to
+review in parallel" produced parallel *subagents*, with no team directory and no
+mailboxes. Only an explicit "create an agent team" produced
+`~/.claude/teams/<id>/inboxes/*.json`. Check for that directory if you need to
+know which one you got.
 
 Teammates do load `CLAUDE.md` and project skills normally, the same as a regular
 session. What they do not inherit is the lead's conversation history — so put

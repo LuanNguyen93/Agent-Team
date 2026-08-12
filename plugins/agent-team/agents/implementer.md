@@ -1,7 +1,6 @@
 ---
 name: implementer
 description: Executes an approved plan using strict red-green-refactor TDD, writing the failing test first and keeping the suite green. Use to write or change code once a plan exists. Do NOT use for exploration, planning, or review.
-tools: Read, Grep, Glob, Edit, Write, Bash, NotebookEdit, Skill
 color: green
 skills:
   - tdd-discipline

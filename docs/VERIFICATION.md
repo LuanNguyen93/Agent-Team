@@ -118,10 +118,30 @@ inline is fine and cheaper. For `reviewer` it is a real loss, because fresh
 context is the entire mechanism. Spawning works when asked; it does not happen
 unprompted.
 
+## Agent teams
+
+Tested with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` against a fixture with
+three seeded defects (crash on unknown user, `Math.random()` session tokens, an
+authorisation check read into a variable and never used).
+
+| Question | Result |
+|---|---|
+| Does a team actually form? | Only on an explicit request. "Spawn three teammates to review in parallel" produced **subagents** — no team directory. "Create an agent team" produced `~/.claude/teams/<id>/inboxes/{alpha,beta}.json`. |
+| Do teammates message each other? | Yes. Mailboxes carried task assignments and peer messages. |
+| Is peer review worth the tokens? | Yes on this evidence: a credential-free admin bypass was invisible to the security lens and surfaced only from the correctness lens, and five duplicates were reconciled before reporting. |
+| Do teammates get coordination tools? | **No, with a `tools:` allowlist.** A `reviewer` teammate had exactly its five allowlisted tools and no `SendMessage`. Removing the allowlist restored `SendMessage`; `TaskList`/`TaskUpdate` were still absent, so the lead drives the task list. |
+| Do teammate skills load? | Yes. `quality-gates` was fully in the teammate's context, contradicting the documentation. |
+| Does read-only hold in team mode? | Yes. The `reviewer` teammate had no Edit or Write. |
+
+The coordination-tools finding was a real defect in this plugin and is fixed:
+no agent declares `tools:` any more. See `HARNESS-NOTES.md` §2b.
+
+All three seeded defects were found, plus plaintext password storage,
+non-constant-time comparison, unbounded session growth, and the observation that
+the existing test would still pass if `login` returned a constant.
+
 ## Not yet verified
 
-- Agent-team mode (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), including whether
-  teammates load their skills through the Skill tool as intended
 - `browser-verify` against a running web app
 - `diagram-excalidraw` output opened in Excalidraw
 - Stacks other than the TypeScript profile
