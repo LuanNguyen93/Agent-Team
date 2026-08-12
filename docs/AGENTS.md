@@ -18,13 +18,20 @@ traceable.
 
 ## Why two agents are read-only
 
-`planner` and `reviewer` set `disallowedTools: Edit, Write, NotebookEdit`. This
-is enforcement, not etiquette:
+`planner` and `reviewer` set `disallowedTools: Edit, Write, NotebookEdit`:
 
 - A planner that can edit will start editing instead of producing a plan
   specific enough for someone else to execute.
 - A reviewer that can edit will fix what it finds, which loses the finding and
   removes the human decision point.
+
+**This is a strong constraint, not an airtight one.** Both agents keep Bash —
+`reviewer` needs it to run gates and read git history, `planner` needs it to
+explore the repo — and Bash can write a file through `sed`, a heredoc, or a
+redirect. Both agent bodies forbid this explicitly, and in testing `reviewer`
+declined the escape hatch unprompted when told to fix what it found. If you need
+a hard guarantee rather than a strong default, add a `PreToolUse` deny rule for
+write-shaped Bash commands scoped to these agent types.
 
 ## Why review runs on fresh context
 

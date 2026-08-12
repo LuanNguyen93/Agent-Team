@@ -19,8 +19,10 @@ run as a hook: while the suite is red, a task cannot be marked complete, and the
 real failure output goes back to the agent as feedback.
 
 **Review runs on fresh context.** The agent that wrote the code cannot see the
-assumptions it made writing it. `reviewer` is always a separate context, and
-cannot edit — it reports, and a human decides.
+assumptions it made writing it. `reviewer` is always a separate context with
+Edit and Write removed — it reports, and a human decides. It keeps Bash to run
+gates, and is instructed not to write through it; see `docs/AGENTS.md` for how
+airtight that is.
 
 **Absent gates are reported, never invented.** A typecheck command made up for a
 project with no TypeScript config would report a pass it has not earned.
@@ -57,7 +59,8 @@ looks ready to commit.
 `reviewer` · `qa-verifier` · `debugger`
 
 Each has a role boundary and an explicit list of what it does **not** do.
-`planner` and `reviewer` are read-only by configuration, not by request.
+`planner` and `reviewer` have Edit and Write removed by configuration rather
+than by instruction.
 
 See [`docs/AGENTS.md`](docs/AGENTS.md) and [`docs/FLOW.md`](docs/FLOW.md).
 
