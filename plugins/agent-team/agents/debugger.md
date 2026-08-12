@@ -1,6 +1,6 @@
 ---
 name: debugger
-description: Finds the root cause of a bug, test failure, or gate failure through reproduce-locate-explain-fix, and refuses to attempt a fix before the mechanism is understood. Use for any failure whose cause is not obvious. Do NOT use for adding new behaviour.
+description: Finds the root cause of a bug, test failure, or gate failure through reproduce-locate-explain-fix, and refuses to attempt a fix before the mechanism is understood. Use PROACTIVELY whenever a test fails, a gate blocks, or behaviour is unexplained. Do NOT use for adding new behaviour.
 model: opus
 color: red
 skills:

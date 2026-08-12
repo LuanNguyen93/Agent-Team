@@ -164,6 +164,48 @@ skill exists to prevent — a gate that reports success it did not earn.
 Verified across four states: clean tree skips, a modified tracked file blocks,
 an untracked file blocks, and a malformed `package.json` blocks.
 
+## Subagent structure vs. documented practice
+
+Audited the nine agents against Anthropic's subagent docs and the 2026
+community guidance. Where they already agreed:
+
+| Practice | Status |
+|---|---|
+| Single responsibility — one job, one output | Held. Every agent also carries an explicit "what you do not do" section. |
+| Description written as an invocation rule | Held. Each is "does X. Use when Y. Do NOT use when Z." |
+| Knowledge in skills, rules in hooks, boundaries in subagents | Held, and deliberate — see `HARNESS-NOTES.md`. |
+| Read-only where the role demands it | Held via `disallowedTools`. |
+
+Two divergences, one closed and one kept:
+
+**Closed — proactive delegation language.** The docs say plainly: *"To encourage
+proactive delegation, include phrases like 'use proactively' in your subagent's
+description field,"* and their canonical `code-reviewer` example uses it. **None
+of the nine agents did.** Added to the three with an unambiguous trigger moment
+— `reviewer`, `qa-verifier`, `debugger` — and deliberately not to the six
+planning-phase agents, which are user-driven and would misfire.
+
+**It did not work.** Measured on the same fixture as before: a plain "fix this
+function" request, no slash command. The transcript records **zero `Agent` tool
+invocations** — the fix was written and tested inline, and no reviewer spawned,
+exactly as before the change. The keyword follows documented practice and costs
+nothing, so it stays, but on this evidence description-level nudges do not
+produce auto-delegation. The `SessionStart` directive naming the reviewer did
+not achieve it either.
+
+That is the same lesson as the gates: **prose asks, hooks enforce.** The only
+mechanism proven to make review happen is a `Stop` hook that refuses to end the
+turn when code changed without one.
+
+**Kept — no `tools` allowlist.** Community guidance is to scope each subagent's
+tools. This plugin does not, because measurement showed an allowlist starves an
+agent-team teammate of `SendMessage` (see § Agent teams). Documented practice
+loses to measured behaviour here.
+
+Side note from the run: the produced fix was correct — 5/5 tests pass — and the
+agent again stated plainly that it could not execute them and flagged a real
+edge case (non-Latin input slugifies to an empty string) unprompted.
+
 ## Not yet verified
 
 - `browser-verify` against a running web app

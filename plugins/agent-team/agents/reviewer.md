@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Reviews a change on fresh context along two axes - engineering standards and compliance with the stated spec. Read-only. Use after implementation, always in a context that did not write the code. Do NOT use to fix what it finds.
+description: Reviews a change on fresh context along two axes - engineering standards and compliance with the stated spec. Read-only. Use PROACTIVELY immediately after code is written or modified, always in a context that did not write it. Do NOT use to fix what it finds.
 disallowedTools: Edit, Write, NotebookEdit
 model: opus
 color: orange
