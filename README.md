@@ -49,6 +49,31 @@ Then, in a project:
 | `/spec <request>` | Planning artifacts only, no code |
 | `/ship` | Gates, review, verification, then an atomic commit |
 | `/stack-init` | Detect the stack and record its gate commands |
+| `/agent-team:review-panel` | Multi-lens review with adversarial verification (workflow) |
+
+Commands also resolve under their namespaced form, `/agent-team:build`. Use that
+form if a bare name collides with another plugin.
+
+## The review workflow
+
+`review-panel` is a [dynamic workflow](https://code.claude.com/docs/en/workflows)
+rather than a skill, because the orchestration is worth codifying:
+
+1. establish the scope of the change
+2. four independent lenses review in parallel — correctness, security, tests,
+   spec compliance
+3. every finding is handed to a skeptic told to **refute** it, defaulting to
+   refuted when the failure cannot be demonstrated
+4. what survives is deduplicated and ranked
+
+A single sequential reviewer anchors on one class of issue and stops. Splitting
+the lenses covers more ground, and the refutation pass is what keeps
+plausible-but-wrong findings out of the report — those are what train people to
+ignore reviews.
+
+The linear `brief → PRD → architecture` chain deliberately stays a skill, not a
+workflow: workflows take no user input mid-run, and that chain needs your
+sign-off after the PRD.
 
 `/ship` is user-invocable only — Claude will not decide on its own that the code
 looks ready to commit.

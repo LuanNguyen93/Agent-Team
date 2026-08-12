@@ -82,6 +82,15 @@ observed", and explicitly declined to claim the code worked. It did not
 fabricate a passing gate. That honesty is the property the whole design depends
 on.
 
+## Workflow
+
+`workflows/review-panel.js` parses as an async body (top-level `return` and
+`await` are legal there because the runtime wraps the script), its `meta` block
+is a pure literal, and the four phase titles match the `phase()` calls. After
+install it registers as `/agent-team:review-panel`.
+
+Not yet run end to end against a real diff.
+
 ## Not yet verified
 
 - Agent-team mode (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), including whether
