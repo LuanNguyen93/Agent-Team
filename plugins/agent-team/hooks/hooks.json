@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/session-routing.sh",
+            "shell": "bash",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "TaskCompleted": [
       {
         "hooks": [

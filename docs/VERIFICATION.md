@@ -91,6 +91,33 @@ install it registers as `/agent-team:review-panel`.
 
 Not yet run end to end against a real diff.
 
+## Autonomy: does the team run without being told?
+
+This was tested directly, with the same prompt before and after adding the
+`SessionStart` routing hook, in a fresh project with no slash command typed.
+
+**Before the hook** — nothing activated. No router, no plan, no test, no agent.
+Claude wrote the feature inline and moved on. The plugin was inert until the
+user typed `/build`, because a skill only loads when Claude judges it relevant
+and nothing told it to route.
+
+**After the hook** — same prompt, no command. The run produced a failing-test
+file first, split a seam for the data source, named two decisions for the user,
+and stated plainly that it could not execute the tests in that session so the
+result was unverified.
+
+That last part was load-bearing. The test script it wrote, `node --test test/`,
+is **broken on Node 22** — it resolves `test` as a module and fails. The seven
+tests themselves pass when run as `node --test test/cart.test.js`. So the thing
+it flagged as unverified genuinely was broken, and the `TaskCompleted` gate hook
+blocks on exactly that failure.
+
+**What still does not happen automatically**: Claude follows the doctrine inline
+rather than spawning `implementer` and `reviewer` as subagents. For most roles
+inline is fine and cheaper. For `reviewer` it is a real loss, because fresh
+context is the entire mechanism. Spawning works when asked; it does not happen
+unprompted.
+
 ## Not yet verified
 
 - Agent-team mode (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), including whether
