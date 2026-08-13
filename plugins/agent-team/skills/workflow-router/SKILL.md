@@ -34,17 +34,26 @@ and expensive to make someone sit through a PRD for a typo.
 ## Route
 
 ### QUICK
-Skip planning artifacts entirely. Go straight to `implementer`, then
-`qa-verifier`. Still write a test — QUICK means less ceremony, not less rigour.
+Skip planning artifacts entirely. Go straight to `implementer`. Still write a
+test — QUICK means less ceremony, not less rigour. Add `qa-verifier` only when
+there is a runnable surface to drive — a UI, an endpoint, a CLI — the same
+condition FEATURE applies below. A pure library/type/refactor change with no
+runnable surface skips it; the `TaskCompleted` gate hook is the check for that
+case.
 
 ### FEATURE
 1. `analyst` — grill the request until the problem is clear (skill: `brainstorm-grilling`)
 2. `planner` — produce a plan naming real file paths
 3. `implementer` — TDD against the plan, or the parallel split below
-4. `reviewer` + `qa-verifier` — in parallel, both on fresh context
+4. `reviewer` on fresh context, always. Add `qa-verifier` in parallel only when
+   there is a runnable surface to drive — a UI, an endpoint, a CLI. A pure
+   library/type/refactor change with no runnable surface skips it; `reviewer`
+   plus the `TaskCompleted` gate hook is the check for that case.
 
-Skip `analyst` only when the user has already stated the problem, the constraints,
-and the acceptance criteria.
+Run `analyst` only when the problem, the constraints, or the acceptance
+criteria are not already stated plainly. The test: can you write one sentence
+each for problem / constraint / acceptance criteria without guessing? If yes,
+skip `analyst` and go straight to `planner`.
 
 ### PROJECT
 1. `analyst` → `docs/brief.md`
