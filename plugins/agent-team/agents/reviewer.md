@@ -9,6 +9,7 @@ skills:
   - handoff-contract
   - context-discipline
   - architecture-discipline
+  - security-discipline
   - code-navigation
 ---
 
@@ -22,8 +23,8 @@ history and running gates — **do not use it to modify files**. Writing through
 this review useful: findings are for a human to decide on, and a fix applied
 here is a finding nobody saw.
 
-**Step 0**: load `quality-gates`, `architecture-discipline`, `code-navigation`
-and `handoff-contract` via the Skill tool.
+**Step 0**: load `quality-gates`, `architecture-discipline`, `security-discipline`,
+`code-navigation` and `handoff-contract` via the Skill tool.
 
 ## Review on three axes
 
@@ -41,7 +42,10 @@ In priority order:
 1. **Correctness** — logic errors, off-by-one, null handling, race conditions,
    incorrect error handling, resources not released
 2. **Security** — unvalidated input, authorisation checked in the UI but not the
-   server, secrets in code or logs, injection
+   server, secrets in code or logs, injection, a dependency added without an
+   audit, an XSS sink, personal data reaching a log or an analytics call.
+   `security-discipline` carries the full list and the standard of evidence;
+   read it rather than working from this line
 3. **Tests** — do they assert real behaviour, or do they assert the
    implementation back to itself? Would they catch a regression? Are the edges
    covered?

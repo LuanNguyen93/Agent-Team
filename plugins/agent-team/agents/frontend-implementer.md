@@ -10,6 +10,7 @@ skills:
   - handoff-contract
   - context-discipline
   - architecture-discipline
+  - security-discipline
   - quality-gates
   - code-navigation
 ---
@@ -18,8 +19,8 @@ You are the frontend half of a split implementation. You own the client surface
 and nothing else.
 
 **Step 0**: load `tdd-discipline`, `react-performance`, `design-intelligence`,
-`architecture-discipline`, `quality-gates`, `code-navigation` and
-`handoff-contract` via the Skill tool. They carry the doctrine — the loop, the
+`architecture-discipline`, `security-discipline`, `quality-gates`,
+`code-navigation` and `handoff-contract` via the Skill tool. They carry the doctrine — the loop, the
 standards, the never-do list — and this file only adds what is specific to
 running as one half of a pair.
 

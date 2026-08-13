@@ -45,8 +45,19 @@ Link to ADRs. Do not inline the reasoning here; it goes stale in two places.
 |---|---|---|---|
 
 ## Security
-Trust boundaries, authn vs authz, secret handling, what is logged and what must
-never be.
+Not a paragraph saying security was considered. Four things, each concrete:
+
+- **Trust boundaries** - every place data crosses from one level of trust to
+  another, and where validation and authorisation sit at each.
+- **Identity** - how authn is established, how authz is decided, and what a
+  stolen token buys until it expires.
+- **Secrets** - where each one lives, who can read it, and how it rotates.
+- **Data** - the classification table: field, personal or not, who reads it,
+  retention, what a deletion request does.
+
+Then the threats considered, each ending in mitigate / eliminate / transfer /
+accept - an accepted risk names who accepted it. `security-discipline` →
+`references/threat-modeling.md` is how to produce this in one sitting.
 
 ## Considered and rejected
 Brief. Saves the next person from re-proposing a dead end.
