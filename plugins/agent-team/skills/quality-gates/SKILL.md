@@ -85,6 +85,26 @@ A gate passes only on a clean exit code. Specifically:
   `ai-engineering` → `references/evals.md`. The rule still applies to every
   deterministic test in the same suite.
 
+## A cached pass
+
+The dependency audit is the only gate that makes a network call, and its answer
+cannot change while its input has not. It is therefore cached against a
+fingerprint of the project's manifests and lockfiles, and reported as **CACHED**
+rather than re-run - a real result, not a skipped one.
+
+Three rules keep that honest:
+
+- Only a **pass** is ever cached. A failing or absent audit is never recorded,
+  so the next run tries again rather than inheriting a verdict nobody reached.
+- Any change to a manifest or lockfile invalidates it. Adding a dependency
+  always re-runs the audit, which is the case the gate exists for.
+- `govulncheck` is never cached. It reports only what the code can *reach*, so
+  its answer changes when the code changes, not only when `go.sum` does.
+
+`AGENT_TEAM_FORCE_AUDIT=1` ignores the cache. Reach for it before a release,
+where you want today's advisories rather than the ones current at the last
+dependency change.
+
 ## On failure
 
 Stop. Report the failing gate, the command, and the **actual output** — not a
@@ -135,7 +155,7 @@ Give the user a plain table:
 | typecheck | `pnpm typecheck` | PASS |
 | lint | `pnpm lint` | PASS |
 | secret scan | `gitleaks dir .` | PASS |
-| dependency audit | `pnpm audit --audit-level high` | PASS |
+| dependency audit | `pnpm audit --audit-level high` | CACHED — lockfile unchanged |
 | test | `pnpm test` | **FAIL** — 2 of 47 |
 | build | `pnpm build` | not run (blocked) |
 | static analysis | `sonar-scanner` | not run (blocked) |
