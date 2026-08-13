@@ -136,3 +136,57 @@ A MICRO/inline tier was designed against the wrong assumption (that
 real behaviour — fires per subagent, not per turn — made the fix cost more
 than the ceremony it removed. Do not silently re-propose it without solving
 per-turn-not-per-subagent detection first.
+
+## 12. A version that does not change is a plugin that never updates
+
+`claude plugin validate` passes on a tree whose content has moved far ahead of
+its `version`. The installer does not compare contents — it keys off the version
+in `plugin.json`. Content added under an already-installed version is content no
+installation ever receives.
+
+**Measured on this repository.** `ai-engineering`, `context-discipline` and
+`security-discipline` were added to `plugins/agent-team/skills/` without a
+version bump. The installed cache stayed at `0.2.1` (commit `2c20144`) with
+**15 skills**, while the tree had 18.
+
+The failure is quieter than it first looks, and the shape of it matters:
+
+- The installed copy is **internally consistent**. Its agents were frozen at the
+  same commit, so none of them references the three missing skills. Nothing
+  asked for a skill that was not there; nothing could have raised.
+- What was lost is everything committed after `2c20144` — three skills and every
+  agent revision that referenced them. Sessions kept running a plugin many
+  commits behind the tree, with no signal anywhere that they were.
+- That is the reason this is worth a note. A broken install announces itself. An
+  install that is merely *old* behaves perfectly and silently withholds every
+  improvement made since.
+
+The check that catches it is `scripts/tests/plugin-shipping.test.sh`: if plugin
+content changed since the commit that last touched `plugin.json`, the version
+must differ. It also asserts that frontmatter `skills:` and the Step 0 load list
+name the same set, because section 2 means doctrine can arrive by either path
+and a disagreement between them is invisible at runtime.
+
+Two habits follow: bump the version in the same commit that adds a skill or an
+agent, and confirm what is actually installed rather than what is in the tree —
+
+```bash
+ls ~/.claude/plugins/cache/agent-team/agent-team/*/skills
+```
+
+## 13. Context size is only recoverable from the transcript
+
+Nothing in the hook environment reports how large the context has become. The
+number exists only in the transcript the harness writes: each assistant record
+carries a `usage` block, and the newest one describes the request that just went
+out — `cache_read + cache_creation + input` is what that request had to carry.
+
+`scripts/context-size.js` reads it back, and both context hooks are built on it.
+Two things it has to survive, and does:
+
+- **`transcript_path` may be absent from the payload.** The fallback is the
+  newest `.jsonl` under `CLAUDE_PROJECT_DIR`.
+- **On Git Bash, MSYS rewrites POSIX paths in `argv` but not in stdin.** A path
+  that works as `--transcript /tmp/x` fails when the same string arrives inside
+  a JSON payload. Tests must pass a native path (`cygpath -m`) or they test the
+  rewrite instead of the code.
