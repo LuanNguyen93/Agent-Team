@@ -104,3 +104,35 @@ Editing a `SKILL.md` takes effect immediately. Changes to `agents/`,
 
 `claude plugin validate ./plugins/agent-team` checks `plugin.json`, skill and
 agent frontmatter, and `hooks/hooks.json`.
+
+## 11. `TaskCompleted` does not cover inline work, and `Stop` is not a safe substitute
+
+Verified against https://code.claude.com/docs/en/hooks.md while designing (and
+then withdrawing) an inline tier below QUICK.
+
+- `TaskCompleted` fires only when a task created through the `TaskCreate` tool
+  is marked completed. It does **not** fire for plain main-context work that
+  edits files and ends the turn without ever creating a Task. Any design that
+  assumes "the `TaskCompleted` gate hook will catch it" is wrong for inline
+  work — it covers task-based work only.
+- A plugin `Stop` hook is automatically converted to `SubagentStop` and so
+  fires at the completion of **every** spawned subagent, not once per user
+  request. A naive `Stop`-hook gate therefore runs the full gate suite once
+  per agent, not once per turn. The `agent_id` field is present only inside a
+  subagent invocation, so it is the way to distinguish a main-thread `Stop`
+  from a subagent's.
+- `stop_hook_active` is **not** a documented field on the `Stop` payload —
+  checked directly against the docs above; do not assume it exists as a
+  re-entrancy guard.
+- The `Stop` hook's blocking contract has two distinct paths that are not
+  interchangeable: stdout JSON `{"continue": false, "stopReason": ...}` stops
+  the session for the **user**, and `stopReason` is explicitly not shown to
+  Claude. Exit code 2 with output on stderr is what feeds text back to the
+  model and continues the conversation. Picking the wrong one silently loses
+  the feedback loop a gate hook depends on.
+
+A MICRO/inline tier was designed against the wrong assumption (that
+`TaskCompleted` already gated it) and was withdrawn once the `Stop` hook's
+real behaviour — fires per subagent, not per turn — made the fix cost more
+than the ceremony it removed. Do not silently re-propose it without solving
+per-turn-not-per-subagent detection first.

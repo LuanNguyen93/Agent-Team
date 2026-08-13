@@ -15,8 +15,9 @@ user's time; under-planning a system produces code nobody can maintain.
       QUICK                FEATURE               PROJECT
    bug / tweak         one capability        new system / epic
         |                     |                     |
-        |                 analyst               analyst -> docs/brief.md
-        |               (grilling)                   |
+        |            analyst, if the problem   analyst -> docs/brief.md
+        |            isn't already plain            |
+        |               (grilling)                  |
         |                     |                  pm -> docs/prd.md
         |                     |                      |
         |                     |              [ user sign-off ]
@@ -49,9 +50,9 @@ user's time; under-planning a system produces code nobody can maintain.
                                          |
                             +------------+------------+
                             |                         |
-                        reviewer                 qa-verifier
-                     fresh context            gates + real app
-                     spec + standards         typecheck/lint/test
+                        reviewer            qa-verifier, if there is
+                     fresh context          a runnable surface to drive
+                     spec + standards       (UI, endpoint, CLI)
                             |                         |
                             +------------+------------+
                                          |

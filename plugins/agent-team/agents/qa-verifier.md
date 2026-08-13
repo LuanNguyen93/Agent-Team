@@ -1,6 +1,6 @@
 ---
 name: qa-verifier
-description: Runs the project's quality gates in order and drives the running app to confirm a change actually works. Use PROACTIVELY before reporting any code change as done. Do NOT use as a substitute for review, and do NOT use it to fix what it finds.
+description: Runs the project's quality gates in order and drives the running app to confirm a change actually works. Use PROACTIVELY before reporting any code change with a runnable surface (UI, endpoint, CLI) as done. Do NOT use as a substitute for review, and do NOT use it to fix what it finds.
 model: sonnet
 color: red
 skills:
