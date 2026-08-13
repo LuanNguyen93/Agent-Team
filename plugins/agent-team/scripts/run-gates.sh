@@ -9,6 +9,19 @@
 #
 # AGENT_TEAM_RUN_SONAR=1 adds the static-analysis gate when the project has a
 # "sonar" script or a sonar-project.properties plus sonar-scanner on PATH.
+#
+# The dependency-audit gate runs whenever its tool is on PATH. A missing tool or
+# an unreachable advisory database is reported as ABSENT and does not fail the
+# run - a gate that could not run must never be reported as a pass, and must not
+# be reported as a failure either. AGENT_TEAM_SKIP_AUDIT=1 opts out.
+# Projects declaring "gates" in .agent-team.json should list their audit command
+# there; explicit configuration replaces this discovery entirely.
+#
+# The secret-scan gate is stack-independent, so it runs for every project - it is
+# the one gate an explicit "gates" list does not replace. It runs gitleaks or
+# trufflehog over the working tree when one is on PATH. It scans the tree, not the history: history is slow and a hit there
+# needs a rotation decision, not a blocked task. AGENT_TEAM_SCAN_HISTORY=1 scans
+# the full history instead; AGENT_TEAM_SKIP_SECRET_SCAN=1 opts out.
 
 set -uo pipefail
 
@@ -28,6 +41,122 @@ run_gate() {
   fi
   return 0
 }
+
+# The audit and secret-scan gates depend on a tool that may not be installed and
+# a service that may not be reachable. Either is "we do not know", which is
+# absent, not green - and equally, not a failure to be debugged.
+# "Could not run" and "found something" are different answers, and collapsing
+# them is the one defect that makes every gate in this file worthless: an absent
+# gate reported as green is a lie, and a tool error reported as a finding sends
+# someone chasing a leak that is not there. One matcher, used by both gates.
+looks_absent() {
+  case "$1" in
+    *ENOTFOUND*|*EAI_AGAIN*|*ETIMEDOUT*|*ECONNREFUSED*|*"no such host"*) return 0 ;;
+    *"dial tcp"*|*"Temporary failure in name resolution"*) return 0 ;;
+    *"connection refused"*|*"Could not resolve"*|*"Network is unreachable"*) return 0 ;;
+    *"command not found"*|*"is not recognized"*|*"No module named"*) return 0 ;;
+    *"Failed to spawn"*|*"executable file not found"*) return 0 ;;
+  esac
+  return 1
+}
+
+report_absent() {
+  printf 'Gate ABSENT: %s did not run - tool missing or its service unreachable\n' "$1"
+  printf 'This is not a pass. Install the tool or restore access, then re-run.\n'
+}
+
+run_audit() {
+  local name="$1" cmd="$2" out status
+  if [ "${AGENT_TEAM_SKIP_AUDIT:-}" = "1" ]; then
+    printf 'Gate SKIPPED: %s (AGENT_TEAM_SKIP_AUDIT=1)\n' "$name"
+    return 0
+  fi
+  out=$(eval "$cmd" 2>&1)
+  status=$?
+  if [ $status -ne 0 ]; then
+    if looks_absent "$out"; then
+      report_absent "$name"
+      return 0
+    fi
+    printf 'Gate FAILED: %s\n' "$name"
+    printf 'Command: %s\n' "$cmd"
+    printf 'Exit code: %s\n\n' "$status"
+    printf '%s\n' "$out" | tail -40
+    printf '\nDo not raise the severity threshold or ignore the advisory to clear this.\n'
+    return 1
+  fi
+  return 0
+}
+
+# Secrets are stack-independent, so this gate runs once for the whole project
+# rather than inside each language block.
+run_secret_scan() {
+  if [ "${AGENT_TEAM_SKIP_SECRET_SCAN:-}" = "1" ]; then
+    printf 'Gate SKIPPED: secret scan (AGENT_TEAM_SKIP_SECRET_SCAN=1)\n'
+    return 0
+  fi
+  local cmd="" cfg=""
+  # A project's own config always wins. Otherwise use the one shipped with the
+  # plugin, which allowlists node_modules, vendor, .venv and build output - see
+  # scripts/gitleaks-default.toml for why.
+  if [ ! -f .gitleaks.toml ] && [ ! -f gitleaks.toml ]; then
+    SCAN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    [ -f "$SCAN_DIR/gitleaks-default.toml" ] && cfg=" --config $SCAN_DIR/gitleaks-default.toml"
+  fi
+  if command -v gitleaks >/dev/null 2>&1; then
+    if [ "${AGENT_TEAM_SCAN_HISTORY:-}" = "1" ]; then
+      # `gitleaks git` is v8.19+; `detect` is the older spelling of the same scan.
+      if gitleaks git --help >/dev/null 2>&1; then
+        cmd="gitleaks git . --no-banner --redact$cfg"
+      else
+        cmd="gitleaks detect --no-banner --redact$cfg"
+      fi
+    elif gitleaks dir --help >/dev/null 2>&1; then
+      cmd="gitleaks dir . --no-banner --redact$cfg"
+    else
+      cmd="gitleaks detect --no-git --no-banner --redact$cfg"
+    fi
+  elif command -v trufflehog >/dev/null 2>&1; then
+    # NOT --results=verified: verification needs the provider's API, so offline it
+    # reports nothing and exits 0, and a private key or a database password has no
+    # provider to verify against at all. Either way a verified-only scan passes a
+    # tree that holds a real secret. Take the noise instead.
+    cmd="trufflehog filesystem . --results=verified,unknown,unverified --fail --no-update"
+  else
+    printf 'Gate ABSENT: no secret scanner on PATH (gitleaks or trufflehog)\n'
+    printf 'This is not a pass. Nothing checked whether a credential is in the tree.\n'
+    return 0
+  fi
+
+  local out status
+  out=$(eval "$cmd" 2>&1)
+  status=$?
+  [ $status -eq 0 ] && return 0
+  # A scanner that could not run is not a leak. Saying "rotate your credentials"
+  # because gitleaks was pointed at a non-git directory burns the gate's credibility.
+  if looks_absent "$out"; then
+    report_absent "secret scan"
+    return 0
+  fi
+  case "$out" in
+    *"not a git repository"*|*"failed to open"*|*"error parsing"*|*"unknown flag"*|\
+    *"invalid config"*|*"no such file or directory"*)
+      report_absent "secret scan"
+      return 0
+      ;;
+  esac
+  printf 'Gate FAILED: secret scan\n'
+  printf 'Command: %s\n' "$cmd"
+  printf 'Exit code: %s\n\n' "$status"
+  printf '%s\n' "$out" | tail -40
+  printf '\nA committed secret is a leaked secret: the fix is to ROTATE the credential,\n'
+  printf 'not to delete the line or amend the commit. Tell the user before doing\n'
+  printf 'anything else - only they can rotate it. If this is genuinely a false\n'
+  printf 'positive, it needs a .gitleaksignore entry with a comment saying why.\n'
+  return 1
+}
+
+run_secret_scan || exit 1
 
 # 1. Explicit configuration wins.
 if [ -f .agent-team.json ] && command -v node >/dev/null 2>&1; then
@@ -56,6 +185,7 @@ if [ -f Cargo.toml ]; then
   fi
   command -v rustfmt >/dev/null 2>&1 && { run_gate fmt "cargo fmt --check" || exit 1; }
   cargo clippy --version >/dev/null 2>&1 && { run_gate clippy "cargo clippy --all-targets -- -D warnings" || exit 1; }
+  command -v cargo-audit >/dev/null 2>&1 && { run_audit "cargo audit" "cargo audit" || exit 1; }
   [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || { run_gate test "cargo test" || exit 1; }
   [ "${AGENT_TEAM_RUN_BUILD:-}" = "1" ] && { run_gate build "cargo build --release" || exit 1; }
 fi
@@ -73,6 +203,9 @@ if [ -f pubspec.yaml ]; then
     run_gate format "dart format --set-exit-if-changed ." || exit 1
   fi
   run_gate analyze "$DART analyze" || exit 1
+  command -v osv-scanner >/dev/null 2>&1 && [ -f pubspec.lock ] && {
+    run_audit "osv-scanner" "osv-scanner --lockfile=pubspec.lock" || exit 1
+  }
   [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || { run_gate test "$DART test" || exit 1; }
 fi
 
@@ -96,6 +229,45 @@ if [ -n "$DOTNET_TARGET" ]; then
   }
   # For C# the build IS the typecheck, so it is not opt-in the way it is for JS.
   run_gate build "dotnet build \"$DOTNET_TARGET\" --nologo" || exit 1
+  # `dotnet list package --vulnerable` is the one command here whose exit code
+  # cannot be trusted in either direction: it exits 0 when it finds vulnerable
+  # packages, and non-zero when the project could not be restored or the SDK is
+  # too old for the flag. So: read the status to decide ABSENT, and read the
+  # output to decide FAILED - and read it as JSON, because the English sentence
+  # is localized and would miss every finding on a non-English SDK.
+  if [ "${AGENT_TEAM_SKIP_AUDIT:-}" != "1" ]; then
+    DN_LIST="dotnet list \"$DOTNET_TARGET\" package --vulnerable --include-transitive"
+    VULN=$(eval "$DN_LIST --format json" 2>&1)
+    DN_STATUS=$?
+    DN_JSON=1
+    if [ $DN_STATUS -ne 0 ]; then
+      # --format is .NET 7+. Fall back to the text output on an older SDK.
+      VULN=$(eval "$DN_LIST" 2>&1)
+      DN_STATUS=$?
+      DN_JSON=0
+    fi
+    if [ $DN_STATUS -ne 0 ]; then
+      report_absent "dependency audit"
+      printf 'Command: %s\n' "$DN_LIST"
+      printf '%s\n' "$VULN" | tail -20
+    else
+      DN_HIT=0
+      if [ $DN_JSON -eq 1 ]; then
+        # A JSON report lists vulnerabilities only when it found some, and the
+        # key names are not translated.
+        case "$VULN" in *'"severity"'*) DN_HIT=1 ;; esac
+      else
+        case "$VULN" in *"has the following vulnerable packages"*) DN_HIT=1 ;; esac
+      fi
+      if [ $DN_HIT -eq 1 ]; then
+        printf 'Gate FAILED: dependency audit\n'
+        printf 'Command: %s\n\n' "$DN_LIST"
+        printf '%s\n' "$VULN" | tail -40
+        printf '\nDo not raise the severity threshold or ignore the advisory to clear this.\n'
+        exit 1
+      fi
+    fi
+  fi
   [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || {
     run_gate test "dotnet test \"$DOTNET_TARGET\" --nologo --no-build" || exit 1
   }
@@ -132,6 +304,7 @@ if [ -f pyproject.toml ] || [ -f setup.cfg ]; then
   if grep -q 'mypy' pyproject.toml setup.cfg 2>/dev/null || [ -f mypy.ini ]; then
     py_has mypy && { run_gate typecheck "$(py_cmd 'mypy .')" || exit 1; }
   fi
+  py_has pip-audit && { run_audit "pip-audit" "$(py_cmd 'pip-audit')" || exit 1; }
   if [ "${AGENT_TEAM_SKIP_TESTS:-}" != "1" ]; then
     if grep -q 'pytest' pyproject.toml setup.cfg 2>/dev/null || [ -f pytest.ini ] || [ -d tests ]; then
       # A missing linter is a skipped gate; a missing test runner on a project
@@ -139,14 +312,10 @@ if [ -f pyproject.toml ] || [ -f setup.cfg ]; then
       if py_has pytest; then
         run_gate test "$(py_cmd 'pytest -q')" || exit 1
       else
-        printf 'Gate FAILED: this project has tests but pytest is not runnable
-'
-        printf 'The test gate cannot be verified, so it must not be reported as a
-'
-        printf 'pass. Install the dev dependencies, activate the environment, or
-'
-        printf 'declare the real command in .agent-team.json.
-'
+        printf 'Gate FAILED: this project has tests but pytest is not runnable\n'
+        printf 'The test gate cannot be verified, so it must not be reported as a\n'
+        printf 'pass. Install the dev dependencies, activate the environment, or\n'
+        printf 'declare the real command in .agent-team.json.\n'
         exit 1
       fi
     fi
@@ -165,6 +334,7 @@ if [ -f go.mod ]; then
   # gofmt -l exits 0 and prints the offending files, so the list is the failure.
   run_gate format 'test -z "$(gofmt -l .)" || { gofmt -l .; false; }' || exit 1
   run_gate vet "go vet ./..." || exit 1
+  command -v govulncheck >/dev/null 2>&1 && { run_audit govulncheck "govulncheck ./..." || exit 1; }
   [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || { run_gate test "go test ./..." || exit 1; }
   [ "${AGENT_TEAM_RUN_BUILD:-}" = "1" ] && { run_gate build "go build ./..." || exit 1; }
 fi
@@ -177,8 +347,7 @@ fi
 # A package.json that cannot be parsed is a real problem, and it must not be
 # mistaken for "this project has no gates" - that silently reports a pass.
 if ! node -e 'require("./package.json")' 2>/dev/null; then
-  printf 'Gate FAILED: package.json is present but could not be parsed
-'
+  printf 'Gate FAILED: package.json is present but could not be parsed\n'
   printf 'Command: node -e '"'"'require("./package.json")'"'"'
 
 '
@@ -190,6 +359,7 @@ PM=npm
 [ -f pnpm-lock.yaml ] && PM=pnpm
 [ -f yarn.lock ] && PM=yarn
 [ -f bun.lockb ] && PM=bun
+[ -f bun.lock ] && PM=bun
 command -v "$PM" >/dev/null 2>&1 || PM=npm
 
 has_script() {
@@ -201,12 +371,65 @@ has_script() {
   ' "$1" 2>/dev/null
 }
 
+# The audit command differs per package manager. yarn 1's exit code is a bitmask
+# of the severities found, and whether --level narrows it is undocumented, so a
+# low advisory may fail the gate.
+# Reporting that as absent beats a gate that fails on a low advisory, because a
+# gate people learn to ignore is worse than one they know is missing.
+js_audit_cmd() {
+  case "$PM" in
+    npm)  printf 'npm audit --audit-level=high' ;;
+    pnpm) printf 'pnpm audit --audit-level high' ;;
+    bun)  printf 'bun audit' ;;
+    yarn)
+      case "$(yarn --version 2>/dev/null)" in
+        1.*) printf '' ;;
+        *)   printf 'yarn npm audit --severity high' ;;
+      esac
+      ;;
+  esac
+}
+
 # Ordered cheapest-and-most-localised first, so failures read clearly.
-for script in typecheck type-check tsc lint test build; do
+for script in typecheck type-check tsc lint audit test build; do
   case "$script" in
     type-check|tsc) has_script typecheck && continue ;;
     test) [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] && continue ;;
     build) [ "${AGENT_TEAM_RUN_BUILD:-}" = "1" ] || continue ;;
+    audit)
+      if [ "${AGENT_TEAM_SKIP_AUDIT:-}" = "1" ]; then
+        printf %s "Gate SKIPPED: dependency audit (AGENT_TEAM_SKIP_AUDIT=1)"; printf "
+"
+        continue
+      fi
+      has_script audit && { run_gate audit "$PM run audit" || exit 1; continue; }
+      has_script security && { run_gate security "$PM run security" || exit 1; continue; }
+      # The lockfile has to match the package manager we are about to audit with.
+      # Any lockfile is not enough: when the project's own manager is not
+      # installed, PM falls back to npm above, and `npm audit` against a
+      # bun.lock or pnpm-lock.yaml project dies with ENOLOCK - which is an
+      # absent gate wearing a failure's clothes.
+      HAVE_LOCK=0
+      case "$PM" in
+        npm)  { [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; } && HAVE_LOCK=1 ;;
+        pnpm) [ -f pnpm-lock.yaml ] && HAVE_LOCK=1 ;;
+        yarn) [ -f yarn.lock ] && HAVE_LOCK=1 ;;
+        bun)  { [ -f bun.lockb ] || [ -f bun.lock ]; } && HAVE_LOCK=1 ;;
+      esac
+      if [ "$HAVE_LOCK" -eq 0 ]; then
+        printf 'Gate ABSENT: dependency audit found no lockfile for %s\n' "$PM"
+        printf 'Without one the audit describes the registry today, not what ships.\n'
+        continue
+      fi
+      AUDIT_CMD="$(js_audit_cmd)"
+      if [ -z "$AUDIT_CMD" ]; then
+        printf 'Gate ABSENT: %s has no usable audit command\n' "$PM"
+        printf 'Run osv-scanner against the lockfile, or declare one in .agent-team.json.\n'
+        continue
+      fi
+      run_audit "dependency audit" "$AUDIT_CMD" || exit 1
+      continue
+      ;;
   esac
   if has_script "$script"; then
     run_gate "$script" "$PM run $script" || exit 1

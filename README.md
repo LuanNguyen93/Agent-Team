@@ -141,6 +141,9 @@ earn.
 | `AGENT_TEAM_SKIP_TESTS=1` | Skip the test gate (keep typecheck and lint) |
 | `AGENT_TEAM_RUN_BUILD=1` | Include the build gate (`cargo build --release`, `flutter build`, `go build ./...`, `<pm> run build`; .NET always builds, since that is its typecheck) |
 | `AGENT_TEAM_RUN_SONAR=1` | Include the static-analysis gate (`sonar` script, or `sonar-project.properties` + `sonar-scanner`) |
+| `AGENT_TEAM_SKIP_AUDIT=1` | Skip the dependency-audit gate (`npm audit`, `pip-audit`, `govulncheck`, `cargo audit`, `dotnet list package --vulnerable`, `osv-scanner`) |
+| `AGENT_TEAM_SKIP_SECRET_SCAN=1` | Skip the secret scan (`gitleaks`, or `trufflehog`) |
+| `AGENT_TEAM_SCAN_HISTORY=1` | Scan the full git history for secrets instead of the working tree — slow |
 
 ## Agent teams
 
