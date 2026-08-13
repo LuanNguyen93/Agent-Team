@@ -27,11 +27,21 @@ configured, the gate is **absent**, not passed.
 Never guess. Read the project's own definitions, in this order:
 
 1. `package.json` scripts / `Makefile` / `justfile` / `Taskfile.yml`
-2. `pyproject.toml`, `Cargo.toml`, `go.mod`, `*.csproj`
+2. `pyproject.toml`, `Cargo.toml`, `go.mod`, `pubspec.yaml`, `*.sln` / `*.csproj`
 3. `sonar-project.properties`, `sonar.projectKey` in a build file, or a Sonar
    step in CI — for the static analysis gate
 4. CI config — `.github/workflows/*.yml` is the most reliable source, because it
    is what actually gates merges
+
+Some stacks fold steps together. In C# the build *is* the typecheck, and lint
+only exists if analyzers are set to error - so a .NET project with three gates
+is complete, not missing two. Do not invent the missing rows.
+
+In a repository this team does not fully own, run the gates of the **owned**
+surface only, and declare them explicitly in `.agent-team.json` with the
+directory in the command. A red gate outside the scope is neither your failure
+nor your pass - report it as pre-existing and out of scope. See
+`context-discipline` → `references/scope.md`.
 
 If the project defines no gate for a step, **say the gate is absent**. Do not
 substitute your own command and report a pass; an invented `tsc --noEmit` on a

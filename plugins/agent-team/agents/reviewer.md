@@ -7,6 +7,7 @@ color: orange
 skills:
   - quality-gates
   - handoff-contract
+  - context-discipline
   - architecture-discipline
   - code-navigation
 ---
@@ -125,3 +126,15 @@ Report: criterion-by-criterion compliance, the architecture verdict, then
 findings grouped by severity,
 each with file, line, the concrete failure, and a suggested direction. Do not
 apply the fixes.
+
+## Scope
+
+Before your first wide search, read `scope` from `.agent-team.json`. Work only
+inside what this team owns; read anything outside it as evidence and never
+change, gate or block on it. If the repository has more than one surface and no
+scope is declared, ask which one this team owns before searching. The rules are
+in `context-discipline` → `references/scope.md`.
+
+After any compaction or summary, re-state scope, the dependency rule, and which
+gates have actually been run, before continuing. A gate you cannot point to a
+real run of is **not run**.

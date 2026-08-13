@@ -94,7 +94,7 @@ than by instruction.
 
 See [`docs/AGENTS.md`](docs/AGENTS.md) and [`docs/FLOW.md`](docs/FLOW.md).
 
-## The fifteen skills
+## The sixteen skills
 
 Doctrine lives in skills so it is defined once rather than duplicated across
 nine system prompts.
@@ -103,7 +103,7 @@ nine system prompts.
 `tdd-discipline` · `quality-gates` · `debug-rca` · `design-intelligence` ·
 `react-performance` · `browser-verify` · `diagram-excalidraw` ·
 `handoff-contract` · `backend-discipline` · `architecture-discipline` ·
-`code-navigation` · `app-verify`
+`code-navigation` · `app-verify` · `context-discipline`
 
 `react-performance` and `backend-discipline` auto-activate on matching paths
 rather than costing context every session.
@@ -111,26 +111,34 @@ rather than costing context every session.
 ## Configuration
 
 Gate commands come from `.agent-team.json` in your project when present,
-otherwise discovered from `Cargo.toml`, `pubspec.yaml`, and `package.json`
-scripts — in that order, and a project can have more than one:
+otherwise discovered from `Cargo.toml`, `pubspec.yaml`, a `*.sln` / `*.csproj`,
+and `package.json` scripts — in that order, and a project can have more than one:
 
 ```json
-{ "gates": ["pnpm typecheck", "pnpm lint", "pnpm test"] }
+{
+  "scope": { "owns": ["backend/**"], "reads": ["web/src/api/**"], "excludes": ["web/**"] },
+  "gates": ["cd backend && dotnet build --nologo", "cd backend && dotnet test --nologo --no-build"]
+}
 ```
+
+`scope` declares which part of the repository this team owns when you do not own
+all of it. Outside it, files are read as evidence only — never changed, gated or
+reviewed. Without it the team searches, gates and reviews the whole repo,
+including the surface another team maintains.
 
 Declare them explicitly for anything the discovery cannot know: a Cargo
 workspace, a non-default feature set, `cargo nextest`, or a monorepo where the
 commands run from subdirectories.
 
 When a manifest is present but its toolchain is not on `PATH` — a `Cargo.toml`
-with no `cargo` — the run **fails** rather than reporting a pass it could not
+with no `cargo`, a `.sln` with no `dotnet` — the run **fails** rather than reporting a pass it could not
 earn.
 
 | Variable | Effect |
 |---|---|
 | `AGENT_TEAM_SKIP_GATES=1` | Disable the enforcement hook |
 | `AGENT_TEAM_SKIP_TESTS=1` | Skip the test gate (keep typecheck and lint) |
-| `AGENT_TEAM_RUN_BUILD=1` | Include the build gate (`cargo build --release`, `flutter build`, `<pm> run build`) |
+| `AGENT_TEAM_RUN_BUILD=1` | Include the build gate (`cargo build --release`, `flutter build`, `<pm> run build`; .NET always builds, since that is its typecheck) |
 | `AGENT_TEAM_RUN_SONAR=1` | Include the static-analysis gate (`sonar` script, or `sonar-project.properties` + `sonar-scanner`) |
 
 ## Agent teams

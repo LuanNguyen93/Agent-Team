@@ -118,7 +118,8 @@ once rather than duplicated across eleven system prompts.
 | `qa-verifier` | `quality-gates`, `browser-verify`, `app-verify` |
 | `debugger` | `debug-rca`, `tdd-discipline`, `code-navigation` |
 
-Every agent additionally carries `handoff-contract` — see below.
+Every agent additionally carries `handoff-contract` and `context-discipline` —
+see below.
 
 Each agent declares its skills in frontmatter **and** loads them via the Skill
 tool in its body. See `HARNESS-NOTES.md` §2 for why both are required.
@@ -284,3 +285,52 @@ used after an `await`, a missing `dispose()`, a `ListView` with fixed children.
 
 `backend-discipline` also gained `**/handlers/**` to its `paths`, because that
 is where Axum and Actix put what Express calls `routes/`.
+
+
+## Context discipline and scope
+
+A large context window is not a large working memory. Recall degrades as the
+context fills, and the model does not report an error — it simply attends less
+accurately to what is buried under the noise. Two concrete failures were
+showing up, and `context-discipline` addresses both.
+
+**The team assumed it owned the whole repository.** Joining a project to work on
+a C# backend does not make the React frontend your business, but nothing said
+so: the reviewer reviewed it, searches walked it, and gate discovery ran its
+suite. `.agent-team.json` now takes a `scope` block with `owns` / `reads` /
+`excludes`. Outside `owns`, a file is evidence — readable to establish a
+contract, never changed, gated, or reported as a blocking finding. When a
+repository has more than one surface and no scope is declared, the team asks
+once, at the start, and writes the answer down.
+
+**Constraints did not survive a compaction.** When a long session is
+summarised, what gets dropped first is what was said once at the beginning —
+which is where the scope, the dependency rule, and the gate commands live. The
+work then continues fluently without them. Every agent now re-states scope, the
+dependency rule, and which gates have *actually been run* after any compaction,
+recovering each from disk rather than from memory. A gate that cannot be traced
+to a real run with an exit code is **not run**, whatever the summary says.
+
+The skill also codifies folding: run a wide, noisy, self-contained sub-task in a
+subagent and keep only what it returns. Fold the search, keep the reading — a
+subagent that paraphrases the code you are about to change has cost you the
+accuracy of the source.
+
+## C# and .NET
+
+`run-gates.sh` had the same silent-pass hole for .NET that it had for Rust and
+Flutter: a solution with no `package.json` enforced nothing while appearing to.
+It now discovers `*.sln`, `*.slnx`, `*.csproj` and `*.fsproj`, and runs
+`dotnet format --verify-no-changes`, `dotnet build`, and `dotnet test`.
+
+Two things are specific to this stack. The **build is the typecheck**, so unlike
+JavaScript it is never opt-in behind `AGENT_TEAM_RUN_BUILD`. And there is no
+separate lint gate unless the project has one — analyzers run inside the build,
+and whether they block depends on `TreatWarningsAsErrors`. A .NET project with
+three gates is complete, not missing two.
+
+`stacks/csharp-dotnet.md` carries the review items a general reviewer misses:
+`async void`, `.Result` / `.Wait()` deadlocks, a `CancellationToken` accepted
+and then not passed on, `HttpClient` per call, EF Core lazy loading in a loop or
+a query with no `Take()`, a `DbContext` in a singleton, `throw ex;` resetting
+the stack trace, and `DateTime.Now` on a stored value.

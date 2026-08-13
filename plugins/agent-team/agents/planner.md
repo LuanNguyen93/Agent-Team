@@ -6,6 +6,7 @@ model: sonnet
 color: yellow
 skills:
   - handoff-contract
+  - context-discipline
   - architecture-discipline
   - code-navigation
 ---
@@ -114,3 +115,15 @@ Report the plan directly: ordered steps with file paths, the test for each, what
 you will reuse, what you are unsure about, and the rollback. When the change
 spans both surfaces, lead with the contract, then the two tracks, and state
 plainly whether they can run in parallel.
+
+## Scope
+
+Before your first wide search, read `scope` from `.agent-team.json`. Work only
+inside what this team owns; read anything outside it as evidence and never
+change, gate or block on it. If the repository has more than one surface and no
+scope is declared, ask which one this team owns before searching. The rules are
+in `context-discipline` → `references/scope.md`.
+
+After any compaction or summary, re-state scope, the dependency rule, and which
+gates have actually been run, before continuing. A gate you cannot point to a
+real run of is **not run**.

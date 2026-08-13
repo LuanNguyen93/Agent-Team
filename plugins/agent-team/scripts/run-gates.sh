@@ -76,7 +76,32 @@ if [ -f pubspec.yaml ]; then
   [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || { run_gate test "$DART test" || exit 1; }
 fi
 
-# 4. JavaScript and TypeScript, via package.json.
+# 4. C# and .NET, via a solution or project file.
+DOTNET_TARGET=""
+for f in *.sln *.slnx; do [ -e "$f" ] && DOTNET_TARGET="$f" && break; done
+if [ -z "$DOTNET_TARGET" ]; then
+  for f in *.csproj *.fsproj; do [ -e "$f" ] && DOTNET_TARGET="$f" && break; done
+fi
+if [ -n "$DOTNET_TARGET" ]; then
+  if ! command -v dotnet >/dev/null 2>&1; then
+    printf 'Gate FAILED: %s is present but dotnet is not on PATH\n' "$DOTNET_TARGET"
+    printf 'The gates for this project cannot be verified, so it must not be\n'
+    printf 'reported as passing. Install the .NET SDK, or declare the real\n'
+    printf 'commands in .agent-team.json.\n'
+    exit 1
+  fi
+  # dotnet format ships with the SDK from .NET 6; older SDKs need it installed.
+  dotnet format --version >/dev/null 2>&1 && {
+    run_gate format "dotnet format \"$DOTNET_TARGET\" --verify-no-changes" || exit 1
+  }
+  # For C# the build IS the typecheck, so it is not opt-in the way it is for JS.
+  run_gate build "dotnet build \"$DOTNET_TARGET\" --nologo" || exit 1
+  [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || {
+    run_gate test "dotnet test \"$DOTNET_TARGET\" --nologo --no-build" || exit 1
+  }
+fi
+
+# 5. JavaScript and TypeScript, via package.json.
 if [ ! -f package.json ] || ! command -v node >/dev/null 2>&1; then
   exit 0
 fi
