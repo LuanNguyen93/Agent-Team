@@ -27,6 +27,11 @@ airtight that is.
 **Absent gates are reported, never invented.** A typecheck command made up for a
 project with no TypeScript config would report a pass it has not earned.
 
+**Commits carry no tool attribution.** No `Co-Authored-By` naming an AI, no
+"generated with" line, no emoji badge. Authorship is a statement about who is
+accountable for the change, and that is the person who reviewed it — not the
+tool that typed it. Ask for the trailer and you get it; the default is off.
+
 ## Install
 
 ```

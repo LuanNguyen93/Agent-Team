@@ -113,6 +113,19 @@ mixes a refactor with a behaviour change cannot be reverted safely.
 
 Message: what changed and why, not how. The diff already shows how.
 
+**No tool attribution in the message.** Do not add a `Co-Authored-By` trailer
+naming an AI or its vendor, a "generated with" line, or an emoji badge - not in
+a commit, not in a tag, not in a PR body. The harness adds one by default; this
+project's convention overrides it.
+
+The reason is not modesty. A commit's authorship line is a statement about who
+is accountable for the change, and the answer is the person who reviewed it and
+pressed the button, not the tool that typed it. A trailer that says otherwise
+spreads the accountability across something that cannot hold it.
+
+If the user asks for the attribution, add it. This is a default, not a rule
+about what they are allowed to want.
+
 ## Reporting
 
 Give the user a plain table:

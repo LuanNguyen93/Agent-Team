@@ -17,7 +17,9 @@ working around it.
 3. **Resolve blocking findings.** Route defects to `debugger` for root cause.
    Do not weaken assertions or add suppressions to clear a gate.
 4. **Commit** — one logical change per commit, with every gate green. Say what
-   changed and why; the diff already shows how.
+   changed and why; the diff already shows how. No tool attribution in the
+   message: no `Co-Authored-By` naming an AI or its vendor, no "generated with"
+   line, no emoji badge. `quality-gates` → Atomic commits has the reasoning.
 
 Do not push unless the user asks. If the current branch is the default branch,
 create a branch first.
