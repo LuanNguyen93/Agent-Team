@@ -94,9 +94,61 @@ for scope and gates, an ADR for a structural decision, the plan file for the
 task list. A fact in a file survives a compaction; a fact in the conversation
 does not.
 
+## 5. A long context is billed again on every turn
+
+This is the part that is invisible while it happens. A context is not paid for
+once when it is built — it is re-read on every request that follows it. The cost
+of a session is roughly **context size × number of turns**, so a context that
+doubles halfway through does not cost 2x more, it costs 2x more *for every
+remaining turn*.
+
+Measured on this repository with `scripts/measure-tokens.js`:
+
+| | |
+|---|---|
+| Share of spend that was re-reading existing context | **53%** |
+| Most expensive session, all in one context, no delegation | **$272** |
+| That session's context, start → end | 50k → **729k** |
+| One skill load, in one turn | **234k tokens**, and cost per turn went $0.49 → $1.55 |
+| `WebFetch` — 16 calls | **227k tokens, 36%** of everything that filled it |
+| `Bash` — 154 calls | 31k tokens, 5% |
+
+Read the last two rows together, because they are the counter-intuitive part.
+The 154 Bash calls are not the problem; one WebFetch costs about a hundred of
+them. What makes a turn expensive is the size of what it drags in, not how many
+turns there are — and a fetched page is never reclaimed, so a page pulled in at
+turn 50 is still being re-read at turn 400.
+
+Worth naming: none of this was doctrine. The plugin's own skills did not appear
+in the top ten of that session. The expensive things were a skill read into the
+wrong context and a handful of web pages.
+
+Three rules follow from that, in the order they pay off:
+
+1. **Compact or hand off before the context passes ~150k.** Past that point
+   every further turn is paying to re-read material it is mostly not using.
+   Section 4 is what makes this safe to do.
+2. **Pull heavy material in inside a subagent, not here.** A large reference
+   skill, or a fetched web page, read into the main context stays there for the
+   rest of the session. Read in a subagent, it dies with that context and you
+   keep the conclusion. This is the fold from section 2, applied to doctrine and
+   to sources rather than to code. Fetch the page, return the answer — not the
+   page.
+3. **Delegate by default on anything wide.** In the sessions measured above, the
+   two most expensive spawned **no subagents at all** and did the work inline;
+   the session that delegated 75% of its spend held its main context at 91k.
+
+Run `node scripts/measure-tokens.js --fillers` to see the same breakdown for the
+project you are in. It reports the main/subagent split per session, so "we should
+delegate more" becomes a number rather than an opinion.
+
 ## Never do these
 
 - Load the whole repository "for context" when the task names its files
+- Load a large reference skill, or fetch a web page, into the main context when
+  a subagent could read it and hand back the answer
+- Keep working in a context past ~150k because compacting feels like losing
+  progress - section 4 is how you keep the progress
 - Treat a compaction summary as authoritative about what was verified - it
   records what was said, not what was run
 - Report a constraint as satisfied when you only remember agreeing to it

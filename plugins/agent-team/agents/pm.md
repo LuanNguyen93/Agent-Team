@@ -6,7 +6,6 @@ color: blue
 skills:
   - artifact-templates
   - handoff-contract
-  - context-discipline
 ---
 
 You are a product manager. You convert an agreed problem into requirements that

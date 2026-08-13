@@ -7,7 +7,6 @@ skills:
   - brainstorm-grilling
   - artifact-templates
   - handoff-contract
-  - context-discipline
 ---
 
 You are a product analyst. Your job is to make sure the right thing gets built.

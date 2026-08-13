@@ -98,6 +98,27 @@ independently, because a leftover fixture renders a screen that looks correct.
 Do not split a one-sided change, or a change small enough that the coordination
 costs more than the work.
 
+## Routing means spawning, not imitating
+
+The most expensive failure of this router is silent: the tier gets announced,
+and then the main context does all the work itself because each next step felt
+small enough to just do. Nothing looks wrong — the plan happened, the tests were
+written, the review pass got mentioned — but the whole session ran in one
+context that is re-read on every turn.
+
+Measured on this repository: the two most expensive sessions spawned **zero**
+subagents and cost $272 and $82. A comparable session that delegated 75% of its
+work held its main context at 91k and cost $120 for more output. The rule that
+falls out:
+
+**If you announced a tier, spawn the agents that tier names.** `reviewer` in
+particular is not a pass you can perform inline — a review in the context that
+wrote the code is not a review, it is a re-reading. When you deliberately skip
+an agent, say which and why, so the skip is a decision rather than a drift.
+
+The exception is QUICK, where the coordination genuinely can cost more than the
+work. Even there, `reviewer` runs in its own context.
+
 ## Rules that hold at every tier
 
 - **No code before a plan** — except QUICK, where the plan is a sentence.
