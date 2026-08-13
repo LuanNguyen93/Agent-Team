@@ -16,6 +16,11 @@ typecheck  →  lint  →  test  →  build  →  static analysis
 The order is deliberate: each gate is cheaper and more localised than the next,
 so failures surface with the clearest possible message.
 
+A project with an eval suite adds one more link at the end - it is slower than
+the static analysis and it costs money per run, so it is opt-in and it is
+**absent** rather than passed when it did not run. Its threshold has to be
+declared before the run, against a pinned model version, or it is not a gate.
+
 The last one runs only where the project has configured it — a SonarQube /
 SonarCloud gate, or an equivalent analyser. It is judged on **new code**, and
 its thresholds, the forbidden ways to pass it, and the rules that fail most
@@ -58,6 +63,11 @@ A gate passes only on a clean exit code. Specifically:
   but do not treat the suite as green.
 - **Flaky tests**: re-run once. If it flips, report it as flaky with both
   outputs. Do not re-run until it passes and call that a pass.
+- **Non-deterministic output** is the exception to that rule. Where a gate
+  exercises a model call, variation is expected behaviour rather than a broken
+  test, and the result is a pass **rate** over n runs against a threshold - see
+  `ai-engineering` → `references/evals.md`. The rule still applies to every
+  deterministic test in the same suite.
 
 ## On failure
 

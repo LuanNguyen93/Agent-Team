@@ -101,7 +101,75 @@ if [ -n "$DOTNET_TARGET" ]; then
   }
 fi
 
-# 5. JavaScript and TypeScript, via package.json.
+# 5. Python, via pyproject.toml or setup.cfg.
+if [ -f pyproject.toml ] || [ -f setup.cfg ]; then
+  # The runner is what decides the command prefix: uv and poetry both put the
+  # tools in an environment that a bare `ruff` on PATH is not part of.
+  PY_RUN=""
+  if [ -f uv.lock ] && command -v uv >/dev/null 2>&1; then
+    PY_RUN="uv run"
+  elif [ -f poetry.lock ] && command -v poetry >/dev/null 2>&1; then
+    PY_RUN="poetry run"
+  elif ! command -v python >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
+    printf 'Gate FAILED: pyproject.toml is present but no python is on PATH\n'
+    printf 'The gates for this project cannot be verified, so it must not be\n'
+    printf 'reported as passing. Activate the environment, or declare the real\n'
+    printf 'commands in .agent-team.json.\n'
+    exit 1
+  fi
+
+  py_has() { [ -n "$PY_RUN" ] && return 0; command -v "$1" >/dev/null 2>&1; }
+  py_cmd() { if [ -n "$PY_RUN" ]; then printf '%s %s' "$PY_RUN" "$1"; else printf '%s' "$1"; fi; }
+
+  # Configured tools only. An invented mypy run on a project that never typed
+  # its code produces noise, not a gate.
+  if grep -q 'ruff' pyproject.toml 2>/dev/null || [ -f ruff.toml ] || [ -f .ruff.toml ]; then
+    py_has ruff && {
+      run_gate format "$(py_cmd 'ruff format --check .')" || exit 1
+      run_gate lint "$(py_cmd 'ruff check .')" || exit 1
+    }
+  fi
+  if grep -q 'mypy' pyproject.toml setup.cfg 2>/dev/null || [ -f mypy.ini ]; then
+    py_has mypy && { run_gate typecheck "$(py_cmd 'mypy .')" || exit 1; }
+  fi
+  if [ "${AGENT_TEAM_SKIP_TESTS:-}" != "1" ]; then
+    if grep -q 'pytest' pyproject.toml setup.cfg 2>/dev/null || [ -f pytest.ini ] || [ -d tests ]; then
+      # A missing linter is a skipped gate; a missing test runner on a project
+      # that has tests is an unverifiable one, and that is a failure.
+      if py_has pytest; then
+        run_gate test "$(py_cmd 'pytest -q')" || exit 1
+      else
+        printf 'Gate FAILED: this project has tests but pytest is not runnable
+'
+        printf 'The test gate cannot be verified, so it must not be reported as a
+'
+        printf 'pass. Install the dev dependencies, activate the environment, or
+'
+        printf 'declare the real command in .agent-team.json.
+'
+        exit 1
+      fi
+    fi
+  fi
+fi
+
+# 6. Go, via go.mod.
+if [ -f go.mod ]; then
+  if ! command -v go >/dev/null 2>&1; then
+    printf 'Gate FAILED: go.mod is present but go is not on PATH\n'
+    printf 'The gates for this project cannot be verified, so it must not be\n'
+    printf 'reported as passing. Install the Go toolchain, or declare the real\n'
+    printf 'commands in .agent-team.json.\n'
+    exit 1
+  fi
+  # gofmt -l exits 0 and prints the offending files, so the list is the failure.
+  run_gate format 'test -z "$(gofmt -l .)" || { gofmt -l .; false; }' || exit 1
+  run_gate vet "go vet ./..." || exit 1
+  [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || { run_gate test "go test ./..." || exit 1; }
+  [ "${AGENT_TEAM_RUN_BUILD:-}" = "1" ] && { run_gate build "go build ./..." || exit 1; }
+fi
+
+# 7. JavaScript and TypeScript, via package.json.
 if [ ! -f package.json ] || ! command -v node >/dev/null 2>&1; then
   exit 0
 fi

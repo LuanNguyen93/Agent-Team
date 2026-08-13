@@ -111,10 +111,10 @@ once rather than duplicated across eleven system prompts.
 | `architect` | `artifact-templates`, `diagram-excalidraw`, `architecture-discipline` |
 | `ux-designer` | `design-intelligence`, `artifact-templates` |
 | `planner` | `architecture-discipline`, `code-navigation` |
-| `implementer` | `tdd-discipline`, `architecture-discipline`, `quality-gates`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
+| `implementer` | `tdd-discipline`, `architecture-discipline`, `quality-gates`, `code-navigation` (+ `react-performance`, `backend-discipline`, `ai-engineering` via `paths`) |
 | `backend-implementer` | as `implementer`, plus `backend-discipline` always on |
 | `frontend-implementer` | as `implementer`, plus `react-performance` and `design-intelligence` always on (the latter scoped to conformance — see ADR-0001) |
-| `reviewer` | `quality-gates`, `architecture-discipline`, `code-navigation` (+ `react-performance`, `backend-discipline` via `paths`) |
+| `reviewer` | `quality-gates`, `architecture-discipline`, `code-navigation` (+ `react-performance`, `backend-discipline`, `ai-engineering` via `paths`) |
 | `qa-verifier` | `quality-gates`, `browser-verify`, `app-verify` |
 | `debugger` | `debug-rca`, `tdd-discipline`, `code-navigation` |
 
@@ -342,3 +342,63 @@ since the client and the server are separate surfaces.
 and then not passed on, `HttpClient` per call, EF Core lazy loading in a loop or
 a query with no `Take()`, a `DbContext` in a singleton, `throw ex;` resetting
 the stack trace, and `DateTime.Now` on a stored value.
+
+
+## AI engineering
+
+Every other skill here assumes the same input produces the same output. A model
+call does not, and that single fact breaks three things at once.
+
+The skill is deliberately language-neutral: it describes what a model call is,
+not what an SDK looks like, so it applies unchanged in Rust or Go. Where those
+ecosystems have no eval harness to reach for, you write one - a dataset file, a
+runner, a pass-rate report. That changes the amount of code, not the standard of
+evidence.
+
+**It breaks the test gate.** Red-green-refactor needs a deterministic
+assertion; a single passing output from a model proves nothing. `ai-engineering`
+splits the work: everything around the model - parsing, validation, retrieval,
+routing, tool schemas, storage - stays ordinary TDD, because that is where most
+of the code and most of the bugs are. Only the model-dependent behaviour moves
+to a dataset and a pass rate, with a measured baseline, a held-out split, and
+the regressions listed. "It looks better now" is not a result, and a change that
+fixed five cases while breaking three reads like progress.
+
+**It breaks the flaky rule.** `quality-gates` says re-run once and treat a flip
+as flaky. For a model call variation is the expected behaviour, not a broken
+test - the answer is n runs and a rate against a declared threshold, not a
+re-run. Both skills now say so explicitly, and the original rule still governs
+every deterministic test in the same suite.
+
+**It adds a trust boundary.** `backend-discipline` puts the boundary at the
+server and authorises the object rather than the route. With a model there is a
+second one: anything reaching the prompt can try to instruct it - a retrieved
+document, an uploaded file, a field another user wrote, a tool result. So model
+output never authorises an action on its own; the server re-checks the *user*
+with the same authorisation code an ordinary endpoint uses. The model proposes,
+the server decides. `references/llm-boundaries.md` also covers what the rest of
+this plugin would otherwise have said nothing about: timeouts and retries on a
+call that is expensive and not idempotent, iteration and spend caps on an agent
+loop, an unpinned model alias changing behaviour with no diff, and prompts
+containing personal data being logged to a third party.
+
+## Python and Go
+
+`run-gates.sh` had the silent-pass hole for both of these too, and it mattered more than the
+others because AI engineering is overwhelmingly Python. It now discovers
+`pyproject.toml` / `setup.cfg`, prefixes commands with `uv run` or `poetry run`
+when a matching lockfile is present, and runs only the tools the project
+actually configures - an invented `mypy` run on an unannotated codebase gates
+nothing.
+
+One asymmetry is deliberate: a missing linter is a **skipped** gate, but a
+missing `pytest` on a project that has tests is a **failure**. One is absent by
+choice; the other is unverifiable, and unverifiable must never read as a pass.
+
+Go discovers `go.mod` and runs `gofmt`, `go vet` and `go test`. The format gate
+needs care: `gofmt -l` exits 0 and prints the offending files, so the *list* is
+the failure and a naive exit-code check reports a pass on unformatted code.
+`stacks/go.md` and `stacks/python.md` carry the review items - an unchecked
+error, a shadowed `err`, a goroutine with no way to stop, a mutex copied by
+value; a mutable default argument, blocking I/O inside an async function, a
+`requests` call with no timeout.

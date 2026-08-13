@@ -66,6 +66,23 @@ State what actually happened, with the real output:
 - If you could not run tests (no runner, missing deps), **say so explicitly**
   and do not claim the code works.
 
+## When the output is not deterministic
+
+The loop above assumes the same input produces the same output. A model call
+does not, and forcing the ritual onto it produces a test that passes or fails by
+luck.
+
+The split is: **everything around the model is still ordinary TDD** - parsing,
+validation, retrieval, routing, tool schemas, storage, the error paths. That is
+most of the code and most of the bugs, and it gets a failing test first, as
+usual. Only the model-dependent behaviour changes shape, and there the unit is a
+dataset and a pass rate rather than one assertion. See `ai-engineering` and its
+`references/evals.md`.
+
+Two things do not carry over. A single passing output is not a green bar - run
+it n times and report the rate. And a failure that appears sometimes is variance
+to be measured, not a flake to be re-run away.
+
 ## When TDD does not apply
 
 Be honest rather than performing ritual. Skip the cycle, and say you skipped it, for:

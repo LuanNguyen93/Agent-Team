@@ -94,7 +94,7 @@ than by instruction.
 
 See [`docs/AGENTS.md`](docs/AGENTS.md) and [`docs/FLOW.md`](docs/FLOW.md).
 
-## The sixteen skills
+## The seventeen skills
 
 Doctrine lives in skills so it is defined once rather than duplicated across
 nine system prompts.
@@ -103,16 +103,16 @@ nine system prompts.
 `tdd-discipline` · `quality-gates` · `debug-rca` · `design-intelligence` ·
 `react-performance` · `browser-verify` · `diagram-excalidraw` ·
 `handoff-contract` · `backend-discipline` · `architecture-discipline` ·
-`code-navigation` · `app-verify` · `context-discipline`
+`code-navigation` · `app-verify` · `context-discipline` · `ai-engineering`
 
-`react-performance` and `backend-discipline` auto-activate on matching paths
+`react-performance`, `backend-discipline` and `ai-engineering` auto-activate on matching paths
 rather than costing context every session.
 
 ## Configuration
 
 Gate commands come from `.agent-team.json` in your project when present,
 otherwise discovered from `Cargo.toml`, `pubspec.yaml`, a `*.sln` / `*.csproj`,
-and `package.json` scripts — in that order, and a project can have more than one:
+`pyproject.toml`, `go.mod`, and `package.json` scripts — in that order, and a project can have more than one:
 
 ```json
 {
@@ -138,7 +138,7 @@ earn.
 |---|---|
 | `AGENT_TEAM_SKIP_GATES=1` | Disable the enforcement hook |
 | `AGENT_TEAM_SKIP_TESTS=1` | Skip the test gate (keep typecheck and lint) |
-| `AGENT_TEAM_RUN_BUILD=1` | Include the build gate (`cargo build --release`, `flutter build`, `<pm> run build`; .NET always builds, since that is its typecheck) |
+| `AGENT_TEAM_RUN_BUILD=1` | Include the build gate (`cargo build --release`, `flutter build`, `go build ./...`, `<pm> run build`; .NET always builds, since that is its typecheck) |
 | `AGENT_TEAM_RUN_SONAR=1` | Include the static-analysis gate (`sonar` script, or `sonar-project.properties` + `sonar-scanner`) |
 
 ## Agent teams
