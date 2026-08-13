@@ -103,7 +103,8 @@ nine system prompts.
 `tdd-discipline` · `quality-gates` · `debug-rca` · `design-intelligence` ·
 `react-performance` · `browser-verify` · `diagram-excalidraw` ·
 `handoff-contract` · `backend-discipline` · `architecture-discipline` ·
-`code-navigation` · `app-verify` · `context-discipline` · `ai-engineering`
+`code-navigation` · `app-verify` · `context-discipline` · `ai-engineering` ·
+`security-discipline`
 
 `react-performance`, `backend-discipline` and `ai-engineering` auto-activate on matching paths
 rather than costing context every session.

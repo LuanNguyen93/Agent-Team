@@ -8,6 +8,7 @@ Applies when: `go.mod` at the module root.
 |---|---|---|
 | format | `test -z "$(gofmt -l .)"` | `gofmt -l` exits 0 and prints the offending files, so the list is the failure |
 | vet | `go vet ./...` | the compiler is the typecheck; vet is the closest thing to a lint |
+| dependency audit | `govulncheck ./...` | reachability-based, so a finding here is almost always real |
 | test | `go test ./...` | add `-race` where the code is concurrent, and it usually is |
 | build | `go build ./...` | opt-in via `AGENT_TEAM_RUN_BUILD=1`; `go test` already compiles |
 

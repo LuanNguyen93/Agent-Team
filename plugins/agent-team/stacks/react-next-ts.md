@@ -8,6 +8,7 @@ Applies when `package.json` lists `next` or `react`.
 |---|---|---|
 | typecheck | `tsc --noEmit` | Usually a `typecheck` script. Without one, there is no type gate — say so. |
 | lint | `next lint` or `eslint .` | |
+| dependency audit | `npm audit --audit-level=high` | match the lockfile: `pnpm audit --audit-level high`, `yarn npm audit --severity high` |
 | test | `vitest run` / `jest` / `playwright test` | Distinguish unit from e2e; e2e usually needs the app running. |
 | build | `next build` | Slow. Run before shipping, not on every task. |
 
@@ -28,6 +29,7 @@ Applies when `package.json` lists `next` or `react`.
 - `backend-discipline` — auto-activates under `app/api/`, `server/`, migrations
 - `design-intelligence` — for any UI work
 - `browser-verify` — verification drives the real app
+- `security-discipline` — secrets, the dependency audit gate, the abuse surface.
 
 ## Things to check in review on this stack
 

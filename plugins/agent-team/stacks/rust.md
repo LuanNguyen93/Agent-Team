@@ -8,6 +8,7 @@ Applies when: `Cargo.toml` at the repo root or in a workspace member.
 |---|---|---|
 | format | `cargo fmt --check` | fails on diff; never `cargo fmt` in a gate — that edits |
 | lint | `cargo clippy --all-targets -- -D warnings` | `--all-targets` covers tests and examples |
+| dependency audit | `cargo audit` | needs `cargo-audit`; `cargo deny check advisories` where the project uses it |
 | test | `cargo test` | add `--workspace` in a workspace |
 | build | `cargo build --release` | slow; opt-in via `AGENT_TEAM_RUN_BUILD=1` |
 
@@ -37,6 +38,7 @@ explicitly for a workspace, a non-default feature set, or `cargo nextest`.
   the port, the struct implementing it is the adapter
 - `code-navigation` — trait impls are found with `rg "impl .* for "`; nothing
   declares that a type satisfies a trait, so search alone under-reports
+- `security-discipline` — secrets, the dependency audit gate, the abuse surface.
 
 ## Things to check in review on this stack
 

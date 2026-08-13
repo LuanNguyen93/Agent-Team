@@ -9,6 +9,7 @@ in the backend directory of a monorepo.
 |---|---|---|
 | format | `dotnet format <target> --verify-no-changes` | fails on diff; never plain `dotnet format` in a gate - that edits |
 | build | `dotnet build <target> --nologo` | this **is** the typecheck for C#, so it is never opt-in |
+| dependency audit | `dotnet list package --vulnerable --include-transitive` | **exits 0 even with findings** - read the output, not the status |
 | test | `dotnet test <target> --nologo --no-build` | `--no-build` reuses the build gate's output |
 
 There is no separate typecheck step: the compiler is the type checker. There is
@@ -43,7 +44,7 @@ solution filter (`*.slnf`).
 
 `backend-discipline`, `architecture-discipline`, `quality-gates`,
 `code-navigation`, `context-discipline`, `app-verify` (for a service surface),
-`tdd-discipline`.
+`tdd-discipline`, `security-discipline`.
 
 ## How to verify a change
 

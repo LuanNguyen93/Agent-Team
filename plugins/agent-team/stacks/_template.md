@@ -11,8 +11,12 @@ Applies when: <the file or dependency that identifies this stack>
 |---|---|---|
 | typecheck | | |
 | lint | | |
+| dependency audit | | |
 | test | | |
 | build | | |
+
+The secret scan is deliberately not a row here: it is stack-independent and the
+gate runner applies it to every project, so a profile never declares it.
 
 Order them cheapest-and-most-localised first. If this stack has no equivalent
 for a gate, leave the row out rather than inventing a command — an invented gate

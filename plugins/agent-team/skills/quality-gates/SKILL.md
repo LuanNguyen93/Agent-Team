@@ -10,7 +10,7 @@ Gates run **in order**, and a failure **stops the line**. Do not run the next
 gate, do not "fix it later", do not mark the task complete.
 
 ```
-typecheck  →  lint  →  test  →  build  →  static analysis
+typecheck  →  lint  →  dependency audit  →  test  →  build  →  static analysis
 ```
 
 The order is deliberate: each gate is cheaper and more localised than the next,
@@ -21,7 +21,21 @@ the static analysis and it costs money per run, so it is opt-in and it is
 **absent** rather than passed when it did not run. Its threshold has to be
 declared before the run, against a pinned model version, or it is not a gate.
 
-The last one runs only where the project has configured it — a SonarQube /
+A **secret scan** runs alongside the chain rather than inside it: it is
+stack-independent, so it applies to every project including one with no gates at
+all. It scans the working tree, not the history — a hit in the history is a
+rotation decision for the user, not a task to block. No scanner on PATH means
+**absent**. A hit is never cleared by deleting the line: a committed secret is a
+leaked secret and the credential has to be rotated. See `security-discipline`.
+
+The **dependency audit** gate is not part of the static analysis gate and is not
+covered by it. Sonar and its equivalents analyse the code in this repository;
+they do not know that a package you depend on has a published CVE. The command
+per stack, and what to do with a finding that has no fix, are in
+`security-discipline` → `references/supply-chain.md`. With no lockfile, or with
+the tool not installed, the gate is **absent** — never passed.
+
+The **static analysis** gate runs only where the project has configured it — a SonarQube /
 SonarCloud gate, or an equivalent analyser. It is judged on **new code**, and
 its thresholds, the forbidden ways to pass it, and the rules that fail most
 often are in `references/sonarqube.md`. If the project has no such analysis
@@ -33,9 +47,11 @@ Never guess. Read the project's own definitions, in this order:
 
 1. `package.json` scripts / `Makefile` / `justfile` / `Taskfile.yml`
 2. `pyproject.toml`, `Cargo.toml`, `go.mod`, `pubspec.yaml`, `*.sln` / `*.csproj`
-3. `sonar-project.properties`, `sonar.projectKey` in a build file, or a Sonar
+3. An `audit` or `security` script the project already defines — for the
+   dependency audit gate
+4. `sonar-project.properties`, `sonar.projectKey` in a build file, or a Sonar
    step in CI — for the static analysis gate
-4. CI config — `.github/workflows/*.yml` is the most reliable source, because it
+5. CI config — `.github/workflows/*.yml` is the most reliable source, because it
    is what actually gates merges
 
 Some stacks fold steps together. In C# the build *is* the typecheck, and lint
@@ -78,6 +94,10 @@ Do not:
 - weaken an assertion to make a test pass
 - add `// @ts-ignore`, `# type: ignore`, an eslint-disable, or `// NOSONAR` to
   clear a gate
+- raise `--audit-level`, add an `--ignore-vuln`, or exclude an advisory to clear
+  the dependency audit
+- delete a flagged line, or add a `.gitleaksignore` entry with no comment, to
+  clear the secret scan
 - mark a Sonar issue "won't fix" or a security hotspot "safe", or exclude a path
   from analysis or coverage, to move a number
 - delete or skip a failing test
@@ -101,6 +121,8 @@ Give the user a plain table:
 |---|---|---|
 | typecheck | `pnpm typecheck` | PASS |
 | lint | `pnpm lint` | PASS |
+| secret scan | `gitleaks dir .` | PASS |
+| dependency audit | `pnpm audit --audit-level high` | PASS |
 | test | `pnpm test` | **FAIL** — 2 of 47 |
 | build | `pnpm build` | not run (blocked) |
 | static analysis | `sonar-scanner` | not run (blocked) |

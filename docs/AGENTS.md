@@ -108,13 +108,13 @@ once rather than duplicated across eleven system prompts.
 |---|---|
 | `analyst` | `brainstorm-grilling`, `artifact-templates` |
 | `pm` | `artifact-templates` |
-| `architect` | `artifact-templates`, `diagram-excalidraw`, `architecture-discipline` |
+| `architect` | `artifact-templates`, `diagram-excalidraw`, `architecture-discipline`, `security-discipline` |
 | `ux-designer` | `design-intelligence`, `artifact-templates` |
 | `planner` | `architecture-discipline`, `code-navigation` |
-| `implementer` | `tdd-discipline`, `architecture-discipline`, `quality-gates`, `code-navigation` (+ `react-performance`, `backend-discipline`, `ai-engineering` via `paths`) |
+| `implementer` | `tdd-discipline`, `architecture-discipline`, `security-discipline`, `quality-gates`, `code-navigation` (+ `react-performance`, `backend-discipline`, `ai-engineering` via `paths`) |
 | `backend-implementer` | as `implementer`, plus `backend-discipline` always on |
 | `frontend-implementer` | as `implementer`, plus `react-performance` and `design-intelligence` always on (the latter scoped to conformance — see ADR-0001) |
-| `reviewer` | `quality-gates`, `architecture-discipline`, `code-navigation` (+ `react-performance`, `backend-discipline`, `ai-engineering` via `paths`) |
+| `reviewer` | `quality-gates`, `architecture-discipline`, `security-discipline`, `code-navigation` (+ `react-performance`, `backend-discipline`, `ai-engineering` via `paths`) |
 | `qa-verifier` | `quality-gates`, `browser-verify`, `app-verify` |
 | `debugger` | `debug-rca`, `tdd-discipline`, `code-navigation` |
 
@@ -188,8 +188,11 @@ and stays on what is specific to the server.
 The gate chain ends in static analysis where the project configures one:
 
 ```
-typecheck  →  lint  →  test  →  build  →  static analysis
+typecheck  →  lint  →  dependency audit  →  test  →  build  →  static analysis
 ```
+
+A secret scan runs alongside it, outside the chain, because it depends on no
+stack and applies even to a project that has no other gate.
 
 Two things had to change for that to mean anything.
 
