@@ -85,6 +85,37 @@ A gate passes only on a clean exit code. Specifically:
   `ai-engineering` → `references/evals.md`. The rule still applies to every
   deterministic test in the same suite.
 
+## A cached pass
+
+The dependency audit is the only gate that makes a network call, and its answer
+cannot change while its input has not. It is therefore cached against a
+fingerprint of the project's manifests and lockfiles, and reported as **CACHED**
+rather than re-run - a real result, not a skipped one.
+
+Three rules keep that honest:
+
+- Only a **pass** is ever cached. A failing or absent audit is never recorded,
+  so the next run tries again rather than inheriting a verdict nobody reached.
+- Any change to a manifest or lockfile invalidates it. Adding a dependency
+  always re-runs the audit, which is the case the gate exists for.
+- `govulncheck` is never cached. It reports only what the code can *reach*, so
+  its answer changes when the code changes, not only when `go.sum` does.
+- **It expires after 24 hours.** An advisory database gains entries against
+  dependencies nobody has touched, so an unchanged lockfile is only a good
+  answer for a while. `AGENT_TEAM_AUDIT_TTL_HOURS` sets the window.
+- Each audit tool has its own cache entry. A repository with both a `.csproj`
+  and a `package.json` runs both gates; one cannot report the other's pass.
+
+A **prose-only change** - every path in it a `.md`, a `docs/` file, a `LICENSE` -
+skips the chain entirely, because a typecheck and a test suite have nothing to
+say about a paragraph. The secret scan still runs: a credential pasted into a
+README example is doc-only by definition, and is one of the commonest ways one
+gets committed.
+
+`AGENT_TEAM_FORCE_AUDIT=1` ignores the cache. Reach for it before a release,
+where you want today's advisories rather than the ones current at the last
+dependency change.
+
 ## On failure
 
 Stop. Report the failing gate, the command, and the **actual output** — not a
@@ -113,6 +144,19 @@ mixes a refactor with a behaviour change cannot be reverted safely.
 
 Message: what changed and why, not how. The diff already shows how.
 
+**No tool attribution in the message.** Do not add a `Co-Authored-By` trailer
+naming an AI or its vendor, a "generated with" line, or an emoji badge - not in
+a commit, not in a tag, not in a PR body. The harness adds one by default; this
+project's convention overrides it.
+
+The reason is not modesty. A commit's authorship line is a statement about who
+is accountable for the change, and the answer is the person who reviewed it and
+pressed the button, not the tool that typed it. A trailer that says otherwise
+spreads the accountability across something that cannot hold it.
+
+If the user asks for the attribution, add it. This is a default, not a rule
+about what they are allowed to want.
+
 ## Reporting
 
 Give the user a plain table:
@@ -122,7 +166,7 @@ Give the user a plain table:
 | typecheck | `pnpm typecheck` | PASS |
 | lint | `pnpm lint` | PASS |
 | secret scan | `gitleaks dir .` | PASS |
-| dependency audit | `pnpm audit --audit-level high` | PASS |
+| dependency audit | `pnpm audit --audit-level high` | CACHED — lockfile unchanged |
 | test | `pnpm test` | **FAIL** — 2 of 47 |
 | build | `pnpm build` | not run (blocked) |
 | static analysis | `sonar-scanner` | not run (blocked) |

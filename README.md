@@ -27,6 +27,11 @@ airtight that is.
 **Absent gates are reported, never invented.** A typecheck command made up for a
 project with no TypeScript config would report a pass it has not earned.
 
+**Commits carry no tool attribution.** No `Co-Authored-By` naming an AI, no
+"generated with" line, no emoji badge. Authorship is a statement about who is
+accountable for the change, and that is the person who reviewed it — not the
+tool that typed it. Ask for the trailer and you get it; the default is off.
+
 ## Install
 
 ```
@@ -144,6 +149,9 @@ earn.
 | `AGENT_TEAM_SKIP_AUDIT=1` | Skip the dependency-audit gate (`npm audit`, `pip-audit`, `govulncheck`, `cargo audit`, `dotnet list package --vulnerable`, `osv-scanner`) |
 | `AGENT_TEAM_SKIP_SECRET_SCAN=1` | Skip the secret scan (`gitleaks`, or `trufflehog`) |
 | `AGENT_TEAM_SCAN_HISTORY=1` | Scan the full git history for secrets instead of the working tree — slow |
+| `AGENT_TEAM_FORCE_AUDIT=1` | Re-run the dependency audit even when no manifest or lockfile has changed since it last passed |
+| `AGENT_TEAM_ALWAYS_GATE=1` | Run the gates even when every changed path is prose (`*.md`, `docs/**`, `LICENSE`) |
+| `AGENT_TEAM_AUDIT_TTL_HOURS=<n>` | How long a cached audit pass stays valid (default 24) |
 
 ## Agent teams
 
