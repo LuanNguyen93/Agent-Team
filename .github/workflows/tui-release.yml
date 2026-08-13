@@ -1,0 +1,252 @@
+name: TUI release
+
+# ADR-0002: five target triples, binaries committed to the repo, refreshed
+# only on a release (not per PR). Two triggers land the same run: a `v*` tag
+# for a real release, and workflow_dispatch so this pipeline can be exercised
+# without cutting one - both open questions the user decided explicitly.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # --- Five build jobs, one per shipped triple (docs/architecture.md
+  # "Binary distribution", ADR-0002). Every job stages its output into
+  # rust/dist/ before uploading, and uploads exactly that one directory as
+  # its artifact - `upload-artifact@v4` roots an artifact at the least common
+  # ancestor of the paths it's given, so a job that uploads two paths (binary
+  # + srchash.txt) gets a different artifact shape than a job that uploads
+  # one. Staging first keeps all five artifacts shaped identically:
+  # <artifact>/agent-team-tui[.exe] and, where the binary could run on its
+  # own build runner, <artifact>/srchash.txt.
+  #
+  # publish-manifest assembles bin/ from all five and cannot run unless every
+  # one of them succeeded (see its `needs:` below) - a partial MANIFEST
+  # covering only the triples that happened to succeed is structurally
+  # impossible.
+
+  build-x86_64-pc-windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: cargo test
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo test --target x86_64-pc-windows-msvc
+      - name: cargo build --release
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo build --release --target x86_64-pc-windows-msvc
+      - name: Stage dist/
+        shell: bash
+        working-directory: plugins/agent-team/tui/rust
+        run: |
+          set -eu
+          mkdir -p dist
+          cp target/x86_64-pc-windows-msvc/release/agent-team-tui.exe dist/
+          ./dist/agent-team-tui.exe --build-info | grep srcHash > dist/srchash.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-binary-x86_64-pc-windows-msvc
+          path: plugins/agent-team/tui/rust/dist
+
+  build-x86_64-apple-darwin:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin
+      - name: cargo test
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo test --target x86_64-apple-darwin
+      - name: cargo build --release
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo build --release --target x86_64-apple-darwin
+      - name: Stage dist/
+        working-directory: plugins/agent-team/tui/rust
+        run: |
+          set -eu
+          mkdir -p dist
+          cp target/x86_64-apple-darwin/release/agent-team-tui dist/
+          ./dist/agent-team-tui --build-info | grep srcHash > dist/srchash.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-binary-x86_64-apple-darwin
+          path: plugins/agent-team/tui/rust/dist
+
+  build-aarch64-apple-darwin:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - name: cargo test
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo test --target aarch64-apple-darwin
+      - name: cargo build --release
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo build --release --target aarch64-apple-darwin
+      - name: Stage dist/
+        working-directory: plugins/agent-team/tui/rust
+        run: |
+          set -eu
+          mkdir -p dist
+          cp target/aarch64-apple-darwin/release/agent-team-tui dist/
+          ./dist/agent-team-tui --build-info | grep srcHash > dist/srchash.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-binary-aarch64-apple-darwin
+          path: plugins/agent-team/tui/rust/dist
+
+  build-x86_64-unknown-linux-musl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+      - name: install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - name: cargo test
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo test --target x86_64-unknown-linux-musl
+      - name: cargo build --release
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo build --release --target x86_64-unknown-linux-musl
+      - name: Stage dist/
+        working-directory: plugins/agent-team/tui/rust
+        run: |
+          set -eu
+          mkdir -p dist
+          cp target/x86_64-unknown-linux-musl/release/agent-team-tui dist/
+          ./dist/agent-team-tui --build-info | grep srcHash > dist/srchash.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-binary-x86_64-unknown-linux-musl
+          path: plugins/agent-team/tui/rust/dist
+
+  # aarch64-unknown-linux-musl: cross-compiled on an x86_64 runner and
+  # deliberately NOT tested - ADR-0002 / docs/architecture.md accept this
+  # explicitly ("built but unexercised until someone reports otherwise").
+  # Faking a test here (e.g. via QEMU emulation) would hide exactly the risk
+  # the ADR named, not close it. Its dist/ therefore has no srchash.txt - the
+  # binary cannot run on this runner to produce one.
+  build-aarch64-unknown-linux-musl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-musl
+      - name: install cross
+        uses: taiki-e/install-action@cross
+      - name: cross build --release (cross-compiled, not tested - see comment above)
+        working-directory: plugins/agent-team/tui/rust
+        run: cross build --release --target aarch64-unknown-linux-musl
+      - name: Stage dist/
+        working-directory: plugins/agent-team/tui/rust
+        run: |
+          set -eu
+          mkdir -p dist
+          cp target/aarch64-unknown-linux-musl/release/agent-team-tui dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-binary-aarch64-unknown-linux-musl
+          path: plugins/agent-team/tui/rust/dist
+
+  publish-manifest:
+    # A partial MANIFEST covering only the triples that happened to succeed
+    # must be structurally impossible: this job cannot start unless all five
+    # build jobs succeeded.
+    needs:
+      - build-x86_64-pc-windows-msvc
+      - build-x86_64-apple-darwin
+      - build-aarch64-apple-darwin
+      - build-x86_64-unknown-linux-musl
+      - build-aarch64-unknown-linux-musl
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tui-binary-*
+          path: artifacts
+
+      - name: Assemble bin/ and regenerate MANIFEST
+        working-directory: plugins/agent-team/tui
+        run: |
+          set -eu
+          rm -rf bin
+          mkdir -p bin
+
+          # Four of the five triples ran --build-info on their own build
+          # runner and each wrote artifacts/tui-binary-<triple>/srchash.txt
+          # (aarch64-unknown-linux-musl is cross-compiled and cannot execute
+          # on this x86_64 runner, so it has none). srcHash never depends on
+          # TARGET (build.rs hashes only source files), so all four must
+          # agree - assert that rather than silently trusting one of them.
+          SRC_HASH=""
+          for triple in x86_64-pc-windows-msvc x86_64-apple-darwin aarch64-apple-darwin x86_64-unknown-linux-musl; do
+            this_hash="$(awk -F': ' '{print $2}' "../../../artifacts/tui-binary-$triple/srchash.txt")"
+            if [ -z "$SRC_HASH" ]; then
+              SRC_HASH="$this_hash"
+            elif [ "$this_hash" != "$SRC_HASH" ]; then
+              echo "srcHash disagreement: $triple reports $this_hash, expected $SRC_HASH (from an earlier triple)"
+              echo "This means the five build jobs did not build the same commit - refusing to publish."
+              exit 1
+            fi
+          done
+          echo "srcHash agrees across all four testable triples: $SRC_HASH"
+
+          declare -A BIN_NAME=(
+            [x86_64-pc-windows-msvc]=agent-team-tui.exe
+            [x86_64-apple-darwin]=agent-team-tui
+            [aarch64-apple-darwin]=agent-team-tui
+            [x86_64-unknown-linux-musl]=agent-team-tui
+            [aarch64-unknown-linux-musl]=agent-team-tui
+          )
+
+          : > bin/MANIFEST
+          for triple in "${!BIN_NAME[@]}"; do
+            name="${BIN_NAME[$triple]}"
+            mkdir -p "bin/$triple"
+            cp "../../../artifacts/tui-binary-$triple/$name" "bin/$triple/$name"
+            chmod +x "bin/$triple/$name" || true
+            checksum="$(sha256sum "bin/$triple/$name" | awk '{print $1}')"
+            printf '%s\t%s\t%s\n' "$triple" "$checksum" "$SRC_HASH" >> bin/MANIFEST
+          done
+          sort -o bin/MANIFEST bin/MANIFEST
+
+      - name: Commit bin/ as github-actions[bot]
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add plugins/agent-team/tui/bin
+          if git diff --cached --quiet; then
+            echo "No binary changes to commit"
+            exit 0
+          fi
+          git commit -m "chore(tui): publish release binaries and MANIFEST"
+
+          # actions/checkout leaves a `v*` tag push in detached HEAD, so a
+          # bare `git push` fails (there is no current branch to push).
+          # Decision: this pipeline assumes release tags are cut from the
+          # tip of main, so the new commit's parent is main's current tip
+          # and this is a fast-forward. Pushing straight to refs/heads/main
+          # makes that explicit and lets git's own fast-forward check do the
+          # right thing if the assumption is wrong: a tag cut from anywhere
+          # else makes this a non-fast-forward push, which git rejects
+          # outright rather than silently rewriting main's history - fail
+          # loudly, do not force-push.
+          git push origin HEAD:refs/heads/main
