@@ -1,0 +1,36 @@
+# Default gitleaks config for the secret-scan gate.
+#
+# It exists for one reason: `gitleaks dir .` walks everything, including
+# node_modules, vendor, and virtualenvs. Those are full of fixture keys and
+# example credentials that are not the user's secrets and cannot be rotated,
+# and a gate that cries wolf on every run is a gate people switch off.
+#
+# The plugin passes this with --config unless the project has its own
+# .gitleaks.toml, which always wins.
+
+title = "agent-team secret scan"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Dependency and build directories - not the project's own code"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)vendor/''',
+  '''(^|/)\.venv/''',
+  '''(^|/)venv/''',
+  '''(^|/)site-packages/''',
+  '''(^|/)target/(debug|release)/''',
+  '''(^|/)\.next/''',
+  '''(^|/)\.nuxt/''',
+  '''(^|/)dist/''',
+  '''(^|/)build/''',
+  '''(^|/)bin/(Debug|Release)/''',
+  '''(^|/)obj/''',
+  '''(^|/)\.dart_tool/''',
+  '''(^|/)\.git/''',
+  '''(^|/)coverage/''',
+  '''\.lock$''',
+  '''(^|/)package-lock\.json$''',
+]
