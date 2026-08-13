@@ -30,7 +30,9 @@ Also check that no agent frontmatter uses `hooks`, `mcpServers`, or
   are what keep the handoff chain intact.
 - Every new agent must load its skills via the Skill tool in the body, in
   addition to declaring `skills:` in frontmatter. See `docs/HARNESS-NOTES.md` §2.
-- Keep `description` + `when_to_use` under 1,536 characters combined.
+- Keep `description` + `when_to_use` at most 1,536 characters combined — the
+  skill listing truncates beyond that (see `docs/HARNESS-NOTES.md` §6), so 1,536
+  survives intact and character 1,537 is silently lost.
 - Skills use progressive disclosure: a short `SKILL.md`, detail in `references/`.
 
 ## Bash scripts
