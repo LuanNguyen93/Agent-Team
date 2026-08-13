@@ -93,6 +93,11 @@ Trimming is not the same as dropping. A finding you leave out of the report did
 not happen as far as the next agent knows - so cut the prose, not the findings,
 and if there are genuinely thirty findings, file them and summarise by severity.
 
+The budget never applies to evidence. A failing gate's real output, the failing
+assertion, the error and its stack: those stay in full, because "Evidence, not
+paraphrase" above outranks the line count. Summarising an error into a sentence
+to save space is how a hard failure becomes a soft one.
+
 ## The closing block
 
 End every report with these three, even when they are empty — an empty list is

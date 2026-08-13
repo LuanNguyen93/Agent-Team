@@ -25,30 +25,71 @@ cat > /dev/null   # drain the hook payload; the gates only need the project dir
 # full. A change that touches a doc and a source file is a source change.
 # AGENT_TEAM_ALWAYS_GATE=1 turns the shortcut off.
 docs_only_change() {
-  local status_out="$1" line path saw_any=0
+  local status_out="$1" line path other saw_any=0
 
   while IFS= read -r line; do
     [ -z "$line" ] && continue
-    # porcelain v1: two status columns, a space, then the path.
+    local code="${line:0:2}"
     path="${line:3}"
-    # A rename reports "old -> new"; the new path is the one that exists.
-    case "$path" in *" -> "*) path="${path##* -> }" ;; esac
-    # A path with a space or a non-ASCII byte arrives quoted.
-    path="${path%\"}"
-    path="${path#\"}"
-    saw_any=1
 
-    case "$path" in
-      *.md|*.mdx|*.markdown|*.txt|*.rst|*.adoc) ;;
-      docs/*|doc/*|*/docs/*|*/doc/*) ;;
-      LICENSE|LICENSE.*|NOTICE|NOTICE.*|AUTHORS|CHANGELOG|CHANGELOG.*) ;;
-      *) return 1 ;;
+    # An unmerged or conflicted path is never prose-only, whatever it is called.
+    case "$code" in
+      UU|AA|DD|AU|UA|DU|UD) return 1 ;;
     esac
+
+    # A rename or copy has two sides, and BOTH have to be prose. Moving a module
+    # into docs/ empties a source directory while looking like a doc change.
+    other=""
+    case "$path" in
+      *" -> "*)
+        other="${path%% -> *}"
+        path="${path##* -> }"
+        ;;
+    esac
+
+    saw_any=1
+    is_prose "$path" || return 1
+    if [ -n "$other" ]; then
+      is_prose "$other" || return 1
+    fi
   done <<EOF
 $status_out
 EOF
 
   [ "$saw_any" -eq 1 ]
+}
+
+# One path. Anything not recognised as prose returns false, which gates the
+# change - the safe direction when this is wrong.
+is_prose() {
+  local path="$1"
+
+  # git quotes a path containing a space, a backslash or a non-ASCII byte, and
+  # C-escapes what is inside. Rather than decode that, gate it: an unusual path
+  # is not worth a wrong skip.
+  case "$path" in
+    '"'*) return 1 ;;
+  esac
+
+  # git reports a new untracked directory as `dir/` without listing what is in
+  # it, so the name says nothing about the contents.
+  case "$path" in
+    */) return 1 ;;
+  esac
+
+  # A manifest or lockfile is the one input the dependency audit exists for, and
+  # several of them end in .txt.
+  case "$path" in
+    requirements*.txt|constraints*.txt|CMakeLists.txt) return 1 ;;
+    */requirements*.txt|*/constraints*.txt|*/CMakeLists.txt) return 1 ;;
+  esac
+
+  case "$path" in
+    *.md|*.mdx|*.markdown|*.txt|*.rst|*.adoc) return 0 ;;
+    docs/*|doc/*|*/docs/*|*/doc/*) return 0 ;;
+    LICENSE|LICENSE.*|NOTICE|NOTICE.*|AUTHORS|CHANGELOG|CHANGELOG.*) return 0 ;;
+  esac
+  return 1
 }
 
 # Not a git repo, or git unavailable: fall through and run the gates.
@@ -60,12 +101,19 @@ if command -v git >/dev/null 2>&1 && git -C "$ROOT" rev-parse --git-dir >/dev/nu
   [ -z "$STATUS_OUT" ] && exit 0
 
   if [ "${AGENT_TEAM_ALWAYS_GATE:-}" != "1" ] && docs_only_change "$STATUS_OUT"; then
-    exit 0
+    DOCS_ONLY=1
   fi
 fi
 
+# A prose-only change skips the gates that have nothing to say about prose, but
+# NOT the secret scan: a credential pasted into a README example is one of the
+# commonest ways one gets committed, and that change is doc-only by definition.
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUTPUT=$("$DIR/run-gates.sh" 2>&1)
+if [ "${DOCS_ONLY:-0}" = "1" ]; then
+  OUTPUT=$(AGENT_TEAM_SECRET_SCAN_ONLY=1 "$DIR/run-gates.sh" 2>&1)
+else
+  OUTPUT=$("$DIR/run-gates.sh" 2>&1)
+fi
 STATUS=$?
 
 if [ $STATUS -ne 0 ]; then

@@ -151,6 +151,7 @@ earn.
 | `AGENT_TEAM_SCAN_HISTORY=1` | Scan the full git history for secrets instead of the working tree — slow |
 | `AGENT_TEAM_FORCE_AUDIT=1` | Re-run the dependency audit even when no manifest or lockfile has changed since it last passed |
 | `AGENT_TEAM_ALWAYS_GATE=1` | Run the gates even when every changed path is prose (`*.md`, `docs/**`, `LICENSE`) |
+| `AGENT_TEAM_AUDIT_TTL_HOURS=<n>` | How long a cached audit pass stays valid (default 24) |
 
 ## Agent teams
 

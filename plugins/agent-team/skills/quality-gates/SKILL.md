@@ -100,6 +100,17 @@ Three rules keep that honest:
   always re-runs the audit, which is the case the gate exists for.
 - `govulncheck` is never cached. It reports only what the code can *reach*, so
   its answer changes when the code changes, not only when `go.sum` does.
+- **It expires after 24 hours.** An advisory database gains entries against
+  dependencies nobody has touched, so an unchanged lockfile is only a good
+  answer for a while. `AGENT_TEAM_AUDIT_TTL_HOURS` sets the window.
+- Each audit tool has its own cache entry. A repository with both a `.csproj`
+  and a `package.json` runs both gates; one cannot report the other's pass.
+
+A **prose-only change** - every path in it a `.md`, a `docs/` file, a `LICENSE` -
+skips the chain entirely, because a typecheck and a test suite have nothing to
+say about a paragraph. The secret scan still runs: a credential pasted into a
+README example is doc-only by definition, and is one of the commonest ways one
+gets committed.
 
 `AGENT_TEAM_FORCE_AUDIT=1` ignores the cache. Reach for it before a release,
 where you want today's advisories rather than the ones current at the last

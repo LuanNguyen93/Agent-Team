@@ -78,30 +78,43 @@ bun.lock bun.lockb package.json requirements.txt requirements-dev.txt
 poetry.lock uv.lock Pipfile.lock pyproject.toml Cargo.lock Cargo.toml go.mod
 go.sum pubspec.lock packages.lock.json paket.lock"
 
+# A cached result older than this is discarded: an advisory database gains
+# entries against dependencies nobody touched, so "the lockfile has not changed"
+# is only a good answer for a while.
+AUDIT_TTL_HOURS="${AGENT_TEAM_AUDIT_TTL_HOURS:-24}"
+
+# .NET pins versions in the project file, and the usual layout puts those under
+# src/, not at the root. Bounded depth and pruned build output so this cannot
+# turn into a repository walk.
+audit_project_files() {
+  find . -maxdepth 4 \
+    \( -name node_modules -o -name .git -o -name obj -o -name bin \
+       -o -name target -o -name .venv -o -name vendor \) -prune -o \
+    -type f \( -name '*.csproj' -o -name '*.fsproj' \
+       -o -name 'Directory.Packages.props' \) -print 2>/dev/null | LC_ALL=C sort
+}
+
 # cksum is POSIX and present on Git Bash, macOS and Linux; md5sum is not on all
 # three. The fingerprint only has to change when the input does, not be a hash.
 audit_fingerprint() {
-  local f found=0
+  local f found=0 projects
+  projects=$(audit_project_files)
+
   # Existence is checked BEFORE the pipeline: a `found=1` set inside a piped
   # block runs in a subshell and never reaches the caller, which would silently
   # disable the cache instead of failing loudly.
   for f in $AUDIT_INPUTS; do
     [ -f "$f" ] && { found=1; break; }
   done
-  if [ "$found" -eq 0 ]; then
-    for f in *.csproj *.fsproj Directory.Packages.props; do
-      [ -e "$f" ] && { found=1; break; }
-    done
-  fi
+  [ -n "$projects" ] && found=1
   [ "$found" -eq 1 ] || return 1
 
   {
     for f in $AUDIT_INPUTS; do
       [ -f "$f" ] && { printf '%s:' "$f"; cat "$f"; }
     done
-    # A .NET project pins its versions in the project file itself.
-    for f in *.csproj *.fsproj Directory.Packages.props; do
-      [ -e "$f" ] && { printf '%s:' "$f"; cat "$f"; }
+    printf '%s' "$projects" | while IFS= read -r f; do
+      [ -n "$f" ] && { printf '%s:' "$f"; cat "$f"; }
     done
     # pipefail is on, and a block whose last command is a false test would make
     # the whole pipeline non-zero - which reads as "no fingerprint" and quietly
@@ -124,24 +137,48 @@ audit_stamp_file() {
 # gate and a failing gate both stay uncached, so the next run tries again -
 # caching either one would turn "we could not check" into "we checked" for as
 # long as nobody touches a lockfile.
+#
+# The key is per audit tool, not per gate name. Both the .NET and the JS gate
+# are called "dependency audit", and a shared key would let one report the
+# other's pass in a repository that has both.
 audit_is_cached() {
-  local name="$1" stamp fp
+  local key="$1" stamp fp line stamped_fp stamped_at now age_limit
   [ "${AGENT_TEAM_FORCE_AUDIT:-}" = "1" ] && return 1
   stamp=$(audit_stamp_file) || return 1
   [ -f "$stamp" ] || return 1
   fp=$(audit_fingerprint) || return 1
-  grep -qxF "$name $fp" "$stamp" 2>/dev/null
+
+  line=$(grep "^$key " "$stamp" 2>/dev/null | tail -1)
+  [ -n "$line" ] || return 1
+  stamped_fp=$(printf '%s' "$line" | awk '{print $2}')
+  stamped_at=$(printf '%s' "$line" | awk '{print $3}')
+  [ "$stamped_fp" = "$fp" ] || return 1
+
+  # No timestamp means a stamp from an older version of this script: treat it as
+  # expired rather than trusting it forever.
+  case "$stamped_at" in ''|*[!0-9]*) return 1 ;; esac
+  now=$(date +%s 2>/dev/null) || return 1
+  case "$now" in ''|*[!0-9]*) return 1 ;; esac
+  age_limit=$(( AUDIT_TTL_HOURS * 3600 ))
+  [ $(( now - stamped_at )) -lt "$age_limit" ] || return 1
+  return 0
 }
 
 audit_record_pass() {
-  local name="$1" stamp fp tmp
+  local key="$1" stamp fp tmp now
   stamp=$(audit_stamp_file) || return 0
   fp=$(audit_fingerprint) || return 0
-  tmp="$stamp.tmp"
-  { grep -v "^$name " "$stamp" 2>/dev/null; printf '%s %s\n' "$name" "$fp"; } > "$tmp" 2>/dev/null \
+  now=$(date +%s 2>/dev/null) || return 0
+  tmp="$stamp.$$.tmp"
+  { grep -v "^$key " "$stamp" 2>/dev/null; printf '%s %s %s\n' "$key" "$fp" "$now"; } > "$tmp" 2>/dev/null \
     && mv "$tmp" "$stamp" 2>/dev/null
   rm -f "$tmp" 2>/dev/null
   return 0
+}
+
+# The tool decides the cache key: `npm audit ...` -> npm, `pip-audit` -> pip-audit.
+audit_key_for() {
+  printf '%s' "$1" | awk '{print $1}'
 }
 
 run_audit() {
@@ -157,7 +194,7 @@ run_audit() {
   case "$cmd" in
     govulncheck*) : ;;
     *)
-      if audit_is_cached "$name"; then
+      if audit_is_cached "$(audit_key_for "$cmd")"; then
         printf 'Gate CACHED: %s passed, and no manifest or lockfile has changed since\n' "$name"
         return 0
       fi
@@ -179,7 +216,7 @@ run_audit() {
   fi
   case "$cmd" in
     govulncheck*) : ;;
-    *) audit_record_pass "$name" ;;
+    *) audit_record_pass "$(audit_key_for "$cmd")" ;;
   esac
   return 0
 }
@@ -253,6 +290,11 @@ run_secret_scan() {
 }
 
 run_secret_scan || exit 1
+
+# A prose-only change still gets the secret scan - a token pasted into a README
+# example is one of the commonest ways a credential is committed - but nothing
+# else, because no other gate has anything to say about a paragraph.
+[ "${AGENT_TEAM_SECRET_SCAN_ONLY:-}" = "1" ] && exit 0
 
 # 1. Explicit configuration wins.
 if [ -f .agent-team.json ] && command -v node >/dev/null 2>&1; then
@@ -331,9 +373,11 @@ if [ -n "$DOTNET_TARGET" ]; then
   # too old for the flag. So: read the status to decide ABSENT, and read the
   # output to decide FAILED - and read it as JSON, because the English sentence
   # is localized and would miss every finding on a non-English SDK.
-  if [ "${AGENT_TEAM_SKIP_AUDIT:-}" != "1" ] && audit_is_cached "dependency audit"; then
+  if [ "${AGENT_TEAM_SKIP_AUDIT:-}" = "1" ]; then
+    printf 'Gate SKIPPED: dependency audit (AGENT_TEAM_SKIP_AUDIT=1)\n'
+  elif audit_is_cached "dotnet-vulnerable"; then
     printf 'Gate CACHED: dependency audit passed, and no project file has changed since\n'
-  elif [ "${AGENT_TEAM_SKIP_AUDIT:-}" != "1" ]; then
+  else
     DN_LIST="dotnet list \"$DOTNET_TARGET\" package --vulnerable --include-transitive"
     VULN=$(eval "$DN_LIST --format json" 2>&1)
     DN_STATUS=$?
@@ -364,7 +408,7 @@ if [ -n "$DOTNET_TARGET" ]; then
         printf '\nDo not raise the severity threshold or ignore the advisory to clear this.\n'
         exit 1
       fi
-      audit_record_pass "dependency audit"
+      audit_record_pass "dotnet-vulnerable"
     fi
   fi
   [ "${AGENT_TEAM_SKIP_TESTS:-}" = "1" ] || {
