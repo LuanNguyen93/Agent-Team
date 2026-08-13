@@ -7,7 +7,9 @@ Set up the agent team for this project.
 1. **Detect the stack.** Read `package.json`, `pyproject.toml`, `go.mod`,
    `Cargo.toml`, `pubspec.yaml`, `*.sln` / `*.csproj`, and the lockfile that
    indicates the package manager. A repository can have more than one - a
-   `backend/` and a `web/` are two stacks, not one.
+   `backend/` and a `web/` are two stacks, not one. Also determine whether each
+   owned surface has a UI (React, Vue, Flutter, native UI code) versus being a
+   pure API, service, CLI, or library.
 2. **Establish scope.** If the repository has more than one surface, ask which
    one this team owns before going further:
 
@@ -30,9 +32,15 @@ Set up the agent team for this project.
     "reads": ["web/src/api/**"],
     "excludes": ["web/**"]
   },
+  "surfaces": { "ui": false },
   "gates": ["dotnet build --nologo", "dotnet test --nologo --no-build"]
 }
 ```
+
+`surfaces.ui` records whether the owned scope has a user-facing UI;
+`session-routing.sh` reads it to tell the session which UI-only agents and
+skills are out of play. Set it explicitly, because an absent key is read as
+"unknown", not "no UI".
 
 Order gates cheapest-and-most-localised first, so failures read clearly. In a
 monorepo, put the directory in the command (`cd backend && dotnet test`) -

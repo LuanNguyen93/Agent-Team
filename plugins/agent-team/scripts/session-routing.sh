@@ -30,4 +30,18 @@ design software in this session:
 
 Answer questions directly; this applies to build requests, not to explanations.
 MSG
+
+# Tell the session when the owned scope has no UI, so it does not waste context
+# considering UI-only agents and skills. Absent key means unknown, not "no UI" -
+# only an explicit `false` triggers the hint. Keep it to one line; see the note
+# above about cost per request.
+ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
+# Plain text match, not a JSON parser - works without node, which is often
+# absent on the Go/Python/.NET projects this hint targets most. Only an
+# explicit `false` matches; absent key, `true`, and malformed JSON all stay
+# silent because none of them contain this literal.
+if [ -f "$ROOT/.agent-team.json" ] && grep -Eq '"ui"[[:space:]]*:[[:space:]]*false' "$ROOT/.agent-team.json" 2>/dev/null; then
+  echo "no UI surface in this project - ux-designer, frontend-implementer, design-intelligence, react-performance, browser-verify are not in play"
+fi
+
 exit 0
