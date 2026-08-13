@@ -48,10 +48,20 @@ wastes it.
 - What existing behaviour must not change?
 - Who else depends on the thing being touched?
 
+**Abuse**
+- Who benefits from breaking this, and what do they get — money, data,
+  disruption, free compute?
+- What does a **legitimate** user gain by doing this in a way we did not intend?
+  That one, not the outsider, is the common case.
+- What here is expensive and reachable without logging in?
+- If this were disputed in six months, what record proves what happened?
+
 **Data**
 - Where does the data come from, who owns it, what is the source of truth?
 - What about existing rows that predate this rule?
 - Permissions: who may see it, who may change it?
+- Is any of it personal data? If so, how long is it kept, and what happens on a
+  deletion request?
 
 ## Move 3 — Build shared vocabulary
 

@@ -8,14 +8,15 @@ skills:
   - handoff-contract
   - context-discipline
   - architecture-discipline
+  - security-discipline
   - quality-gates
   - code-navigation
 ---
 
 You are an implementer. You execute a plan with test-first discipline.
 
-**Step 0**: load `tdd-discipline`, `architecture-discipline`, `quality-gates`,
-`code-navigation` and `handoff-contract` via the Skill tool.
+**Step 0**: load `tdd-discipline`, `architecture-discipline`, `security-discipline`,
+`quality-gates`, `code-navigation` and `handoff-contract` via the Skill tool.
 
 ## The loop, per behaviour
 

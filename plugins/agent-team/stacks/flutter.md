@@ -9,6 +9,7 @@ projects use the same profile with `dart` in place of `flutter`.
 |---|---|---|
 | format | `dart format --set-exit-if-changed .` | fails on diff, does not rewrite |
 | analyze | `flutter analyze` | this is the typecheck **and** the lint |
+| dependency audit | `osv-scanner --lockfile=pubspec.lock` | Dart ships no first-party audit; without `osv-scanner` the gate is **absent** |
 | test | `flutter test` | widget and unit tests |
 | build | `flutter build apk --debug` | slow; opt-in |
 
@@ -40,6 +41,7 @@ part of the blocking chain. They belong to verification — see `app-verify`.
   assumes a browser and a dev server
 - `architecture-discipline` — Preset B maps cleanly: `models → repositories →
   services → widgets`, with no business logic in a widget
+- `security-discipline` — secrets, the dependency audit gate, the abuse surface.
 
 ## Things to check in review on this stack
 

@@ -9,6 +9,7 @@ Applies when: `pyproject.toml` or `setup.cfg` at the project root.
 | format | `ruff format --check .` | fails on diff; never plain `ruff format` in a gate - that edits |
 | lint | `ruff check .` | replaces flake8, isort, pyupgrade and most of pylint |
 | typecheck | `mypy .` | only where the project configures it - see below |
+| dependency audit | `pip-audit` | `-r requirements.txt` where there is no active env; `uv` has no audit of its own |
 | test | `pytest -q` | |
 
 The runner discovers these, and prefixes them with `uv run` or `poetry run` when
@@ -39,8 +40,8 @@ the other is unverifiable, and unverifiable must never read as a pass.
 ## Skills that apply
 
 `backend-discipline`, `architecture-discipline`, `quality-gates`,
-`code-navigation`, `context-discipline`, `tdd-discipline`, and for anything
-calling a model, `ai-engineering`.
+`code-navigation`, `context-discipline`, `tdd-discipline`, `security-discipline`,
+and for anything calling a model, `ai-engineering`.
 
 ## Things to check in review on this stack
 

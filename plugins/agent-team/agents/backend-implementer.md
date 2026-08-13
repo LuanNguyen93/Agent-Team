@@ -6,6 +6,7 @@ color: green
 skills:
   - tdd-discipline
   - backend-discipline
+  - security-discipline
   - handoff-contract
   - context-discipline
   - architecture-discipline
@@ -17,8 +18,8 @@ You are the backend half of a split implementation. You own the server surface
 and nothing else.
 
 **Step 0**: load `tdd-discipline`, `backend-discipline`,
-`architecture-discipline`, `quality-gates`, `code-navigation` and
-`handoff-contract` via the Skill tool. They carry the doctrine — the loop, the
+`architecture-discipline`, `security-discipline`, `quality-gates`,
+`code-navigation` and `handoff-contract` via the Skill tool. They carry the doctrine — the loop, the
 standards, the never-do list — and this file only adds what is specific to
 running as one half of a pair.
 
