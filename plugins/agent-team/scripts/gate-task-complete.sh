@@ -15,12 +15,51 @@ cat > /dev/null   # drain the hook payload; the gates only need the project dir
 
 # Gates only tell you something when code changed. A task that read files,
 # answered a question, or wrote docs pays a full test run for no signal - on a
-# large suite that is minutes of latency per task. Skip a clean tree.
+# large suite that is minutes of latency per task.
 #
+# Every path in the change is prose. A typecheck, a test suite and a network
+# audit have nothing to say about a paragraph, so charging minutes for one is
+# how a team learns to set AGENT_TEAM_SKIP_GATES=1 and lose the gates entirely.
+#
+# Deliberately conservative: ONE non-doc path in the change and the gates run in
+# full. A change that touches a doc and a source file is a source change.
+# AGENT_TEAM_ALWAYS_GATE=1 turns the shortcut off.
+docs_only_change() {
+  local status_out="$1" line path saw_any=0
+
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    # porcelain v1: two status columns, a space, then the path.
+    path="${line:3}"
+    # A rename reports "old -> new"; the new path is the one that exists.
+    case "$path" in *" -> "*) path="${path##* -> }" ;; esac
+    # A path with a space or a non-ASCII byte arrives quoted.
+    path="${path%\"}"
+    path="${path#\"}"
+    saw_any=1
+
+    case "$path" in
+      *.md|*.mdx|*.markdown|*.txt|*.rst|*.adoc) ;;
+      docs/*|doc/*|*/docs/*|*/doc/*) ;;
+      LICENSE|LICENSE.*|NOTICE|NOTICE.*|AUTHORS|CHANGELOG|CHANGELOG.*) ;;
+      *) return 1 ;;
+    esac
+  done <<EOF
+$status_out
+EOF
+
+  [ "$saw_any" -eq 1 ]
+}
+
 # Not a git repo, or git unavailable: fall through and run the gates.
 ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
 if command -v git >/dev/null 2>&1 && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
-  if [ -z "$(git -C "$ROOT" status --porcelain 2>/dev/null)" ]; then
+  STATUS_OUT="$(git -C "$ROOT" status --porcelain 2>/dev/null)"
+
+  # Nothing changed: nothing to gate.
+  [ -z "$STATUS_OUT" ] && exit 0
+
+  if [ "${AGENT_TEAM_ALWAYS_GATE:-}" != "1" ] && docs_only_change "$STATUS_OUT"; then
     exit 0
   fi
 fi
