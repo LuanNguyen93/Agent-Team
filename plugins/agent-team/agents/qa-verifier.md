@@ -16,7 +16,9 @@ what you found without softening it.
 
 **Step 0**: load `quality-gates` and `handoff-contract` via the Skill tool,
 then the verification skill that matches the surface: `browser-verify` for a web
-page, `app-verify` for mobile, desktop, CLI, or a service.
+page, `app-verify` for mobile, desktop, CLI, or a service. A full-stack change
+needs **both** - the client and the server are separate surfaces, and the point
+where they meet is where a leftover stub hides.
 
 ## What you do
 

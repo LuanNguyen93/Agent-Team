@@ -1,6 +1,6 @@
 ---
 name: app-verify
-description: Verify a change by running the real application and driving it - mobile, desktop, CLI, or service - for the cases a browser cannot cover. Use before declaring work done on anything that is not a web page.
+description: Verify a change by running the real application and driving it - mobile, desktop, CLI, or HTTP service - for the cases a browser cannot cover. Use before declaring work done on anything that is not a web page.
 when_to_use: Verifying a Flutter, mobile, desktop, CLI, or backend service change end to end. Use browser-verify instead when the surface is a web page. Do NOT use as a substitute for the quality gates.
 ---
 
@@ -24,10 +24,17 @@ Find the run command from the project, not from memory: `pubspec.yaml` scripts,
 | Mobile native | the platform's run command, on a simulator | the platform's UI test runner |
 | Desktop | the run command | by hand, and record what you did |
 | CLI | run the binary | real arguments, including the failure cases |
-| Service | start it | `curl` / an HTTP client against the real endpoint |
+| Service | its launch profile or compose file | `curl` / an HTTP client against the real endpoint |
 
 If it does not start, **that is the finding**. Stop and report it. Do not look
 for a way to test around a broken app.
+
+An HTTP service has no screen, and the rest of this skill assumes one. Sections
+2 and 3 below still apply in spirit, but the concrete checklist for a service -
+dependency registration that only resolves at request time, configuration that
+bound to nothing, migrations not applied to the database it actually connected
+to, and the auth and error-shape paths a test never sends - is in
+`references/service-verify.md`. Use it for anything with an API surface.
 
 `flutter devices` first — no device or emulator means verification is
 **blocked**, which is a legitimate result to report. It is not a pass.

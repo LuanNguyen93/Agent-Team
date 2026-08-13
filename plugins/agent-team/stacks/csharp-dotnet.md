@@ -45,6 +45,23 @@ solution filter (`*.slnf`).
 `code-navigation`, `context-discipline`, `app-verify` (for a service surface),
 `tdd-discipline`.
 
+## How to verify a change
+
+`app-verify` → `references/service-verify.md` is the checklist. The three that
+catch the most on this stack:
+
+- **Hit every endpoint the change touched.** A missing `AddScoped` compiles and
+  boots, then throws `Unable to resolve service for type ...` on the first call.
+- **Send one request without a token**, and one with a token for the wrong
+  user. A suite that always runs authenticated never checks the gate exists.
+- **Read the startup log** for the environment and the bound URLs. Running under
+  `Development` binds a different `appsettings` than the one you are reasoning
+  about.
+
+For a change with a React frontend, `browser-verify` covers the client and this
+covers the server. Both are needed - the point where they meet is where a
+leftover stub hides.
+
 ## Things to check in review on this stack
 
 - **`async void`** anywhere except an event handler. The exception cannot be

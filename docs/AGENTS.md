@@ -329,6 +329,14 @@ separate lint gate unless the project has one — analyzers run inside the build
 and whether they block depends on `TreatWarningsAsErrors`. A .NET project with
 three gates is complete, not missing two.
 
+`app-verify` also gained `references/service-verify.md`, because its service row
+was one line in a skill otherwise shaped around a device. An API breaks on the
+things a green suite cannot see: a dependency that only resolves at request
+time, configuration that bound to nothing, migrations not applied to the
+database the process actually connected to, an endpoint never called without a
+token. `qa-verifier` now loads both verification skills on a full-stack change,
+since the client and the server are separate surfaces.
+
 `stacks/csharp-dotnet.md` carries the review items a general reviewer misses:
 `async void`, `.Result` / `.Wait()` deadlocks, a `CancellationToken` accepted
 and then not passed on, `HttpClient` per call, EF Core lazy loading in a loop or
