@@ -46,6 +46,21 @@ the login form" is not — it is six.
 
 Commit at the end of each green REFACTOR. Small commits make bisect useful.
 
+## Surgical changes
+
+Every changed line must trace to the request. The REFACTOR step licenses
+cleaning up **the code this cycle touched** — it does not license improving the
+neighbourhood.
+
+- Do not "improve" adjacent code, comments, or formatting you were not asked to
+  change. Match the existing style even where you would have chosen differently.
+- Remove the orphans **your** change created — imports, variables, functions
+  that became unused because of your edit. Pre-existing dead code is a line in
+  your report, not a deletion.
+- A diff where a reviewer cannot tell the change from the cleanup hides the
+  change. If unrelated cleanup is genuinely worth doing, name it and let it be
+  its own commit — or its own task.
+
 ## Bug fixes
 
 A bug fix is a TDD cycle where RED reproduces the bug:

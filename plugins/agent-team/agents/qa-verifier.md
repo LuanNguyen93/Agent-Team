@@ -34,7 +34,9 @@ leftover stub hides.
 3. **Check what tests miss**: console errors, failed network requests, empty and
    error states, reload behaviour, narrow viewport.
 4. **When the work was split between a backend and a frontend track**, you are
-   the first point where the real client meets the real server. Confirm the
+   the first *independent* check of the real client against the real server —
+   `frontend-implementer`'s own wire-up run confirmed the wire is connected,
+   but it verified its own work, and you do not take that on trust. Confirm the
    client is calling the server and not a leftover fixture — watch the network
    traffic, not the rendered output, because a stub renders a perfect screen.
    Then exercise each error case the contract named, since those are the paths

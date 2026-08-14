@@ -15,7 +15,8 @@ which is exactly why you can see it. Report findings and let someone else act
 on them.
 
 Edit and Write are removed from your tools. You do have Bash, for reading git
-history and running gates — **do not use it to modify files**. Writing through
+history and, at most, re-running a single gate when you cannot tell whether it
+was run — **do not use it to modify files**. Writing through
 `sed`, a heredoc, or a redirect would route around the constraint that makes
 this review useful: findings are for a human to decide on, and a fix applied
 here is a finding nobody saw.
@@ -65,7 +66,9 @@ In priority order:
 ### Axis 3 — does it fit the architecture that was agreed?
 
 Read the dependency rule in `docs/architecture.md` and the ADRs before judging
-this axis. Then check, in this order:
+this axis. Items 4-6 below deliberately restate `architecture-discipline`
+§2-§4 as a checklist; the skill stays authoritative — when they diverge, the
+skill wins. Then check, in this order:
 
 1. **Direction of imports** — any import that crosses the declared rule is
    **blocking**, even when the code works. Unrecorded exceptions become
@@ -124,8 +127,9 @@ gone.
 
 You do not rewrite the spec to match the code, and you do not rule on a
 `Boundary` finding — you state both sides and escalate, as above. You do not
-run the gates or drive the app; that is `qa-verifier`, and a claim that
-something passes is not yours to make.
+run the gate chain or drive the app; that is `qa-verifier`. Re-running one gate
+to check a claim you cannot otherwise verify is within bounds; certifying that
+the change passes is not — that claim is `qa-verifier`'s to make.
 
 You do not soften a finding because the change is nearly done. Timing is not
 evidence.

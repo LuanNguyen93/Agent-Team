@@ -63,6 +63,10 @@ normal — if the behaviour cannot be built without crossing, stop and say so.
 
 ## Build the simple thing, and know what it costs
 
+This section deliberately restates the core of `architecture-discipline` §2-§4,
+because that skill is loaded conditionally to save tokens; the skill stays
+authoritative — when the two diverge, the skill wins and this section is stale.
+
 Write the straight-line solution. Add structure only for a requirement that
 exists today — one implementation behind an interface, a forwarding layer, or a
 generic inferred from a single case are defects, not foresight. Duplicate once

@@ -44,7 +44,10 @@ case.
 ### FEATURE
 1. `analyst` — grill the request until the problem is clear (skill: `brainstorm-grilling`)
 2. `planner` — produce a plan naming real file paths
-3. `implementer` — TDD against the plan, or the parallel split below
+3. Implementation. **Read the plan's `Parallel safe:` row before choosing.**
+   `yes` → `backend-implementer` + `frontend-implementer`, spawned in one
+   message; anything else → a single `implementer`. Not choosing is choosing
+   sequentially, so say which you picked and why. Details: the split section below.
 4. `reviewer` on fresh context, always. Add `qa-verifier` in parallel only when
    there is a runnable surface to drive — a UI, an endpoint, a CLI. A pure
    library/type/refactor change with no runnable surface skips it; `reviewer`
@@ -60,7 +63,9 @@ skip `analyst` and go straight to `planner`.
 2. `pm` → `docs/prd.md` + `docs/stories/*.md`
 3. `architect` → `docs/architecture.md`, ADRs, diagrams
 4. `ux-designer` → `docs/design-system.md`, `docs/ui-spec.md` (skip if no UI)
-5. Then per story: `planner` → `implementer` → `reviewer` + `qa-verifier`
+5. Then per story: `planner` → implementation (step 3 of FEATURE — the
+   `Parallel safe:` check applies per story) → `reviewer`, plus `qa-verifier`
+   under the same runnable-surface condition as FEATURE step 4
 
 Get the user's sign-off after step 2 before spending tokens on steps 3-4. A PRD
 built on a misunderstood brief is worse than no PRD.
@@ -77,20 +82,37 @@ no error cases, means **no split** — run the single `implementer` sequentially
 and say why. Two halves guessing at the same shape costs more than doing it in
 order.
 
+When the plan's `Parallel safe:` row and the contract disagree — a `yes` over a
+contract with missing error cases — **the contract wins**. The row is the
+planner's claim; the contract is the evidence, and evidence beats claims
+(`handoff-contract`). Treat the mismatch itself as a finding to send back to
+`planner`, and run sequentially in the meantime.
+
 **The split.** When the condition holds, hand the same plan to
 `backend-implementer` and `frontend-implementer`, and **spawn them in one
 message with two tool calls**. Two consecutive messages run sequentially; the
 parallelism comes from the single dispatch, not from the intent.
+
+The observed failure here is silent: the plan says `Parallel safe: yes`, the
+split gets mentioned, and then one `implementer` does both halves anyway because
+that felt simpler than briefing two. Nobody sees it — the code lands and the
+tests pass. Treat a `yes` you did not act on as a routing error, not a shortcut.
 
 Neither half waits for the other. The frontend builds against stubs that return
 the contract's shapes. Neither half may change the contract on its own — a
 contract that turns out wrong comes back to `planner` or `architect`, and both
 halves are re-briefed together.
 
-**Then converge.** The split is not finished when both halves report green —
-green on the frontend side only means the stub worked. The frontend track's last
-step is replacing that stub with the real call and running it against the landed
-backend; if its report does not say it did, the work is incomplete, not done.
+**Then converge — and the convergence dispatch is yours.** The split is not
+finished when both halves report green; green on the frontend side only means
+the stub worked. Since both halves were spawned together, the backend had not
+landed while `frontend-implementer` ran, so it cannot have done the wire-up in
+that dispatch — its first report will say "stub in place, wire-up pending", and
+that is correct, not incomplete. When `backend-implementer` reports green, **you
+spawn `frontend-implementer` a second time** for the wire-up: replace the stub
+with the real call, run the path against the running server, report. A split
+whose convergence dispatch never happened is unfinished work, whatever the two
+first reports said.
 
 Only then do `reviewer` and `qa-verifier` run. `qa-verifier` checks the wire
 independently, because a leftover fixture renders a screen that looks correct.

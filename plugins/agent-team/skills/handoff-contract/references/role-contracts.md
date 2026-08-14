@@ -37,7 +37,7 @@ Components:            each with what it is NOT responsible for
 Mark any component or interface that does not exist yet as `[assumed]` until it
 is written. Planner cites real paths, and cannot tell yours apart otherwise.
 
-## ux-designer → implementer
+## ux-designer → implementer (or frontend-implementer, on a split)
 
 ```
 Style direction and why:

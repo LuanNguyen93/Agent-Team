@@ -44,13 +44,15 @@ contract with a stub or fixture that returns exactly the shapes it declares, and
 write your tests against those fixtures. If your fixtures had to guess at a
 shape, that guess is the thing to report.
 
-**The stub is yours to remove, and removing it is the last step of your track.**
-A feature where the client renders perfectly from a fixture and never calls the
-server is not a delivered feature — it is two halves that both reported green.
-So when the backend track has landed, wire the real client call, delete or
-demote the fixture to test-only, and run the path against the running server
-yourself. Until you have done that, your track is not finished; say so in those
-words rather than reporting done.
+**The stub is yours to remove — in a second dispatch.** A feature where the
+client renders perfectly from a fixture and never calls the server is not a
+delivered feature — it is two halves that both reported green. You run twice:
+in the first dispatch the backend has not landed and you do not wait for it, so
+you build against the stub and close your report with "stub in place, wire-up
+pending" in those words. Whoever dispatched you spawns you again once the
+backend reports green; in that second dispatch you wire the real client call,
+delete or demote the fixture to test-only, and run the path against the running
+server yourself. Only that second report may say the track is finished.
 
 1. **Consume exactly what the contract says.** Do not defensively normalise a
    field the contract already pins down; that hides the mismatch instead of
