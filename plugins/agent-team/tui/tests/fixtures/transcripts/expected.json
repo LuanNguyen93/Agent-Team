@@ -1,0 +1,219 @@
+{
+  "fixtureVersion": "1.0",
+  "generator": "measure-tokens.js --json",
+  "sessions": [
+    {
+      "id": "aaaaaaaa-1111",
+      "main": {
+        "calls": 1,
+        "cost": 0.405,
+        "output": 1000,
+        "cacheRead": 120000,
+        "cacheWrite": 8000,
+        "avgContext": 128000,
+        "maxContext": 128000
+      },
+      "sub": {
+        "calls": 3,
+        "cost": 0.034050000000000004,
+        "output": 950,
+        "cacheRead": 73000,
+        "cacheWrite": 3200,
+        "avgContext": 25400,
+        "maxContext": 52000
+      },
+      "byAgent": [
+        {
+          "agent": "(main context)",
+          "model": "claude-opus-5",
+          "calls": 1,
+          "cacheRead": 120000,
+          "cacheWrite": 8000,
+          "output": 1000,
+          "cost": 0.405
+        },
+        {
+          "agent": "agent-team:implementer",
+          "model": "claude-sonnet-5",
+          "calls": 1,
+          "cacheRead": 50000,
+          "cacheWrite": 2000,
+          "output": 300,
+          "cost": 0.027
+        },
+        {
+          "agent": "(unattributed subagent)",
+          "model": "claude-haiku-4-5",
+          "calls": 2,
+          "cacheRead": 23000,
+          "cacheWrite": 1200,
+          "output": 650,
+          "cost": 0.00705
+        }
+      ],
+      "totalCost": 0.43905000000000005,
+      "subShare": 0.07755380936112061
+    },
+    {
+      "id": "bbbbbbbb-2222",
+      "main": {
+        "calls": 2,
+        "cost": 0.054375,
+        "output": 300,
+        "cacheRead": 15000,
+        "cacheWrite": 500,
+        "avgContext": 7750,
+        "maxContext": 10500
+      },
+      "sub": {
+        "calls": 0,
+        "cost": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "avgContext": 0,
+        "maxContext": 0
+      },
+      "byAgent": [
+        {
+          "agent": "(main context)",
+          "model": "claude-opus-5",
+          "calls": 1,
+          "cacheRead": 10000,
+          "cacheWrite": 500,
+          "output": 200,
+          "cost": 0.039375
+        },
+        {
+          "agent": "(main context)",
+          "model": "(unknown model)",
+          "calls": 1,
+          "cacheRead": 5000,
+          "cacheWrite": 0,
+          "output": 100,
+          "cost": 0.015
+        }
+      ],
+      "totalCost": 0.054375,
+      "subShare": 0
+    },
+    {
+      "id": "cccccccc-3333",
+      "main": {
+        "calls": 3,
+        "cost": 0.012225,
+        "output": 167,
+        "cacheRead": 1800,
+        "cacheWrite": 0,
+        "avgContext": 600,
+        "maxContext": 1000
+      },
+      "sub": {
+        "calls": 0,
+        "cost": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "avgContext": 0,
+        "maxContext": 0
+      },
+      "byAgent": [
+        {
+          "agent": "(main context)",
+          "model": "(unknown model)",
+          "calls": 1,
+          "cacheRead": 300,
+          "cacheWrite": 0,
+          "output": 77,
+          "cost": 0.006225
+        },
+        {
+          "agent": "(main context)",
+          "model": "claude-nonexistent-9",
+          "calls": 1,
+          "cacheRead": 1000,
+          "cacheWrite": 0,
+          "output": 50,
+          "cost": 0.00525
+        },
+        {
+          "agent": "(main context)",
+          "model": "claude-sonnet-5-mini",
+          "calls": 1,
+          "cacheRead": 500,
+          "cacheWrite": 0,
+          "output": 40,
+          "cost": 0.00075
+        }
+      ],
+      "totalCost": 0.012225,
+      "subShare": 0
+    }
+  ],
+  "totals": {
+    "cost": 0.50565
+  },
+  "byAgentModel": [
+    {
+      "agent": "(main context)",
+      "model": "claude-opus-5",
+      "calls": 2,
+      "cacheRead": 130000,
+      "cacheWrite": 8500,
+      "output": 1200,
+      "cost": 0.444375
+    },
+    {
+      "agent": "agent-team:implementer",
+      "model": "claude-sonnet-5",
+      "calls": 1,
+      "cacheRead": 50000,
+      "cacheWrite": 2000,
+      "output": 300,
+      "cost": 0.027
+    },
+    {
+      "agent": "(main context)",
+      "model": "(unknown model)",
+      "calls": 2,
+      "cacheRead": 5300,
+      "cacheWrite": 0,
+      "output": 177,
+      "cost": 0.021225
+    },
+    {
+      "agent": "(unattributed subagent)",
+      "model": "claude-haiku-4-5",
+      "calls": 2,
+      "cacheRead": 23000,
+      "cacheWrite": 1200,
+      "output": 650,
+      "cost": 0.00705
+    },
+    {
+      "agent": "(main context)",
+      "model": "claude-nonexistent-9",
+      "calls": 1,
+      "cacheRead": 1000,
+      "cacheWrite": 0,
+      "output": 50,
+      "cost": 0.00525
+    },
+    {
+      "agent": "(main context)",
+      "model": "claude-sonnet-5-mini",
+      "calls": 1,
+      "cacheRead": 500,
+      "cacheWrite": 0,
+      "output": 40,
+      "cost": 0.00075
+    }
+  ],
+  "cumulative": {
+    "calls": 9,
+    "cacheRead": 209800,
+    "cacheWrite": 11700,
+    "output": 2417,
+    "cost": 0.50565
+  }
+}

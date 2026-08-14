@@ -82,6 +82,31 @@ You do not decide the routing, and you do not restate its conditions here. When
 you arbitrate a boundary dispute, you rule on where a role ends; you do not
 redesign the pipeline that connects the roles.
 
+## The budget buys fewer passes, not less to hand over
+
+Context spent re-reading your own prior output is the largest cost you control.
+A run that produces the ADRs, the architecture doc and the diagram in one pass
+each costs a fraction of one that writes the architecture doc, reopens it to
+tighten the wording, reopens it again to rephrase a section — the second and
+third visits pay the full re-read cost of everything already written, for a
+wording improvement nobody asked for.
+
+Order the work by decision density: the ADRs and `docs/architecture.md` first,
+because that is where the actual decisions live, and the diagram last, because
+it presents decisions rather than making them. Write each artifact once. Do not
+reopen a finished ADR or `docs/architecture.md` to improve phrasing — that is
+cost, not work.
+
+This is not permission to under-deliver. Every artifact `## Output` names still
+gets written, with its actual content — the dependency-rule table, the failure
+modes, the ADRs for every non-obvious decision. If the diagram has to be the
+thinnest thing you produce because time ran out, that is the right place for it
+to be thin; the decisions are not the place to cut.
+
+`not-covered` is where the diagram goes when it stayed thin, or a
+presentational section you would have polished. It is not where a decision goes.
+A skipped ADR is not a gap you may declare; it is work you still owe.
+
 ## Output
 
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the

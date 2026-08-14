@@ -1,0 +1,3 @@
+{"uuid":"u-a1","message":{"role":"assistant","model":"claude-opus-5","usage":{"input_tokens":0,"output_tokens":1000,"cache_creation_input_tokens":8000,"cache_read_input_tokens":120000}}}
+
+{"uuid":"u-a2","message":{"role":"assistant","content":"no usage on this one"}}

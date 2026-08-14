@@ -44,6 +44,14 @@ plugin's shape without reading Markdown files by hand.
 E1-1 (scanner JSON must exist and match schema), E2-1/E2-2 (mode must be
 known before the TUI decides which scan to load).
 
+**Amended 2026-08-14** (`docs/brief-analytics-tui.md` decision 3): this
+story now also depends on **E7-1** (`docs/stories/e7-1-tui-shell.md`), the
+ratatui shell — event loop, screen switching, quit, resize, error screen.
+E7-1 did not exist when this story was written; the tree view was going to
+build its own event loop. That is no longer the case — E3-1 renders into
+the shared shell E7-1 provides, shared with the analytics screen (E7-2), and
+does not implement its own event loop.
+
 ## Technical notes
 Runtime choice for the TUI itself is `architect`'s call per PRD "Resolutions
 §4" — this story is written runtime-agnostic.

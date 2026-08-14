@@ -359,5 +359,83 @@ t="--by-agent does not crash on a record with no message.model"
 t="--by-agent labels a missing model rather than dropping the row"
 case "$OUT" in *"(unknown model)"*) ok "$t";; *) nope "$t" "$OUT";; esac
 
+# --- cost is sourced from tui/shared/rates.json, not a literal in this file -
+#
+# Copies the script and rates.json into an isolated tree (preserving the
+# relative path from scripts/ to tui/shared/), mutates the opus input rate in
+# the copy, and checks the reported cost moves with it. If the script still
+# carries its own hardcoded RATES table this is a no-op and the cost will not
+# move.
+RATE_TEST="$TMP/rate-source"
+mkdir -p "$RATE_TEST/plugins/agent-team/scripts" "$RATE_TEST/plugins/agent-team/tui/shared"
+cp "$MEASURE" "$RATE_TEST/plugins/agent-team/scripts/measure-tokens.js"
+cp "$SCRIPT_DIR/../../tui/shared/rates.json" "$RATE_TEST/plugins/agent-team/tui/shared/rates.json"
+node -e '
+  const fs = require("fs");
+  const p = process.argv[1];
+  const r = JSON.parse(fs.readFileSync(p, "utf8"));
+  r.tiers.opus.input = 999;
+  fs.writeFileSync(p, JSON.stringify(r, null, 2));
+' "$RATE_TEST/plugins/agent-team/tui/shared/rates.json"
+
+RATE_PROJ="$RATE_TEST/proj"
+mkdir -p "$RATE_PROJ"
+# Cache-write tokens only, so the whole cost is driven by the (mutated) opus
+# input rate and its 1.25x multiplier - nothing else contributes.
+usage_line claude-opus-5 0 1000 0 > "$RATE_PROJ/ffffffff-7777.jsonl"
+
+RATE_OUT="$(node "$RATE_TEST/plugins/agent-team/scripts/measure-tokens.js" --project "$RATE_PROJ" --json 2>&1)"
+get_from() { printf '%s' "$1" | node -e '
+let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+  try{const o=JSON.parse(s);const v=process.argv[1].split(".").reduce((a,k)=>a&&a[/^\d+$/.test(k)?+k:k],o);
+  console.log(typeof v==="number"?v.toFixed(5):JSON.stringify(v));}catch(e){console.log("PARSE_ERR")}});' "$2"; }
+
+t="cost derives from tui/shared/rates.json rather than a hardcoded literal"
+CW_COST="$(get_from "$RATE_OUT" sessions.0.main.cost)"
+# With the mutated input rate 999: 1000 cache-write tokens * 999 * 1.25 / 1e6 = 1.24875
+[ "$CW_COST" = "1.24875" ] && ok "$t" || nope "$t" "expected 1.24875 (rate read from mutated rates.json) got $CW_COST"
+
+# --- fixture-only checks (not parity, not measure-tokens.js behaviour) -----
+FIXTURE_DIR="$SCRIPT_DIR/../../tui/tests/fixtures/transcripts"
+REGEN="$SCRIPT_DIR/../../tui/tests/regen-transcript-expected.sh"
+
+# This asserts a property of the committed FIXTURE file, not of
+# measure-tokens.js: exactly one line in cccccccc-3333.jsonl must fail
+# JSON.parse. Without this, someone silently dropping the malformed line
+# (or "fixing" it to valid JSON) makes a future Rust malformed_lines==1 test
+# pass vacuously - it would no longer be testing anything.
+t="cccccccc-3333.jsonl fixture contains exactly one line that fails JSON.parse"
+BAD_COUNT="$(node -e '
+  const fs = require("fs");
+  const lines = fs.readFileSync(process.argv[1], "utf8").split("\n");
+  let bad = 0;
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    try { JSON.parse(line); } catch (e) { bad++; }
+  }
+  console.log(bad);
+' "$FIXTURE_DIR/project/cccccccc-3333.jsonl")"
+[ "$BAD_COUNT" = "1" ] && ok "$t" || nope "$t" "expected exactly 1 malformed line, got $BAD_COUNT"
+
+# expected.json regeneration must be a pure function of the committed
+# fixture input: re-running it must leave the file byte-identical, on any
+# machine - this is what catches the absolute-path leak that broke it before.
+t="regenerating expected.json twice leaves it byte-identical"
+if [ -x "$REGEN" ] || [ -f "$REGEN" ]; then
+  bash "$REGEN" >/dev/null
+  FIRST="$(cat "$FIXTURE_DIR/expected.json")"
+  bash "$REGEN" >/dev/null
+  SECOND="$(cat "$FIXTURE_DIR/expected.json")"
+  [ "$FIRST" = "$SECOND" ] && ok "$t" || nope "$t" "expected.json changed on re-run"
+else
+  nope "$t" "regen script not found at $REGEN"
+fi
+
+t="expected.json carries no machine-specific project path"
+case "$(cat "$FIXTURE_DIR/expected.json")" in
+  *'"project"'*) nope "$t" "expected.json still contains a project field";;
+  *) ok "$t";;
+esac
+
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

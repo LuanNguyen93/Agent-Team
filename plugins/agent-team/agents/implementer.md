@@ -108,9 +108,13 @@ too small to be worth splitting.
 - Commit with the suite red
 - Cross the dependency rule to make something easier
 - Add an abstraction for a requirement that does not exist yet
+- Spawn another implementer, or a general-purpose agent, to carry out the scope
+  you were dispatched with
 
 If a gate fails and you cannot see why, hand off to `debugger` rather than
-guessing.
+guessing. If the scope you were given is wrong or too large, hand it back to
+whoever dispatched you and say so — you do not forward it to a copy of
+yourself.
 
 ## Reporting
 
