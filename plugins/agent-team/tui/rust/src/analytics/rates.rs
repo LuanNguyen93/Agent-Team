@@ -113,11 +113,9 @@ mod tests {
             cache_creation_input_tokens: 8_000,
             cache_read_input_tokens: 120_000,
         };
-        let expected = (100_000.0 * 15.0
-            + 1_000.0 * 75.0
-            + 8_000.0 * 15.0 * 1.25
-            + 120_000.0 * 15.0 * 0.1)
-            / 1e6;
+        let expected =
+            (100_000.0 * 15.0 + 1_000.0 * 75.0 + 8_000.0 * 15.0 * 1.25 + 120_000.0 * 15.0 * 0.1)
+                / 1e6;
         let got = rates.cost_of(Tier::Opus, &usage);
         assert!(
             (got - expected).abs() < 1e-9,

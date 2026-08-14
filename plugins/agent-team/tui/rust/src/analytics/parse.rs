@@ -97,7 +97,13 @@ struct SessionAcc {
     valid_lines: usize,
 }
 
-fn add_to_row(map: &mut HashMap<(String, String), RowAcc>, agent: &str, model: &str, usage: &Usage, cost: f64) {
+fn add_to_row(
+    map: &mut HashMap<(String, String), RowAcc>,
+    agent: &str,
+    model: &str,
+    usage: &Usage,
+    cost: f64,
+) {
     let key = (agent.to_string(), model.to_string());
     let row = map.entry(key).or_default();
     row.calls += 1;
@@ -184,7 +190,11 @@ pub fn parse(files: &[RawFile<'_>], rates: &Rates) -> (Vec<Session>, ParseReport
             let cost = rates.cost_of(tier, &usage);
             let ctx = context_of(&usage);
 
-            let bucket = if sub { &mut session.sub } else { &mut session.main };
+            let bucket = if sub {
+                &mut session.sub
+            } else {
+                &mut session.main
+            };
             bucket.calls += 1;
             bucket.cost += cost;
             bucket.output += usage.output_tokens;
@@ -220,10 +230,7 @@ pub fn parse(files: &[RawFile<'_>], rates: &Rates) -> (Vec<Session>, ParseReport
         }
 
         if session.valid_lines == 0 {
-            let already = report
-                .failed_files
-                .iter()
-                .any(|(f, _)| f == file.rel_path);
+            let already = report.failed_files.iter().any(|(f, _)| f == file.rel_path);
             if !already {
                 report
                     .failed_files
@@ -343,7 +350,10 @@ mod tests {
         }];
         let (sessions, report) = parse(&files, &rates());
         assert_eq!(report.malformed_lines, 1);
-        assert_eq!(sessions[0].main.calls, 1, "the valid line after it must still be counted");
+        assert_eq!(
+            sessions[0].main.calls, 1,
+            "the valid line after it must still be counted"
+        );
     }
 
     #[test]
@@ -370,9 +380,18 @@ mod tests {
     fn many_sessions_each_produce_their_own_entry() {
         let l = line("claude-opus-5", 1000, 100, None);
         let files = [
-            RawFile { rel_path: "sess1.jsonl", contents: &l },
-            RawFile { rel_path: "sess2.jsonl", contents: &l },
-            RawFile { rel_path: "sess3.jsonl", contents: &l },
+            RawFile {
+                rel_path: "sess1.jsonl",
+                contents: &l,
+            },
+            RawFile {
+                rel_path: "sess2.jsonl",
+                contents: &l,
+            },
+            RawFile {
+                rel_path: "sess3.jsonl",
+                contents: &l,
+            },
         ];
         let (sessions, _) = parse(&files, &rates());
         assert_eq!(sessions.len(), 3);

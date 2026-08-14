@@ -12,10 +12,7 @@ use ratatui::Frame;
 
 pub fn render(frame: &mut Frame, area: Rect, error: &ShellError) {
     let lines = vec![
-        Line::from(Span::styled(
-            "Error",
-            Style::default().fg(Color::Red),
-        )),
+        Line::from(Span::styled("Error", Style::default().fg(Color::Red))),
         Line::from(error.message.clone()),
         Line::from(""),
         Line::from("q quits. Tab switches screens."),
@@ -43,11 +40,7 @@ mod tests {
             .unwrap();
 
         let buffer = terminal.backend().buffer().clone();
-        let rendered: String = buffer
-            .content()
-            .iter()
-            .map(|cell| cell.symbol())
-            .collect();
+        let rendered: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
 
         assert!(rendered.contains("boom"), "rendered: {rendered}");
         assert!(rendered.contains("Tab"), "rendered: {rendered}");

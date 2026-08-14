@@ -58,13 +58,45 @@ run_case() {
 # pair under src/ - exactly the shape the reviewer named: "src/ui.rs" next to
 # "src/ui/tree.rs". A component-wise path sort (Rust's default PathBuf Ord)
 # and a byte-wise string sort disagree on the order of these two.
+# Only build.rs is real here - that is the thing under test. The manifest
+# and main.rs are intentionally minimal and dependency-free rather than
+# copied from the real crate: the real manifest and main.rs have grown a
+# [lib] target, modules, and runtime dependencies that have nothing to do
+# with srcHash, and copying them means this fixture breaks every time that
+# unrelated surface changes (as happened when [lib] was added and cargo
+# started failing target resolution before compiling). Do not re-couple
+# this fixture to the real manifest/main.rs.
+write_minimal_crate_files() {
+  fixture="$1"
+  cat > "$fixture/rust/Cargo.toml" <<'EOF'
+[package]
+name = "agent-team-tui"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "agent-team-tui"
+path = "src/main.rs"
+EOF
+  # main.rs needs just enough to print the srcHash build.rs embeds via
+  # SRC_HASH - the same env!() build.rs sets for the real crate's
+  # print_build_info() - so this fixture's --build-info matches what
+  # run_case() greps for, without pulling in the real main.rs's modules,
+  # analytics/shell dependencies, or CLI arg handling.
+  cat > "$fixture/rust/src/main.rs" <<'EOF'
+fn main() {
+    if std::env::args().nth(1).as_deref() == Some("--build-info") {
+        println!("srcHash: {}", env!("SRC_HASH"));
+    }
+}
+EOF
+}
+
 build_subdir_fixture() {
   fixture="$1"
   mkdir -p "$fixture/rust/src/ui"
-  cp "$SCRIPT_DIR/../rust/Cargo.toml" "$fixture/rust/Cargo.toml"
-  cp "$SCRIPT_DIR/../rust/Cargo.lock" "$fixture/rust/Cargo.lock"
   cp "$SCRIPT_DIR/../rust/build.rs" "$fixture/rust/build.rs"
-  cp "$SCRIPT_DIR/../rust/src/main.rs" "$fixture/rust/src/main.rs"
+  write_minimal_crate_files "$fixture"
   echo "// ui module file" > "$fixture/rust/src/ui.rs"
   echo "// ui/tree.rs submodule" > "$fixture/rust/src/ui/tree.rs"
 }
@@ -81,10 +113,8 @@ rm -rf "$fixture"
 build_deep_nesting_fixture() {
   fixture="$1"
   mkdir -p "$fixture/rust/src/a/b"
-  cp "$SCRIPT_DIR/../rust/Cargo.toml" "$fixture/rust/Cargo.toml"
-  cp "$SCRIPT_DIR/../rust/Cargo.lock" "$fixture/rust/Cargo.lock"
   cp "$SCRIPT_DIR/../rust/build.rs" "$fixture/rust/build.rs"
-  cp "$SCRIPT_DIR/../rust/src/main.rs" "$fixture/rust/src/main.rs"
+  write_minimal_crate_files "$fixture"
   echo "// a module file" > "$fixture/rust/src/a.rs"
   echo "// a/b module file" > "$fixture/rust/src/a/b.rs"
   echo "// a/b/c.rs, three levels deep" > "$fixture/rust/src/a/b/c.rs"

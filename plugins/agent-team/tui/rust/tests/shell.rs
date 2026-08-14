@@ -56,8 +56,7 @@ fn rendered_text(terminal: &Terminal<TestBackend>) -> String {
 
 #[test]
 fn fatal_action_shows_the_error_screen_and_quit_still_works() {
-    let screen: Box<dyn agent_team_tui::shell::Screen> =
-        Box::new(FatalOnFirstKey { fired: false });
+    let screen: Box<dyn agent_team_tui::shell::Screen> = Box::new(FatalOnFirstKey { fired: false });
     let mut shell = Shell::new(Registry::new(vec![screen]));
     let mut terminal = Terminal::new(TestBackend::new(40, 6)).unwrap();
 
@@ -101,7 +100,10 @@ fn tab_switches_screens_and_shift_tab_switches_back() {
     shell.draw(&mut terminal).unwrap();
     let after_tab = rendered_text(&terminal);
     assert!(after_tab.contains("two"));
-    assert!(!after_tab.contains("one"), "previous screen bled into the new frame");
+    assert!(
+        !after_tab.contains("one"),
+        "previous screen bled into the new frame"
+    );
 
     shell.handle(agent_team_tui::shell::event::Event::Key(KeyEvent::new(
         KeyCode::BackTab,

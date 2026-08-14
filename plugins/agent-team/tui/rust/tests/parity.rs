@@ -149,11 +149,17 @@ fn rust_parser_matches_measure_tokens_js_on_the_shared_fixture() {
             assert_eq!(gr["model"], wr["model"], "{id}.byAgent.model");
             assert_eq!(gr["calls"], wr["calls"], "{id}.byAgent.calls");
             assert_eq!(gr["cacheRead"], wr["cacheRead"], "{id}.byAgent.cacheRead");
-            assert_eq!(gr["cacheWrite"], wr["cacheWrite"], "{id}.byAgent.cacheWrite");
+            assert_eq!(
+                gr["cacheWrite"], wr["cacheWrite"],
+                "{id}.byAgent.cacheWrite"
+            );
             assert_eq!(gr["output"], wr["output"], "{id}.byAgent.output");
             let gc = gr["cost"].as_f64().unwrap();
             let wc = wr["cost"].as_f64().unwrap();
-            assert!(approx_eq(gc, wc, COST_TOL), "{id}.byAgent.cost: got {gc}, want {wc}");
+            assert!(
+                approx_eq(gc, wc, COST_TOL),
+                "{id}.byAgent.cost: got {gc}, want {wc}"
+            );
         }
     }
 }

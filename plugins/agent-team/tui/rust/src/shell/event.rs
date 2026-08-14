@@ -74,7 +74,10 @@ mod tests {
     fn maps_key_event() {
         assert_eq!(
             from_crossterm(key('q')),
-            Some(Event::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE)))
+            Some(Event::Key(KeyEvent::new(
+                KeyCode::Char('q'),
+                KeyModifiers::NONE
+            )))
         );
     }
 

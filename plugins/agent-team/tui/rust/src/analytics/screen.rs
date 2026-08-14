@@ -13,7 +13,7 @@ use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Row, Table, Wrap};
 use ratatui::Frame;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 /// Settled by `planner`/`ux-designer`, docs/ui-spec-analytics.md §8.2 and
@@ -236,7 +236,13 @@ impl Screen for AnalyticsScreen {
     }
 
     fn render(&mut self, frame: &mut Frame, area: Rect) {
-        render_analytics(&self.state, self.selected, self.by_agent_scroll, area, frame);
+        render_analytics(
+            &self.state,
+            self.selected,
+            self.by_agent_scroll,
+            area,
+            frame,
+        );
     }
 }
 
@@ -256,14 +262,16 @@ fn render_analytics(
                 render_error(frame, area, error);
             }
         }
-        LoadState::Loaded(data) => render_loaded(frame, area, data, selected, by_agent_scroll, None),
+        LoadState::Loaded(data) => {
+            render_loaded(frame, area, data, selected, by_agent_scroll, None)
+        }
         LoadState::Refreshing { previous } => {
             render_loaded(frame, area, previous, selected, by_agent_scroll, None);
         }
     }
 }
 
-fn render_empty(frame: &mut Frame, area: Rect, searched: &PathBuf) {
+fn render_empty(frame: &mut Frame, area: Rect, searched: &Path) {
     let text = format!(
         "No sessions found.\n\nLooked in: {}\n\nRun a session in this project, then press r to check again.",
         searched.display()
@@ -317,11 +325,11 @@ fn render_loaded(
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(1), // header
+            Constraint::Length(1),                                       // header
             Constraint::Length((data.sessions.len().min(6) + 2) as u16), // session list
-            Constraint::Length(2), // split bar + verdict
-            Constraint::Length(1), // totals
-            Constraint::Min(3),    // by-agent table
+            Constraint::Length(2),                                       // split bar + verdict
+            Constraint::Length(1),                                       // totals
+            Constraint::Min(3),                                          // by-agent table
         ])
         .split(area);
 
@@ -370,7 +378,11 @@ fn render_split_bar(frame: &mut Frame, area: Rect, session: &Session, narrow: bo
     let width: usize = if narrow { 20 } else { 40 };
     let total = session.total_cost;
     let (bar, main_pct_text, verdict) = if total == 0.0 {
-        ("-".repeat(width), "$0 / $0".to_string(), Verdict::NoBilledActivity)
+        (
+            "-".repeat(width),
+            "$0 / $0".to_string(),
+            Verdict::NoBilledActivity,
+        )
     } else {
         let main_share = session.main.cost / total;
         let filled = ((main_share * width as f64).round() as usize).min(width);
@@ -526,9 +538,7 @@ mod tests {
             rates: Rates::load(),
         };
         let mut terminal = test_terminal(100, 24);
-        terminal
-            .draw(|f| screen.render(f, f.area()))
-            .unwrap();
+        terminal.draw(|f| screen.render(f, f.area())).unwrap();
         let text = rendered_text(&terminal);
         assert!(text.contains("9732d0cf"));
         assert!(text.contains("119.86") || text.contains("30.46"));
@@ -694,7 +704,10 @@ mod tests {
 
         for _ in 0..50 {
             let start = Instant::now();
-            screen.on_key(KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE));
+            screen.on_key(KeyEvent::new(
+                KeyCode::Char('j'),
+                crossterm::event::KeyModifiers::NONE,
+            ));
             terminal.draw(|f| screen.render(f, f.area())).unwrap();
             let elapsed = start.elapsed().as_millis();
             assert!(
@@ -720,7 +733,9 @@ mod tests {
 
     #[test]
     fn jk_always_moves_session_cursor_pgup_pgdn_always_scrolls_by_agent() {
-        let sessions: Vec<Session> = (0..3).map(|i| session(&format!("s{i}"), 10.0, 1.0)).collect();
+        let sessions: Vec<Session> = (0..3)
+            .map(|i| session(&format!("s{i}"), 10.0, 1.0))
+            .collect();
         let mut screen = AnalyticsScreen {
             state: LoadState::Loaded(LoadedData {
                 sessions,
@@ -732,9 +747,15 @@ mod tests {
             project_dir: PathBuf::from("/dev/null"),
             rates: Rates::load(),
         };
-        screen.on_key(KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE));
+        screen.on_key(KeyEvent::new(
+            KeyCode::Char('j'),
+            crossterm::event::KeyModifiers::NONE,
+        ));
         assert_eq!(screen.selected, 1);
-        screen.on_key(KeyEvent::new(KeyCode::PageDown, crossterm::event::KeyModifiers::NONE));
+        screen.on_key(KeyEvent::new(
+            KeyCode::PageDown,
+            crossterm::event::KeyModifiers::NONE,
+        ));
         assert_eq!(screen.selected, 1, "PgDn must not move the session cursor");
         assert_eq!(screen.by_agent_scroll, BY_AGENT_PAGE);
     }
@@ -754,7 +775,10 @@ mod tests {
             project_dir: PathBuf::from("/does/not/exist"),
             rates: Rates::load(),
         };
-        screen.on_key(KeyEvent::new(KeyCode::Char('r'), crossterm::event::KeyModifiers::NONE));
+        screen.on_key(KeyEvent::new(
+            KeyCode::Char('r'),
+            crossterm::event::KeyModifiers::NONE,
+        ));
         // Still Refreshing: the second r was ignored, not dropped as a crash
         // or an unrelated state change.
         assert!(matches!(screen.state, LoadState::Refreshing { .. }));

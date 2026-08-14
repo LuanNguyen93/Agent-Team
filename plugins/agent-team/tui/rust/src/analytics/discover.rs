@@ -113,7 +113,10 @@ mod tests {
     use std::fs;
 
     fn tempdir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("agent-team-tui-discover-test-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "agent-team-tui-discover-test-{name}-{}",
+            std::process::id()
+        ));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
