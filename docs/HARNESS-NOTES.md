@@ -190,3 +190,35 @@ Two things it has to survive, and does:
   that works as `--transcript /tmp/x` fails when the same string arrives inside
   a JSON payload. Tests must pass a native path (`cygpath -m`) or they test the
   rewrite instead of the code.
+
+## 14. The non-blocking delivery contract differs per hook event
+
+**Measured on this repository**, in `scripts/delegation-nudge.sh`. Plain
+`stdout` with `exit 0` on a `PreToolUse` hook is **not** delivered to Claude —
+the hook can run, fire, and even burn a one-time state flag, while the agent
+never sees a single character of it. `exit 2` does reach Claude (per section 1)
+but takes the blocking path, denying the tool call — wrong for a hook whose
+whole point is to never block.
+
+The non-blocking channel that reaches Claude on `PreToolUse` is a JSON object
+on stdout with `exit 0`:
+
+```json
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"..."}}
+```
+
+This is *not* a general rule for every hook event — it is specific to
+`PreToolUse`. `scripts/context-budget.sh` (`hooks/hooks.json:3-14`, registered
+under `UserPromptSubmit`) reaches Claude with a plain `cat <<EOF` to stdout and
+no envelope, and that is correct for `UserPromptSubmit`, where plain stdout
+*is* the documented delivery mechanism. Do not read it as an envelope
+precedent — it is the counterexample that shows the contract is per-event, not
+uniform: check `hooks/hooks.json` for which event a hook is registered under
+before assuming which delivery shape applies.
+
+`delegation-nudge.sh` used plain stdout on `PreToolUse` and shipped as a
+silent no-op until this was caught by strengthening its test from "output is
+non-empty" to actually parsing the JSON and checking
+`hookSpecificOutput.additionalContext`. A test that only checks for non-empty
+output cannot tell a delivered nudge from one shouted into a channel nobody
+reads.

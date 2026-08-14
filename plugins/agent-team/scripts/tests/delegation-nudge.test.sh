@@ -58,6 +58,26 @@ edit_payload_agent() {  # transcript tool_name agent_id
 
 run() { CLAUDE_PROJECT_DIR="$PROJ" bash "$NUDGE" 2>&1; }
 
+# Asserts OUT parses as JSON, has hookSpecificOutput.hookEventName ==
+# "PreToolUse", and additionalContext contains the distinctive phrase - the
+# non-blocking PreToolUse channel per docs/HARNESS-NOTES.md.
+assert_nudge_json() {  # label output
+  local label="$1" out="$2"
+  printf '%s' "$out" | node -e '
+let s="";
+process.stdin.on("data", (d) => s += d).on("end", () => {
+  try {
+    const p = JSON.parse(s);
+    const ctx = (p.hookSpecificOutput || {}).additionalContext || "";
+    if (p.hookSpecificOutput && p.hookSpecificOutput.hookEventName === "PreToolUse"
+        && ctx.indexOf("without spawning a") !== -1) {
+      process.exit(0);
+    }
+    process.exit(1);
+  } catch (e) { process.exit(1); }
+});' && ok "$label" || nope "$label" "not valid nudge JSON: $out"
+}
+
 # --------------------------------------------------------------------------
 # counter increments, no nudge below threshold
 # --------------------------------------------------------------------------
@@ -71,6 +91,8 @@ done
 OUT="$(edit_payload Edit | run)"; RC=$?
 t="5th consecutive edit fires the nudge, still exits 0"
 { [ $RC -eq 0 ] && [ -n "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+assert_nudge_json "nudge is valid JSON with hookSpecificOutput.additionalContext" "$OUT"
 
 t="nudge references the measured cost"
 case "$OUT" in *272*) ok "$t";; *) nope "$t" "no cost figure in: $OUT";; esac
@@ -96,6 +118,7 @@ done
 OUT="$(edit_payload Edit | run)"; RC=$?
 t="nudge can fire again after delegation resets it"
 { [ $RC -eq 0 ] && [ -n "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+assert_nudge_json "post-delegation nudge is valid JSON with hookSpecificOutput.additionalContext" "$OUT"
 
 # --------------------------------------------------------------------------
 # never blocks, fails open
@@ -145,6 +168,7 @@ done
 OUT="$(edit_payload_no_transcript Edit | run)"; RC=$?
 t="a payload with no transcript_path still increments (keyed unknown) and fires at 5"
 { [ $RC -eq 0 ] && [ -n "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+assert_nudge_json "unknown-keyed nudge is valid JSON with hookSpecificOutput.additionalContext" "$OUT"
 
 # --------------------------------------------------------------------------
 # SF-4: per-transcript keying, and a non-matching tool does not increment.
@@ -157,6 +181,7 @@ done
 OUT="$(edit_payload_for "$T2" Edit | CLAUDE_PROJECT_DIR="$PROJ" bash "$NUDGE" 2>&1)"; RC=$?
 t="a different transcript has its own counter and fires at its own 5th edit"
 { [ $RC -eq 0 ] && [ -n "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+assert_nudge_json "second-transcript nudge is valid JSON with hookSpecificOutput.additionalContext" "$OUT"
 
 OUT="$(printf '{"transcript_path":"%s","tool_name":"Bash","tool_input":{"command":"ls"}}' "$(native "$T2")" \
   | CLAUDE_PROJECT_DIR="$PROJ" bash "$NUDGE" 2>&1)"; RC=$?
@@ -175,6 +200,47 @@ for i in 1 2 3 4 5 6; do
   t="subagent edit $i neither increments nor fires"
   { [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
 done
+
+# --------------------------------------------------------------------------
+# SF-1: if the JSON emit fails, the one-time fired flag must NOT be burned -
+# the nudge must still be available to fire on a later call. Simulated with a
+# stub "node" ahead of the real one on PATH: it delegates to the real node
+# except when its script argument contains "hookSpecificOutput" (the emit
+# call only), where it exits non-zero with no output - matching how the rest
+# of this suite simulates node failure/absence via PATH.
+# --------------------------------------------------------------------------
+REAL_NODE="$(command -v node)"
+STUBDIR="$TMP/stubnode"
+mkdir -p "$STUBDIR"
+cat > "$STUBDIR/node" <<STUB
+#!/usr/bin/env bash
+for a in "\$@"; do
+  case "\$a" in
+    *hookSpecificOutput*) exit 1 ;;
+  esac
+done
+exec "$REAL_NODE" "\$@"
+STUB
+chmod +x "$STUBDIR/node"
+
+T4="$TMP/t4.jsonl"
+: > "$T4"
+for i in 1 2 3 4; do
+  edit_payload_for "$T4" Edit | PATH="$STUBDIR:$PATH" CLAUDE_PROJECT_DIR="$PROJ" bash "$NUDGE" >/dev/null 2>&1
+done
+OUT="$(edit_payload_for "$T4" Edit | PATH="$STUBDIR:$PATH" CLAUDE_PROJECT_DIR="$PROJ" bash "$NUDGE" 2>&1)"; RC=$?
+t="5th edit with a failing emit exits 0 with no output"
+{ [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+GITDIR="$(git -C "$PROJ" rev-parse --absolute-git-dir 2>/dev/null || printf '%s/.git' "$PROJ")"
+FIRED_FILE="$GITDIR/agent-team/delegation-nudge-fired-t4.jsonl"
+t="a failed emit does not create the fired-flag file"
+[ ! -f "$FIRED_FILE" ] && ok "$t" || nope "$t" "fired flag exists at $FIRED_FILE"
+
+OUT="$(edit_payload_for "$T4" Edit | run)"; RC=$?
+t="the nudge still fires on a later call once emit succeeds again"
+{ [ $RC -eq 0 ] && [ -n "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+assert_nudge_json "recovered nudge is valid JSON with hookSpecificOutput.additionalContext" "$OUT"
 
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
