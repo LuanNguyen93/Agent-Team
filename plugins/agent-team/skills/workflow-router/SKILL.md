@@ -119,6 +119,23 @@ an agent, say which and why, so the skip is a decision rather than a drift.
 The exception is QUICK, where the coordination genuinely can cost more than the
 work. Even there, `reviewer` runs in its own context.
 
+## Risk is orthogonal to tier
+
+Tier and risk answer different questions. Tier sets **planning depth** — how
+much ceremony happens before code is written. Risk sets **verification
+depth** — how hard the gates work once it is. Picking the tier does not pick
+the risk, and a small tier is not evidence of low risk.
+
+A one-line QUICK fix inside elevated-risk code keeps QUICK's planning ceremony:
+still a sentence of plan, still straight to `implementer`. At verification time
+it runs the full gauntlet on top of the standard gate chain, exactly as a
+PROJECT touching the same code would. The size of the diff never downgrades
+that; what the diff touches decides it.
+
+What counts as elevated risk is not enumerated here — the risk-scaling table in
+`quality-gates` → `references/gauntlet.md` is the canonical list, so a category
+added there takes effect for routing without this file being touched.
+
 ## Rules that hold at every tier
 
 - **No code before a plan** — except QUICK, where the plan is a sentence.

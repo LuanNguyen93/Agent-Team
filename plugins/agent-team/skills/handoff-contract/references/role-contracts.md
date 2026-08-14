@@ -74,12 +74,13 @@ Parallel safe:         yes / no, and what would make it no
 An `Errors` row that says "standard error handling" is not a contract. If the
 list is empty, the tracks are not safe to run in parallel — say so.
 
-## implementer → qa-verifier, reviewer
+## implementer (or either split implementer) → qa-verifier, reviewer
 
 ```
 Built:                 behaviour by behaviour
 Tests added:           what each one asserts
 Gate results:          command, exit code, real output
+Spec approved:         yes / no — no downgrades the report's confidence
 Deviated from plan:    what and why
 Could not do:
 ```
