@@ -315,7 +315,8 @@ behind `load()` — and it should arrive with a measurement, not a guess
 |---|---|---|---|
 | stdout is not a TTY, or raw mode is unavailable | `shell/terminal.rs`, before raw mode is entered | plain-text message to stderr, exit non-zero, terminal untouched | an error line in their pipe or log — never a broken terminal |
 | Panic anywhere after raw mode | panic hook installed with raw mode | terminal restored, then the default panic output prints | a normal prompt plus a Rust panic message |
-| `SIGTERM` / Windows console close while in raw mode | signal handler | terminal restored, exit | a normal prompt |
+| `SIGTERM`/`SIGHUP`/`SIGQUIT` (Unix), console close / logoff / shutdown (Windows) while in raw mode | signal handler — `signal-hook` thread on Unix, `SetConsoleCtrlHandler` on Windows (ADR-0008) | terminal restored, exit `128+signo` | a normal prompt |
+| `SIGKILL`, `taskkill /F`, `TerminateProcess`, power loss | **nothing — uncatchable on every OS** | process dies in raw mode | a broken prompt; `reset` recovers it. Stated in the release notes, per ADR-0008's coverage table |
 | Zero screens registered | `shell/mod.rs` | renders "nothing to display"; `q` still quits | an explicit empty shell, not a black screen |
 | Rapid resize burst | `shell/event.rs` | drains the queue, keeps the last size, redraws once | smooth resize; input never lags behind rendering |
 | Project directory does not exist | `discover.rs` | `MissingProjectDir` → `LoadState::Failed` | the missing path, named, and how it was derived from the cwd |

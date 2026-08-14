@@ -10,6 +10,8 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
+ "signal-hook",
+ "winapi",
 ]
 
 [[package]]

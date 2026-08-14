@@ -118,8 +118,19 @@ time. This is `[assumed]`, not confirmed by any doc, and needs a one-line
      file list — no `build.rs` change. The bump will correctly turn the
      staleness gate red until the next release commits new binaries. That
      is expected, not a bug to fix here.
-   - No CI workflow exists yet (`.github/workflows/` absent). This plan does
-     not create one; that stays E0-1's remaining scope.
+   - **Correction (post-`bfdb25d`).** This plan originally said no CI
+     workflow existed yet (`.github/workflows/` absent). That was wrong:
+     `.github/workflows/tui-pr.yml` and `tui-release.yml` both already
+     existed and predate E7. `tui-pr.yml` triggers on
+     `plugins/agent-team/tui/**` — everything this plan touches — and
+     enforces `cargo fmt --check`, `cargo clippy --all-targets -- -D
+     warnings`, `tests/check-binaries.test.sh` and
+     `tests/src-hash-consistency.test.sh` on top of the build-and-test
+     gates named here. Working from that false assumption is exactly what
+     let the fmt, clippy and src-hash failures reach `main`: four agents
+     ran the gates this plan listed, all reported green honestly, and none
+     opened the workflow. This plan still creates no workflow — the file
+     is already there.
 
 6. **`src/shell/mod.rs`** — the `Screen` trait, `Action` enum, and registry
    re-exports, exactly the seam in `architecture-e7.md`.
@@ -244,6 +255,9 @@ without tying on cost and calls — arithmetic not yet run.
 
 ## Not covered
 
-Exact version pins (left to `cargo add` at implementation time); the CI
-workflow file itself (still absent, E0-1's scope); Windows console
+Exact version pins (left to `cargo add` at implementation time); any change to
+the CI workflow files (`.github/workflows/tui-pr.yml` and `tui-release.yml`
+already exist and predate E7 — an earlier version of this line wrongly called
+the workflow "still absent", and that assumption is what let the fmt, clippy
+and src-hash failures through in `bfdb25d`; see step 5); Windows console
 panic-hook verification (needs a real Windows terminal, not unit-testable).

@@ -8,6 +8,14 @@
   including its stated cost and chose Rust + ratatui instead. The full options
   table below is preserved, because it is what makes this decision informed —
   only the accepted row moved.
+- **Amended 2026-08-14**: the dependency list below grew by one entry per target
+  family — `signal-hook` on Unix, `winapi` on Windows — to close the
+  terminal-restore gap on termination signals. **The reasoning, the honest
+  per-platform coverage and the restore invariant live in
+  `docs/adr/0008-terminal-restore-on-termination-signals.md`, which is the
+  normative record**; this note exists so a reader of ADR-0002 learns that the
+  list grew and where to find out why. Nothing in this ADR is superseded — 0008
+  is an application of the stance recorded here, not a change to it.
 
 ## Context
 
@@ -40,7 +48,10 @@ for five target triples into the repository**. A user runs the TUI with no
 toolchain of any kind: no Rust, no Node, no compiler, no install step.
 
 Cargo dependencies are normal and expected here — `ratatui`, `crossterm`,
-`serde`/`serde_json`, and an error type. `Cargo.lock` is committed. The
+`serde`/`serde_json`, an error type, and (added 2026-08-14 per ADR-0008)
+`signal-hook` under `cfg(unix)` and `winapi` under `cfg(windows)`, both of which
+[observed, `Cargo.lock`] were already in the tree transitively via `crossterm`
+and `crossterm_winapi`. `Cargo.lock` is committed. The
 zero-dependency posture of the earlier draft was a consequence of having no
 package manager; with Cargo present, refusing dependencies would be superstition.
 

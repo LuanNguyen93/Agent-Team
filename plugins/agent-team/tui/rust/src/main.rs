@@ -48,13 +48,10 @@ fn run_shell() -> ExitCode {
         }
     };
 
-    let mut analytics: Box<dyn shell::Screen> =
+    let analytics: Box<dyn shell::Screen> =
         Box::new(AnalyticsScreen::new(project_dir, Rates::load()));
-    // The shell calls no screen's on_open for now (E7-1 scope); the single
-    // registered screen loads its own data once, here, before the first
-    // frame — matching "on_open ... where a screen does its initial load"
-    // (docs/architecture-e7.md's seam).
-    analytics.on_open();
+    // Shell::new opens the initial active screen itself now (shell/mod.rs),
+    // so this no longer hand-rolls the analytics screen's on_open call.
     let mut shell = Shell::new(Registry::new(vec![analytics]));
 
     let mut terminal = match shell::terminal::ShellTerminal::start() {

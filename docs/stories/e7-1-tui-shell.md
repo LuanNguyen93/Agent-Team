@@ -62,9 +62,38 @@ shipping their own screen.
   behind rendering.
 
 ### Failures
-- [ ] Given the process receives a termination signal (e.g. `SIGTERM`,
-  Windows console close) while in raw mode, when it exits, then the
-  terminal is still restored — not just on the designated quit key path.
+- [ ] **Termination signals — verified per platform, per ADR-0008's coverage
+  table, which is the normative statement.** The blanket "any termination
+  signal restores the terminal" this criterion used to make is not achievable
+  on any operating system and is replaced by:
+  - [ ] **Unix (macOS, Linux)**: given the shell is in raw mode, when the
+    process receives `SIGTERM`, `SIGHUP`, `SIGQUIT` or an external
+    `SIGINT`, then the terminal is restored (echo on, cursor visible, out
+    of the alternate screen) before the process exits, and the exit status
+    is `128 + signo`. Verified by `kill -TERM <pid>` from a second shell,
+    then confirming the first shell's prompt echoes typed characters
+    without `reset`.
+  - [ ] **Windows**: given the shell is in raw mode inside a Git Bash /
+    ConPTY host that outlives the process, when the console close, logoff,
+    shutdown or `Ctrl+Break` control event fires, then the terminal is
+    restored before the process exits. Verified manually — closing the
+    window is not scriptable, and `[assumed]` in ADR-0008 until someone
+    does it on a real Windows terminal. **If it turns out
+    `SetConsoleCtrlHandler` does not fire under the ConPTY host, this
+    sub-criterion is recorded as not-achievable rather than quietly
+    dropped**, and ADR-0008's coverage table is corrected.
+  - [ ] **Not achievable on any platform, and explicitly out of scope**:
+    `SIGKILL`, `SIGSTOP`, `taskkill /F` / `TerminateProcess` / Task
+    Manager "End task", power loss. These deliver no notification, so the
+    terminal is left in raw mode and `reset` is the recovery. This must be
+    stated in the release notes, not discovered.
+  - [ ] Ctrl+C typed at the keyboard is unchanged and is **not** part of
+    this criterion: crossterm delivers it as a key event in raw mode and
+    the shell quits through the normal `Drop` path.
+  - [ ] Whichever of `Drop`, the panic hook and the signal handler arrives
+    first performs the restore and the other two are observable no-ops —
+    no double-restore, no race. Asserted against ADR-0008's
+    `RAW_MODE_ACTIVE` invariant.
 - [ ] Given a panic occurs anywhere after raw mode is entered, when the
   process unwinds, then a panic hook restores the terminal before the
   default panic output prints — a panic must never leave the user's shell

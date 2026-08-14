@@ -21,3 +21,9 @@ crossterm = "0.29.0"
 ratatui = "0.30.2"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
+
+[target.'cfg(unix)'.dependencies]
+signal-hook = "0.3"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["consoleapi", "wincon", "minwindef"] }
