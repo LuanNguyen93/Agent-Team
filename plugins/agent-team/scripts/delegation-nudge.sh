@@ -88,10 +88,7 @@ THRESHOLD=5
 [ "$COUNT" -ge "$THRESHOLD" ] || exit 0
 [ -f "$FIRED_FILE" ] && exit 0
 
-{ printf '' > "$FIRED_FILE"; } 2>/dev/null || true
-
-cat <<EOF
-This is the ${COUNT}th consecutive edit in this session without spawning a
+MESSAGE="This is the ${COUNT}th consecutive edit in this session without spawning a
 subagent. The workflow-router skill names a tier of agents for work like this
 - planner, implementer, reviewer - and none of them has run.
 
@@ -100,7 +97,29 @@ delegated nothing. Every edit happened in the main context, which is billed
 again on every turn that follows it.
 
 If this stretch of edits is genuinely small, ignore this - it fires once per
-delegation gap. If not, consider handing the rest to a subagent.
-EOF
+delegation gap. If not, consider handing the rest to a subagent."
+
+# PreToolUse: plain stdout with exit 0 is NOT delivered to Claude, and exit 2
+# reaches Claude but blocks the tool call (docs/HARNESS-NOTES.md §1/§14). The
+# non-blocking channel that injects text into context is this JSON envelope
+# on stdout with exit 0. Built with node/JSON.stringify (already a dependency
+# of this script) rather than hand-rolled escaping, since the message
+# contains newlines and dollar signs.
+#
+# FIRED_FILE is only written after the emit is confirmed to have produced
+# output - if node fails or is killed mid-emit, the flag must stay unset so
+# the nudge can still fire on a later call, not be silently burned into the
+# void the way the original plain-stdout defect was.
+ENVELOPE="$(printf '%s' "$MESSAGE" | node -e '
+let s="";
+process.stdin.on("data", (d) => s += d).on("end", () => {
+  const out = { hookSpecificOutput: { hookEventName: "PreToolUse", additionalContext: s } };
+  process.stdout.write(JSON.stringify(out));
+});' 2>/dev/null)"
+
+if [ -n "$ENVELOPE" ]; then
+  printf '%s' "$ENVELOPE"
+  { printf '' > "$FIRED_FILE"; } 2>/dev/null || true
+fi
 
 exit 0
