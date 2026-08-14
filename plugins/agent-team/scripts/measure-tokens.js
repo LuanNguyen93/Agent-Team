@@ -24,18 +24,13 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// List price per million tokens. Cache write bills at 1.25x input and cache
-// read at 0.1x, so both are derived rather than typed twice and left to drift.
-//
-// These are list rates, not this account's rates. The absolute dollars are
-// therefore an estimate; the SPLIT between main and subagent - which is what
-// the tool is for - holds whatever the real rates are, because every line is
-// scaled by the same table.
-const RATES = {
-  opus:   { input: 15, output: 75 },
-  sonnet: { input: 3,  output: 15 },
-  haiku:  { input: 1,  output: 5  },
-};
+// List price per million tokens, plus the cache write/read multipliers,
+// loaded from the one file both this script and the Rust TUI read - see
+// ADR-0007. `require` parses JSON natively, so this stays zero-dependency.
+// A missing or malformed rates.json is a hard failure, not a silent
+// fallback table, per the ADR.
+const rates = require(path.join(__dirname, '..', 'tui', 'shared', 'rates.json'));
+const RATES = rates.tiers;
 
 // An unrecognised model bills as the most expensive tier. Guessing cheap would
 // make a new model silently disappear from the report it exists to appear in.
@@ -51,8 +46,8 @@ function costOf(usage, model) {
   return (
     (usage.input_tokens || 0) * r.input +
     (usage.output_tokens || 0) * r.output +
-    (usage.cache_creation_input_tokens || 0) * r.input * 1.25 +
-    (usage.cache_read_input_tokens || 0) * r.input * 0.1
+    (usage.cache_creation_input_tokens || 0) * r.input * rates.cacheWriteMultiplier +
+    (usage.cache_read_input_tokens || 0) * r.input * rates.cacheReadMultiplier
   ) / 1e6;
 }
 

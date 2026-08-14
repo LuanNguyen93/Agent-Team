@@ -50,14 +50,26 @@ fn unknown_argument_exits_one_with_not_implemented_message() {
     );
 }
 
+// No arguments now enters the interactive shell (E7-1). `Command::output()`
+// captures stdout/stderr as pipes, so stdout is never a TTY under this
+// harness — exactly the "unrecoverable startup condition" acceptance
+// criterion (docs/stories/e7-1-tui-shell.md): the shell must refuse to
+// enter raw mode and print a plain-text error instead of hanging or
+// corrupting the test runner's terminal.
 #[test]
-fn no_arguments_exits_one_with_not_implemented_message() {
+fn no_arguments_fails_with_a_not_a_tty_message_when_stdout_is_not_a_terminal() {
     let output = bin().output().expect("spawn agent-team-tui");
 
-    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(
+        output.status.code(),
+        Some(1),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
-        stderr.to_lowercase().contains("not") && stderr.to_lowercase().contains("implement"),
+        stderr.to_lowercase().contains("tty"),
         "stderr was: {stderr}"
     );
 }

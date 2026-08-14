@@ -1,0 +1,11 @@
+{
+  "rateVersion": "1.0",
+  "note": "List price per million tokens. Cache write and cache read are derived from input.",
+  "cacheWriteMultiplier": 1.25,
+  "cacheReadMultiplier": 0.1,
+  "tiers": {
+    "opus":   { "input": 15, "output": 75 },
+    "sonnet": { "input": 3,  "output": 15 },
+    "haiku":  { "input": 1,  "output": 5  }
+  }
+}

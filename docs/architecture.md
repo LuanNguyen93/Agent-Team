@@ -31,6 +31,11 @@ lag its source. All three are specified below rather than left as footnotes.
 
 ![How an edit reaches disk](./diagrams/tui-write-path.excalidraw)
 
+**Scope of this document**: the scanner ↔ TUI pipeline over the plugin tree.
+The transcript-analytics feature (E7: the ratatui shell and the analytics
+screen) is a separate data path over Claude Code's transcript JSONL, and is
+designed in [`docs/architecture-e7.md`](./architecture-e7.md).
+
 ## Constraints that drove the design
 
 | Constraint | Evidence | What it forced |
@@ -95,6 +100,10 @@ they are the ones a reasonable-looking commit will introduce:
 No further layering. There is no repository trait, no source-abstraction, no
 interface with one implementation. Every module above serves a named PRD FR
 today.
+
+**Extended by E7.** The rows for `rust/src/shell/**` and `rust/src/analytics/**`
+live in [`docs/architecture-e7.md`](./architecture-e7.md) and are canonical
+there, not duplicated here. The rows above are unchanged by E7.
 
 ## Data model
 
@@ -283,6 +292,9 @@ apply to it.
 - [ADR-0005](./adr/0005-no-persisted-scanner-cache.md) — no disk cache; re-scan
 - [ADR-0006](./adr/0006-frontmatter-parsing-and-validation-live-in-the-scanner.md)
   — one parser and one rule set, in bash; the TUI asks it to pre-check
+- [ADR-0007](./adr/0007-transcript-parity-fixture-authority-and-rate-source.md)
+  — one committed parity fixture, `measure-tokens.js` authoritative, one shared
+  `rates.json` (E7 only; does not touch the scanner pipeline)
 
 ## Failure modes
 

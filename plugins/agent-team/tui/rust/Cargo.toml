@@ -4,9 +4,20 @@ version = "0.1.0"
 edition = "2021"
 description = "Agent Team TUI (E0-1: --build-info only; full TUI lands in later stories)"
 
-# No dependencies. build.rs computes srcHash with a hand-rolled SHA-256 so the
-# release pipeline never needs network access to fetch a hashing crate.
+# build.rs hand-rolls SHA-256 rather than taking a hashing crate, so srcHash
+# is computable with no dependency resolution at all. Runtime dependencies
+# are expected and normal (ADR-0002).
+
+[lib]
+name = "agent_team_tui"
+path = "src/lib.rs"
 
 [[bin]]
 name = "agent-team-tui"
 path = "src/main.rs"
+
+[dependencies]
+crossterm = "0.29.0"
+ratatui = "0.30.2"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
