@@ -141,6 +141,10 @@ an agent, say which and why, so the skip is a decision rather than a drift.
 The exception is QUICK, where the coordination genuinely can cost more than the
 work. Even there, `reviewer` runs in its own context.
 
+`tier-guard.sh` now enforces the FEATURE/PROJECT half of this mechanically: it
+blocks the fifth undelegated Edit/Write/NotebookEdit after such an announcement
+with no `Task` call in between, once per session.
+
 ## Risk is orthogonal to tier
 
 Tier and risk answer different questions. Tier sets **planning depth** — how
@@ -165,6 +169,61 @@ added there takes effect for routing without this file being touched.
   it; it will defend its own choices.
 - **A gate failure stops the line.** Do not patch around a failing test to keep
   moving. Route to `debugger` instead.
+
+## Bound the review/debug cycle
+
+The reviewer → debugger/implementer → reviewer loop does not run until it
+happens to converge. Two budgets apply, and the dispatching context (you)
+tracks both — no agent in the loop can see the whole count on its own.
+
+- **Per-finding budget: 2 fix attempts.** A single reviewer finding gets at
+  most two implementer/debugger dispatches aimed at it. If the re-review after
+  the second attempt still finds it blocking, stop dispatching against that
+  finding and escalate — do not send a third attempt.
+- **Per-feature budget: 3 reviewer passes.** The first reviewer pass counts as
+  pass 1. A FEATURE or PROJECT story gets at most 3 reviewer passes total. A
+  4th pass never happens automatically; it requires the user's explicit
+  go-ahead.
+
+Both counters belong to the current story/feature. A new finding surfacing in
+pass 2 still spends pass 2's budget — it does not reset the counters or buy a
+new set of 3.
+
+### New finding vs re-litigated finding
+
+Before dispatching a fix for anything `reviewer` flags, check it against the
+immediately preceding pass's findings for the same file and mechanism:
+
+- **New** — a different file:line, a different mechanism, or the first pass
+  this location has been reviewed. Counts as attempt 1 against the per-finding
+  budget.
+- **Re-litigated** — same file:line and same mechanism a previous pass already
+  flagged, and the code there has not changed since (check with `git diff` or
+  `git blame` against the commit the last review ran against). A finding
+  nobody's fix touched is not new evidence; it does not restart its attempt
+  counter, and it does not get another fix dispatch — it goes straight into the
+  escalation below.
+
+`reviewer` makes this call, not the dispatching context: from its second pass
+onward in the same cycle, `reviewer` marks each finding **NEW** or
+**RE-LITIGATED** in its report (see `agents/reviewer.md`), so nobody has to
+reconstruct the history from two review reports.
+
+### Escalation message
+
+When either budget is exhausted, stop the loop and hand the user exactly this
+shape:
+
+> **Loop budget hit — [per-finding | per-feature] — <story/feature name>**
+> Finding: `<file:line>` — <one-line description>
+> Attempts: <n> (<agent>, <agent>, ...) across <n> reviewer passes
+> Latest reviewer verdict: <the still-blocking finding, one line, with evidence>
+> Options: (a) accept as a known limitation, (b) supply the missing decision or
+> context, (c) authorize one more pass, (d) route to `architect` or `debugger`
+> for root-cause work outside the normal loop
+
+Do not keep looping past a budget because the fix looks close — "close" is
+exactly the case the budget exists to stop.
 
 ## Announce the routing
 
