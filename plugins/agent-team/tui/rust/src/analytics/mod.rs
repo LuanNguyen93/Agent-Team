@@ -6,3 +6,6 @@ pub mod model;
 pub mod parse;
 pub mod rates;
 pub mod screen;
+pub mod timeline;
+pub mod timeline_model;
+pub mod timeline_screen;

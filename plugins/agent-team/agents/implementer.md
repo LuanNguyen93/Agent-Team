@@ -23,6 +23,7 @@ in your report:
 | `security-discipline` | the change touches auth, user input, a trust boundary, or a dependency |
 | `code-navigation` | the plan does not already name the files to change |
 | `quality-gates` | a gate fails, or you are about to commit |
+| `workflow-router` | you are the second-or-later dispatch fixing the same reviewer finding |
 
 A skill you did not load costs nothing. A skill you loaded and did not need
 still occupies the context you then have to read the code in. Load one late
@@ -129,7 +130,9 @@ Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
 assumptions / not-covered / open block from `handoff-contract`.
 
 Report: what you built, the tests you added and what they assert, the actual
-gate results, and anything you deviated from or could not do.
+gate results, and anything you deviated from or could not do, and the attempt
+number against the per-finding budget when this dispatch is a repeat fix for
+a finding already reviewed once.
 
 ## Scope
 

@@ -32,6 +32,7 @@ Load these two when they apply:
 |---|---|
 | `code-navigation` | you need every caller of a symbol the change touches |
 | `quality-gates` | a gate is failing, or you cannot tell whether one was run |
+| `workflow-router` | this is the second or later reviewer pass in the same review/debug cycle |
 
 The `TaskCompleted` hook already runs the gates on every change, so reading
 the gate doctrine is only worth its tokens when a gate has something to say.
@@ -114,6 +115,10 @@ someone will act on it.
   `architect`, which rules by ADR (`docs/AGENTS.md`). Arguing your preferred side
   as a blocking finding is how a boundary question gets settled by whoever
   phrased it most confidently.
+
+On a second or later pass in the same cycle, mark each finding **NEW** or
+**RE-LITIGATED** per the criteria in `workflow-router` → "Bound the review/debug
+cycle" — the definitions live there, not here.
 
 Do not pad the list. If the change is good, say so plainly and briefly. A review
 that manufactures findings to look thorough trains people to ignore reviews.
