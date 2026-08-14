@@ -32,6 +32,11 @@ pub struct LoadedFile {
 #[derive(Debug)]
 pub struct Discovered {
     pub files: Vec<LoadedFile>,
+    /// `agent-<id>.meta.json` sidecars — a separate bucket from `files` on
+    /// purpose, per E7-followups: the cost-analytics screen's `files` must
+    /// never gain a non-`.jsonl` entry (regression guard, see the test
+    /// below), so the timeline screen reads this bucket instead.
+    pub meta_files: Vec<LoadedFile>,
     pub read_at: SystemTime,
 }
 
@@ -42,6 +47,17 @@ impl Discovered {
     /// function of borrowed strings.
     pub fn as_raw_files(&self) -> Vec<RawFile<'_>> {
         self.files
+            .iter()
+            .map(|f| RawFile {
+                rel_path: &f.rel_path,
+                contents: &f.contents,
+            })
+            .collect()
+    }
+
+    /// Mirrors `as_raw_files`, over `meta_files` instead.
+    pub fn as_raw_meta_files(&self) -> Vec<RawFile<'_>> {
+        self.meta_files
             .iter()
             .map(|f| RawFile {
                 rel_path: &f.rel_path,
@@ -71,30 +87,47 @@ pub fn discover(project_dir: &Path) -> Result<Discovered, DiscoveryError> {
     }
 
     let mut files = Vec::new();
-    walk(project_dir, project_dir, &mut files)?;
+    let mut meta_files = Vec::new();
+    walk(project_dir, project_dir, &mut files, &mut meta_files)?;
 
     Ok(Discovered {
         files,
+        meta_files,
         read_at: SystemTime::now(),
     })
 }
 
-fn walk(root: &Path, dir: &Path, out: &mut Vec<LoadedFile>) -> Result<(), DiscoveryError> {
+fn walk(
+    root: &Path,
+    dir: &Path,
+    out: &mut Vec<LoadedFile>,
+    meta_out: &mut Vec<LoadedFile>,
+) -> Result<(), DiscoveryError> {
     let entries = std::fs::read_dir(dir).map_err(|e| classify(dir, e))?;
     for entry in entries {
         let entry = entry.map_err(|e| classify(dir, e))?;
         let path = entry.path();
         if path.is_dir() {
-            walk(root, &path, out)?;
-        } else if path.extension().map(|e| e == "jsonl").unwrap_or(false) {
-            let contents = std::fs::read_to_string(&path).map_err(|e| classify(&path, e))?;
-            let rel_path = path
-                .strip_prefix(root)
-                .unwrap_or(&path)
-                .to_string_lossy()
-                .replace('\\', "/");
-            out.push(LoadedFile { rel_path, contents });
+            walk(root, &path, out, meta_out)?;
+            continue;
         }
+        let name = path.file_name().map(|n| n.to_string_lossy().into_owned());
+        let is_meta = name
+            .as_deref()
+            .map(|n| n.ends_with(".meta.json"))
+            .unwrap_or(false);
+        let is_jsonl = path.extension().map(|e| e == "jsonl").unwrap_or(false);
+        if !is_meta && !is_jsonl {
+            continue;
+        }
+        let contents = std::fs::read_to_string(&path).map_err(|e| classify(&path, e))?;
+        let rel_path = path
+            .strip_prefix(root)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .replace('\\', "/");
+        let bucket = if is_meta { &mut *meta_out } else { &mut *out };
+        bucket.push(LoadedFile { rel_path, contents });
     }
     Ok(())
 }
@@ -162,6 +195,41 @@ mod tests {
         let mut rels: Vec<&str> = result.files.iter().map(|f| f.rel_path.as_str()).collect();
         rels.sort();
         assert_eq!(rels, vec!["a.jsonl", "a/subagents/b.jsonl"]);
+        fs::remove_dir_all(&root).ok();
+    }
+
+    #[test]
+    fn walk_collects_meta_json_files_into_their_own_bucket_not_files() {
+        let root = tempdir("meta");
+        fs::write(root.join("a.jsonl"), "line one").unwrap();
+        fs::create_dir_all(root.join("a/subagents")).unwrap();
+        fs::write(root.join("a/subagents/agent-1.meta.json"), "{\"id\":\"1\"}").unwrap();
+        fs::write(root.join("ignored.txt"), "not jsonl").unwrap();
+
+        let result = discover(&root).unwrap();
+        assert_eq!(result.files.len(), 1, "meta.json must never land in files");
+        assert!(result
+            .files
+            .iter()
+            .all(|f| !f.rel_path.ends_with(".meta.json")));
+        assert_eq!(result.meta_files.len(), 1);
+        assert_eq!(
+            result.meta_files[0].rel_path,
+            "a/subagents/agent-1.meta.json"
+        );
+        assert_eq!(result.meta_files[0].contents, "{\"id\":\"1\"}");
+        fs::remove_dir_all(&root).ok();
+    }
+
+    #[test]
+    fn as_raw_meta_files_mirrors_as_raw_files() {
+        let root = tempdir("meta-raw");
+        fs::write(root.join("agent-1.meta.json"), "{}").unwrap();
+        let result = discover(&root).unwrap();
+        let raw = result.as_raw_meta_files();
+        assert_eq!(raw.len(), 1);
+        assert_eq!(raw[0].rel_path, "agent-1.meta.json");
+        assert_eq!(raw[0].contents, "{}");
         fs::remove_dir_all(&root).ok();
     }
 }

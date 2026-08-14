@@ -9,6 +9,7 @@ use std::process::ExitCode;
 use agent_team_tui::analytics::discover::project_dir_for;
 use agent_team_tui::analytics::rates::Rates;
 use agent_team_tui::analytics::screen::AnalyticsScreen;
+use agent_team_tui::analytics::timeline_screen::TimelineScreen;
 use agent_team_tui::shell::{self, registry::Registry, LoopFlow, Shell};
 
 fn main() -> ExitCode {
@@ -49,10 +50,12 @@ fn run_shell() -> ExitCode {
     };
 
     let analytics: Box<dyn shell::Screen> =
-        Box::new(AnalyticsScreen::new(project_dir, Rates::load()));
+        Box::new(AnalyticsScreen::new(project_dir.clone(), Rates::load()));
+    let timeline: Box<dyn shell::Screen> =
+        Box::new(TimelineScreen::new(project_dir, Rates::load()));
     // Shell::new opens the initial active screen itself now (shell/mod.rs),
     // so this no longer hand-rolls the analytics screen's on_open call.
-    let mut shell = Shell::new(Registry::new(vec![analytics]));
+    let mut shell = Shell::new(Registry::new(vec![analytics, timeline]));
 
     let mut terminal = match shell::terminal::ShellTerminal::start() {
         Ok(t) => t,

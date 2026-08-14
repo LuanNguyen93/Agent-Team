@@ -5,6 +5,7 @@
 
 use agent_team_tui::analytics::rates::Rates;
 use agent_team_tui::analytics::screen::AnalyticsScreen;
+use agent_team_tui::analytics::timeline_screen::TimelineScreen;
 use agent_team_tui::shell::registry::Registry;
 use agent_team_tui::shell::{Action, Shell};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -111,6 +112,27 @@ fn tab_switches_screens_and_shift_tab_switches_back() {
     )));
     shell.draw(&mut terminal).unwrap();
     assert!(rendered_text(&terminal).contains("one"));
+}
+
+// E7-followups: the timeline screen joins analytics as the shell's second
+// registered screen (main.rs). Tab must cycle through both real screens'
+// titles, not just the synthetic ones used elsewhere in this file.
+#[test]
+fn tab_cycles_titles_across_the_two_real_registered_screens() {
+    let analytics: Box<dyn agent_team_tui::shell::Screen> = Box::new(AnalyticsScreen::new(
+        std::path::PathBuf::from("/does/not/exist"),
+        Rates::load(),
+    ));
+    let timeline: Box<dyn agent_team_tui::shell::Screen> = Box::new(TimelineScreen::new(
+        std::path::PathBuf::from("/does/not/exist"),
+        Rates::load(),
+    ));
+    let mut registry = Registry::new(vec![analytics, timeline]);
+    assert_eq!(registry.active().unwrap().title(), "ANALYTICS");
+    registry.next();
+    assert_eq!(registry.active().unwrap().title(), "TIMELINE");
+    registry.next();
+    assert_eq!(registry.active().unwrap().title(), "ANALYTICS");
 }
 
 #[test]
