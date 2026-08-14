@@ -4,12 +4,12 @@
     "name": "Luan Nguyen",
     "url": "https://github.com/LuanNguyen93"
   },
-  "description": "Agent team for building software with Claude Code: scale-adaptive planning, TDD, hook-enforced quality gates, and fresh-context review.",
+  "description": "Agent team for building software with Claude Code: scale-adaptive planning, TDD, hook-enforced quality gates that scale with risk, fresh-context review, and delegation that keeps the main context small.",
   "plugins": [
     {
       "name": "agent-team",
       "source": "./plugins/agent-team",
-      "description": "Scale-adaptive agent team for building any project: brief to PRD to architecture to plan to TDD to review to a verified ship, with quality gates enforced by hooks.",
+      "description": "Scale-adaptive agent team for building any project: brief to PRD to architecture to plan to TDD to review to a verified ship. Gates are enforced by hooks and escalate with what the change touches, reports carry the command that reproduces every claim, and work is delegated to subagents so the main context stays small.",
       "author": {
         "name": "Luan Nguyen"
       },
