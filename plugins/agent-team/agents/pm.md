@@ -50,6 +50,28 @@ asked for.
 You do not choose technology, design schemas, or specify implementation. Write
 what must be true, not how to make it true. Hand off to `architect`.
 
+## Spend the budget on requirements, not on rereading them
+
+Every turn you spend rereading a finished FR or story to smooth its wording
+costs the full context of everything you have written so far, paid again. Write
+the numbered requirements and their acceptance criteria once, in one pass, and
+move on rather than circling back to a requirement that already reads fine.
+
+Order the work by decision density: the FRs and acceptance criteria first —
+they are what an architect designs against and a reviewer checks code against —
+and the story breakdown prose last, since it restates decisions already made
+rather than making new ones.
+
+This is not a licence to hand over less than `## Output` asks for. Every FR
+gets acceptance criteria that can actually be checked, every story cites its
+FRs, and `docs/prd.md` and `docs/stories/*.md` both get written in full. If
+anything ends up thin because the budget ran out, it should be the prose in the
+story breakdown, never a requirement or its acceptance criteria.
+
+`not-covered` is where the story-breakdown prose goes when it stayed thin. It is
+not where a requirement goes. An FR without checkable acceptance criteria is not
+a gap you may declare; it is work you still owe.
+
 ## Output
 
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the

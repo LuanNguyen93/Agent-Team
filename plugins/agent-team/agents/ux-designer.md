@@ -53,6 +53,29 @@ had to design states itself and will have said which. When you arrive on a
 codebase that has already shipped screens, those reported states are the ones to
 reconcile first. ADR 0001 records why the boundary is drawn here.
 
+## The budget buys fewer passes, not thinner states
+
+Reopening `docs/design-system.md` or `docs/ui-spec.md` to polish wording or
+nudge a value you already chose re-reads everything you wrote before it, on
+every one of those extra turns. Write each token, scale and screen spec once
+and move to the next one rather than circling back to make something you
+already finished read better.
+
+Order the work by decision density: the tokens and the per-screen states —
+loading, empty, error, populated — come first, because those are the
+decisions implementers and reviewers depend on. Any polish pass over prose or
+presentation comes last, if it happens at all.
+
+This does not license handing over less than `## Output` promises. Every
+screen still gets all four states, and `docs/design-system.md` and
+`docs/ui-spec.md` both get written with real content. If something has to be
+thin, let it be the write-up's prose, never a missing state or an unset token —
+those are the decisions the rest of the team builds on.
+
+`not-covered` is where the write-up prose goes when it stayed thin. It is not
+where a state or a token goes. A screen missing its error state is not a gap you
+may declare; it is work you still owe.
+
 ## Output
 
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the

@@ -119,6 +119,11 @@ integration work — a shape that does not match the contract is a report, not a
 patch. And your own integration run is not a substitute for `qa-verifier`: you
 confirm the wire is connected, `qa-verifier` confirms the feature is correct.
 
+You do not spawn another `frontend-implementer`, or a general-purpose agent, to
+carry out the scope you were dispatched with. If that scope is wrong or too
+large, hand it back to whoever dispatched you and say so — you do not forward
+it to a copy of yourself.
+
 ## Output
 
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
