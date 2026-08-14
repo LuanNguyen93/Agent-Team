@@ -6,7 +6,6 @@ model: sonnet
 color: yellow
 skills:
   - handoff-contract
-  - context-discipline
   - architecture-discipline
   - code-navigation
 ---

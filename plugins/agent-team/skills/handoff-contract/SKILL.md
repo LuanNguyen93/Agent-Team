@@ -42,6 +42,13 @@ Every `[observed]` claim carries its evidence in the report itself:
 
 Paraphrasing an error is where a hard failure becomes a soft one. Paste it.
 
+**Every metric or gate result carries the single command that reproduces it.**
+"92% coverage" or "handles 1,000 req/s" with no command attached is not
+evidence, it is a claim the reader has to trust — and trusting instead of
+verifying is the exact failure this skill exists to close. A number with no
+reproducing command is `[inferred]` at best, not `[observed]`: downgrade it
+rather than reporting it bare.
+
 ## Report negative results
 
 "Searched for a rate limiter, there is none" is as valuable as finding one.
@@ -97,6 +104,16 @@ The budget never applies to evidence. A failing gate's real output, the failing
 assertion, the error and its stack: those stay in full, because "Evidence, not
 paraphrase" above outranks the line count. Summarising an error into a sentence
 to save space is how a hard failure becomes a soft one.
+
+## Approval status
+
+A report on implemented work states whether the plan or spec it implements was
+approved by the user, not just that it exists. Code built against a spec
+nobody signed off on can be flawless and still be the wrong thing — the
+report is the one place that gap is visible before the work compounds.
+Unapproved spec is not disqualifying, but it is not silent either: flag it as
+reduced confidence (`[assumed] spec approved by the user`) rather than
+reporting the build as if approval were `[observed]`.
 
 ## The closing block
 

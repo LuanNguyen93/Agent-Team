@@ -1,0 +1,151 @@
+name: TUI PR checks
+
+# Runs on every PR that touches the TUI's Rust crate or its bash wrapper
+# scripts. docs/architecture.md "Binary distribution" and ADR-0002 require
+# this to run on Windows, macOS and Linux, because a committed binary that
+# only ever built on one OS is not verified for the other four.
+on:
+  pull_request:
+    paths:
+      - "plugins/agent-team/tui/**"
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        # manifest_triple is which bin/MANIFEST line this job's native build
+        # corresponds to, for the --build-info cross-check below. srcHash
+        # never depends on TARGET (build.rs hashes only source files), so a
+        # host build is enough to get it even though ubuntu-latest's default
+        # target is glibc, not the musl triple actually shipped.
+        include:
+          - os: windows-latest
+            manifest_triple: x86_64-pc-windows-msvc
+          - os: macos-13
+            manifest_triple: x86_64-apple-darwin
+          - os: macos-14
+            manifest_triple: aarch64-apple-darwin
+          - os: ubuntu-latest
+            manifest_triple: x86_64-unknown-linux-musl
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: plugins/agent-team/tui
+    steps:
+      # fetch-depth: 0 (full history), not the default shallow clone:
+      # check-binaries.sh's empty-state guard runs `git log -- bin` to tell
+      # "bin/ has never existed" (exit 2, non-blocking) apart from "bin/ was
+      # deleted after a real release" (exit 1, blocking) - ADR-0002 "Why exit
+      # 2 is non-blocking, and the guard rail it needs". A shallow clone
+      # cannot answer that query either way, and the script reports the
+      # guard UNAVAILABLE and blocks rather than assuming a clean bootstrap
+      # on a query it cannot actually run.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: cargo fmt --check
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo fmt --check
+
+      - name: cargo clippy -D warnings
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: cargo test
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo test
+
+      - name: bash tests/check-binaries.test.sh
+        run: bash tests/check-binaries.test.sh
+
+      - name: bash tests/src-hash-consistency.test.sh
+        run: bash tests/src-hash-consistency.test.sh
+
+      # check-binaries.sh exits 2 for "nothing released yet" (no bin/, no
+      # MANIFEST) - that state must not block a PR, or this workflow is red
+      # until the first release exists while the first release is gated
+      # behind a PR (B4, authorised as a spec change from the story's
+      # original "empty -> exit 1" wording). Exit 1 (a real mismatch) and a
+      # SKIPPED result (no SHA-256 tool - never a silent pass, per
+      # CLAUDE.md) both still fail the job.
+      - name: check-binaries.sh (block on a real mismatch, not on "nothing released yet")
+        run: |
+          set +e
+          # 2>&1: a usage error (exit 64) writes to stderr, and stdout-only
+          # capture would show an empty log line under a reassuring "not
+          # blocking this PR" for what is actually a broken invocation (C1).
+          OUTPUT="$(./check-binaries.sh 2>&1)"
+          STATUS=$?
+          echo "$OUTPUT"
+          if [ "$STATUS" -eq 2 ]; then
+            echo "check-binaries.sh: nothing released yet - not blocking this PR."
+            # Non-blocking is not the same as silent (ADR-0002): a green tick
+            # alone does not tell a reviewer that the binary-staleness gate
+            # did not actually run its comparison this time. The job summary
+            # puts that on the PR's Checks tab even though the job succeeds.
+            {
+              echo "### check-binaries.sh: nothing released yet (not blocking)"
+              echo "bin/ and bin/MANIFEST do not exist, confirmed via git history (bin/ has never been committed). This PR was **not** blocked on binary staleness because there is nothing to check yet - this is expected before the first release, but is surfaced here so it is never mistaken for a real pass."
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$STATUS" -ne 0 ]; then
+            echo "check-binaries.sh failed (exit $STATUS)"
+            exit 1
+          fi
+          if printf '%s' "$OUTPUT" | grep -q "SKIPPED"; then
+            echo "check-binaries.sh reported SKIPPED - this must not count as a pass"
+            exit 1
+          fi
+
+      - name: cargo build --release (native, for the --build-info cross-check)
+        working-directory: plugins/agent-team/tui/rust
+        run: cargo build --release
+
+      # check-binaries.sh only compares MANIFEST's srcHash column to a
+      # recomputation from source - it never asks the binary itself what it
+      # embedded, so a hand-edited MANIFEST column would report a clean
+      # bill of health for five stale binaries. This step closes that gap by
+      # asking the binary directly, on the four triples that can run their
+      # own binary natively on a GitHub-hosted runner. It does NOT cover
+      # aarch64-unknown-linux-musl - that triple is cross-compiled in the
+      # release workflow and cannot execute here or there (ADR-0002 accepts
+      # it as built-but-unexercised); this is 4-of-5 coverage, not full
+      # coverage.
+      - name: Verify --build-info srcHash matches bin/MANIFEST for this triple
+        run: |
+          set -eu
+          if [ ! -f bin/MANIFEST ]; then
+            echo "No bin/MANIFEST yet (nothing released) - skipping the build-info cross-check."
+            exit 0
+          fi
+
+          BIN="rust/target/release/agent-team-tui"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            BIN="rust/target/release/agent-team-tui.exe"
+          fi
+
+          ACTUAL_HASH="$("$BIN" --build-info | awk -F': ' '/^srcHash/ {print $2}')"
+          MANIFEST_HASH="$(awk -F'\t' -v t="${{ matrix.manifest_triple }}" '$1==t {print $3}' bin/MANIFEST)"
+
+          if [ -z "$MANIFEST_HASH" ]; then
+            echo "No MANIFEST line for ${{ matrix.manifest_triple }} yet - skipping."
+            exit 0
+          fi
+
+          if [ "$ACTUAL_HASH" != "$MANIFEST_HASH" ]; then
+            echo "srcHash mismatch for ${{ matrix.manifest_triple }}: the binary embeds $ACTUAL_HASH, bin/MANIFEST says $MANIFEST_HASH"
+            exit 1
+          fi
+          echo "OK: --build-info srcHash matches bin/MANIFEST for ${{ matrix.manifest_triple }}"
+
+      # TODO(E1): the scanner (tui/scanner.sh) and its test suite do not exist
+      # yet - this story only wires CI around the Rust build and
+      # check-binaries.sh. Add a "scanner tests" step here once E1 lands
+      # tui/scanner.sh and tui/tests/*.test.sh for it.

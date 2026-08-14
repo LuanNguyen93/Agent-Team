@@ -68,6 +68,16 @@ If the project defines no gate for a step, **say the gate is absent**. Do not
 substitute your own command and report a pass; an invented `tsc --noEmit` on a
 project with no TypeScript config proves nothing.
 
+## When the change is high-risk
+
+The chain above proves the code satisfies its own tests. It does not prove the
+tests assert enough — a green suite an agent wrote alongside the code it
+tests tends to pass by construction, not by scrutiny. For a change whose risk
+is elevated — the risk-scaling table in `references/gauntlet.md` is the
+canonical list of what counts — run that escalation catalog on top of the
+standard chain, regardless of how small the diff looks. Everything else stays
+at the standard chain.
+
 ## Reading results
 
 A gate passes only on a clean exit code. Specifically:
