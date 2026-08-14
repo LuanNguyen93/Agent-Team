@@ -2,7 +2,7 @@
 name: reviewer
 description: Reviews a change on fresh context along three axes - compliance with the stated spec, engineering standards, and fit with the agreed architecture. Read-only. Use PROACTIVELY immediately after code is written or modified, always in a context that did not write it. Do NOT use to fix what it finds.
 disallowedTools: Edit, Write, NotebookEdit
-model: opus
+model: sonnet
 color: orange
 skills:
   - handoff-contract

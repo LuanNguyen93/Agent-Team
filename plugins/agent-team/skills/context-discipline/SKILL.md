@@ -57,6 +57,18 @@ The agent chain in this plugin is already this pattern: analyst, planner,
 implementer and reviewer each hold their own context and pass an artifact. The
 leak is when the main context does the work itself instead of delegating.
 
+This applies as much to fetching as to searching. WebFetch, WebSearch, and any
+long document or API response are payloads, and a payload read into the main
+context stays there for the rest of the session, re-read on every turn that
+follows. Measured on this repository: one session's main context took 227k
+tokens of WebFetch across 16 calls - 36% of a 729k context - and paid for it on
+every subsequent turn. Fetch research material inside a subagent and keep only
+its distilled report; the raw payload dies with that context instead of being
+re-read for the rest of the session. `guard-heavy-load.sh` is the enforcement
+backstop for this - it blocks a WebFetch or Skill load into an already-large
+context once - but the hook is a backstop for a mistake, not the reason to do
+it right; fetch in a subagent by default.
+
 ## 3. Keep evidence, not transcript
 
 When you summarise what happened, keep:
