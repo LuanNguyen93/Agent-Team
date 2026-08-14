@@ -114,6 +114,115 @@ fn tab_switches_screens_and_shift_tab_switches_back() {
 }
 
 #[test]
+fn shell_new_opens_the_initial_screen() {
+    struct Recording {
+        opens: std::rc::Rc<std::cell::RefCell<Vec<&'static str>>>,
+        name: &'static str,
+    }
+    impl agent_team_tui::shell::Screen for Recording {
+        fn title(&self) -> &str {
+            self.name
+        }
+        fn render(&mut self, _frame: &mut ratatui::Frame, _area: ratatui::layout::Rect) {}
+        fn on_key(&mut self, _key: KeyEvent) -> Action {
+            Action::Ignored
+        }
+        fn on_open(&mut self) -> Action {
+            self.opens.borrow_mut().push(self.name);
+            Action::Redraw
+        }
+    }
+
+    let opens = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+    let screen: Box<dyn agent_team_tui::shell::Screen> = Box::new(Recording {
+        opens: opens.clone(),
+        name: "only",
+    });
+    let _shell = Shell::new(Registry::new(vec![screen]));
+
+    assert_eq!(*opens.borrow(), vec!["only"]);
+}
+
+#[test]
+fn tab_switch_calls_on_open_on_the_newly_active_screen_every_time() {
+    struct Recording {
+        opens: std::rc::Rc<std::cell::RefCell<Vec<&'static str>>>,
+        name: &'static str,
+    }
+    impl agent_team_tui::shell::Screen for Recording {
+        fn title(&self) -> &str {
+            self.name
+        }
+        fn render(&mut self, frame: &mut ratatui::Frame, area: ratatui::layout::Rect) {
+            frame.render_widget(ratatui::widgets::Paragraph::new(self.name), area);
+        }
+        fn on_key(&mut self, _key: KeyEvent) -> Action {
+            Action::Ignored
+        }
+        fn on_open(&mut self) -> Action {
+            self.opens.borrow_mut().push(self.name);
+            Action::Redraw
+        }
+    }
+
+    let opens = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+    let screens: Vec<Box<dyn agent_team_tui::shell::Screen>> = vec![
+        Box::new(Recording {
+            opens: opens.clone(),
+            name: "one",
+        }),
+        Box::new(Recording {
+            opens: opens.clone(),
+            name: "two",
+        }),
+    ];
+    let mut shell = Shell::new(Registry::new(screens));
+    // The initial screen opened once, from Shell::new.
+    assert_eq!(*opens.borrow(), vec!["one"]);
+
+    shell.handle(agent_team_tui::shell::event::Event::Key(KeyEvent::new(
+        KeyCode::Tab,
+        KeyModifiers::NONE,
+    )));
+    assert_eq!(*opens.borrow(), vec!["one", "two"]);
+
+    shell.handle(agent_team_tui::shell::event::Event::Key(KeyEvent::new(
+        KeyCode::BackTab,
+        KeyModifiers::SHIFT,
+    )));
+    // Re-entry re-opens: switching back to "one" fires on_open again.
+    assert_eq!(*opens.borrow(), vec!["one", "two", "one"]);
+}
+
+#[test]
+fn on_open_returning_fatal_shows_the_error_screen() {
+    struct FatalOnOpen;
+    impl agent_team_tui::shell::Screen for FatalOnOpen {
+        fn title(&self) -> &str {
+            "fatal-open"
+        }
+        fn render(&mut self, frame: &mut ratatui::Frame, area: ratatui::layout::Rect) {
+            frame.render_widget(ratatui::widgets::Paragraph::new("ok"), area);
+        }
+        fn on_key(&mut self, _key: KeyEvent) -> Action {
+            Action::Ignored
+        }
+        fn on_open(&mut self) -> Action {
+            Action::Fatal(agent_team_tui::shell::ShellError {
+                message: "load failed".to_string(),
+            })
+        }
+    }
+
+    let screen: Box<dyn agent_team_tui::shell::Screen> = Box::new(FatalOnOpen);
+    let mut shell = Shell::new(Registry::new(vec![screen]));
+    let mut terminal = Terminal::new(TestBackend::new(40, 6)).unwrap();
+
+    shell.draw(&mut terminal).unwrap();
+    assert!(rendered_text(&terminal).contains("load failed"));
+}
+
+#[test]
 fn zero_screens_renders_nothing_to_display_and_quit_still_works() {
     let mut shell = Shell::new(Registry::new(Vec::new()));
     let mut terminal = Terminal::new(TestBackend::new(40, 6)).unwrap();
@@ -133,10 +242,10 @@ fn analytics_screen_loads_the_real_fixture_and_renders_through_the_shell() {
     let fixture_project = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../tests/fixtures/transcripts/project");
 
-    let mut screen: Box<dyn agent_team_tui::shell::Screen> =
+    let screen: Box<dyn agent_team_tui::shell::Screen> =
         Box::new(AnalyticsScreen::new(fixture_project, Rates::load()));
-    screen.on_open();
 
+    // Shell::new opens the initial active screen itself.
     let mut shell = Shell::new(Registry::new(vec![screen]));
     let mut terminal = Terminal::new(TestBackend::new(120, 30)).unwrap();
     shell.draw(&mut terminal).unwrap();

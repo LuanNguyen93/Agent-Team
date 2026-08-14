@@ -14,12 +14,38 @@ prose that another Claude reads at runtime, so the writing is the product.
 
 ## Before committing
 
+From the repo root:
+
 ```bash
 claude plugin validate ./plugins/agent-team
 ```
 
 Also check that no agent frontmatter uses `hooks`, `mcpServers`, or
 `permissionMode` — plugins ignore all three silently.
+
+If the change touches `plugins/agent-team/tui/**`, `.github/workflows/tui-pr.yml`
+fires and enforces more than a plan's gate list usually names. A green
+`cargo build` and `cargo test` is *not* evidence that CI will pass — commit
+`bfdb25d` shipped three CI failures with every agent honestly reporting green.
+Run the real list, from these directories:
+
+```bash
+# from plugins/agent-team/tui/rust
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo build --release          # needed by the --build-info cross-check below
+
+# from plugins/agent-team/tui
+bash tests/check-binaries.test.sh
+bash tests/src-hash-consistency.test.sh
+./check-binaries.sh            # exit 2 = nothing released yet, fine;
+                               # exit 1 or a SKIPPED line = failure
+```
+
+CI then checks the built binary's `--build-info` `srcHash` against its
+`bin/MANIFEST` line, and runs the whole matrix on Windows, macOS x86 and arm,
+and Linux — so a local pass on one OS is a partial answer, not a complete one.
 
 ## Writing rules
 

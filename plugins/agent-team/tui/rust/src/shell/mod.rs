@@ -72,10 +72,31 @@ pub struct Shell {
 }
 
 impl Shell {
+    /// Opens the initial active screen (if any) before returning, so the
+    /// invariant "a screen that becomes active has had on_open called" holds
+    /// from the very first frame — callers no longer hand-roll this the way
+    /// `main.rs` used to.
     pub fn new(registry: registry::Registry) -> Self {
-        Self {
+        let mut shell = Self {
             registry,
             error: None,
+        };
+        shell.open_active();
+        shell
+    }
+
+    /// Calls `on_open` on the currently active screen, if any, and routes a
+    /// `Fatal` result to the shell's error screen. Re-entry re-opens: every
+    /// time a screen becomes active — including switching back to one that
+    /// was already open — it gets a fresh `on_open`. A screen that wants to
+    /// keep state across a switch (e.g. scroll position) is responsible for
+    /// caching it itself; the shell would rather show a stale-but-refreshed
+    /// screen than a fresh-looking one showing minutes-old data.
+    fn open_active(&mut self) {
+        if let Some(screen) = self.registry.active() {
+            if let Action::Fatal(err) = screen.on_open() {
+                self.error = Some(err);
+            }
         }
     }
 
@@ -119,10 +140,12 @@ impl Shell {
         }
         if is_next_screen(&key) {
             self.registry.next();
+            self.open_active();
             return LoopFlow::Continue;
         }
         if is_prev_screen(&key) {
             self.registry.prev();
+            self.open_active();
             return LoopFlow::Continue;
         }
         if let Some(screen) = self.registry.active() {
