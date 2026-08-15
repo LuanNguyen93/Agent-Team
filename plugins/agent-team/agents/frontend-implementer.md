@@ -6,6 +6,7 @@ color: green
 skills:
   - tdd-discipline
   - react-performance
+  - typescript-discipline
   - handoff-contract
 ---
 

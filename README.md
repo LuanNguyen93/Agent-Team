@@ -99,19 +99,19 @@ than by instruction.
 
 See [`docs/AGENTS.md`](docs/AGENTS.md) and [`docs/FLOW.md`](docs/FLOW.md).
 
-## The seventeen skills
+## The eighteen skills
 
 Doctrine lives in skills so it is defined once rather than duplicated across
 nine system prompts.
 
 `workflow-router` · `brainstorm-grilling` · `artifact-templates` ·
-`tdd-discipline` · `quality-gates` · `debug-rca` · `design-intelligence` ·
+`tdd-discipline` · `typescript-discipline` · `quality-gates` · `debug-rca` · `design-intelligence` ·
 `react-performance` · `browser-verify` · `diagram-excalidraw` ·
 `handoff-contract` · `backend-discipline` · `architecture-discipline` ·
 `code-navigation` · `app-verify` · `context-discipline` · `ai-engineering` ·
 `security-discipline`
 
-`react-performance`, `backend-discipline` and `ai-engineering` auto-activate on matching paths
+`react-performance`, `backend-discipline`, `typescript-discipline` and `ai-engineering` auto-activate on matching paths
 rather than costing context every session.
 
 ## Configuration
