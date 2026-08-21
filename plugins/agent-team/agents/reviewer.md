@@ -63,6 +63,9 @@ In priority order:
 4. **Reuse and simplification** — duplicated logic, a hand-rolled version of an
    existing utility, indirection that earns nothing
 5. **Fit** — does it read like the surrounding code?
+6. **File length** — any touched source file over 800 lines
+   (`AGENT_TEAM_MAX_FILE_LINES`) is **blocking** unless the plan names the
+   exemption; `quality-gates` → "File length" carries the rule
 
 ### Axis 3 — does it fit the architecture that was agreed?
 
