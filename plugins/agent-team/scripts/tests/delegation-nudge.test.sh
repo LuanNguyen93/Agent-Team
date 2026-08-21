@@ -44,6 +44,10 @@ task_payload() {
   printf '{"transcript_path":"%s","tool_name":"Task","tool_input":{}}' "$(native "$TRANSCRIPT")"
 }
 
+agent_task_payload() {  # transcript
+  printf '{"transcript_path":"%s","tool_name":"Agent","tool_input":{}}' "$(native "$1")"
+}
+
 edit_payload_for() {  # transcript tool_name
   printf '{"transcript_path":"%s","tool_name":"%s","tool_input":{"file_path":"x.txt"}}' "$(native "$1")" "$2"
 }
@@ -241,6 +245,24 @@ OUT="$(edit_payload_for "$T4" Edit | run)"; RC=$?
 t="the nudge still fires on a later call once emit succeeds again"
 { [ $RC -eq 0 ] && [ -n "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
 assert_nudge_json "recovered nudge is valid JSON with hookSpecificOutput.additionalContext" "$OUT"
+
+# --------------------------------------------------------------------------
+# "Agent" is the subagent-spawn tool_name in this harness (measured); it must
+# reset the counter and re-arm the nudge exactly like "Task" does, per
+# docs/HARNESS-NOTES.md.
+# --------------------------------------------------------------------------
+T5="$TMP/t5.jsonl"
+: > "$T5"
+for i in 1 2 3 4; do
+  edit_payload_for "$T5" Edit | run >/dev/null 2>&1
+done
+OUT="$(agent_task_payload "$T5" | CLAUDE_PROJECT_DIR="$PROJ" bash "$NUDGE" 2>&1)"; RC=$?
+t="an Agent call resets the counter, exits 0 silently"
+{ [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+OUT="$(edit_payload_for "$T5" Edit | CLAUDE_PROJECT_DIR="$PROJ" bash "$NUDGE" 2>&1)"; RC=$?
+t="after an Agent reset, edit 1 is below threshold again"
+{ [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
 
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

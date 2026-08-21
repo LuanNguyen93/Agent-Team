@@ -6,119 +6,40 @@ when_to_use: At the end of any agent's turn, and whenever you consume another ag
 
 # Handoff contract
 
-A handoff is where hallucination enters a team. Not because an agent invents
-things — because a hedged claim upstream arrives downstream stripped of its
-hedge, and the next agent builds on it as fact.
-
-The fix is not "be careful". It is a fixed shape that makes the confidence of
-every claim survive the trip.
+A handoff is where hallucination enters a team: a hedged claim arrives
+downstream stripped of its hedge, and the next agent builds on it as fact.
+The fix: a fixed shape that makes confidence survive the trip.
 
 ## Label every claim
 
-Three labels, no others. Use them inline in prose, or as a column in a table.
+Three labels, no others, inline or as a table column.
 
 | Label | Means | Test |
 |---|---|---|
-| **[observed]** | You ran it, read it, or saw the output | You can paste the evidence |
-| **[inferred]** | You reasoned it from something observed | You can name what you reasoned from |
-| **[assumed]** | You needed it to be true and did not check | Nothing supports it yet |
+| **[observed]** | ran/read/saw the output | can paste the evidence |
+| **[inferred]** | reasoned from something observed | can name what it was |
+| **[assumed]** | needed it true, unchecked | nothing supports it yet |
 
-An unlabelled claim is read as `[observed]` by whoever gets it. That is exactly
-the failure mode, so label anything that is not.
-
-Examples:
-
-- `[observed] pnpm test → 2 of 47 failed, both in auth.spec.ts`
-- `[inferred] the failure is in token refresh — both failing tests call refresh()`
-- `[assumed] sessions are invalidated server-side; I did not find the code`
+An unlabelled claim reads as `[observed]` — exactly the failure mode, e.g.
+`[observed] pnpm test → 2/47 failed`, `[inferred] failure is in token
+refresh`, `[assumed] sessions invalidate server-side, unverified`.
 
 ## Evidence, not paraphrase
 
-Every `[observed]` claim carries its evidence in the report itself:
+Every `[observed]` claim carries its evidence: code → `path:line`; a command →
+the command, exit code, real output; behaviour → what you did and saw.
+Paraphrasing an error turns a hard failure into a soft one — paste it.
 
-- Code → `path/to/file.ts:42`
-- A command → the command, the exit code, and the real output
-- Behaviour → what you did, and what you saw happen
+**Every metric or gate result carries the command that reproduces it.** A
+number with no command is a claim the reader must trust — downgrade it to
+`[inferred]` instead.
 
-Paraphrasing an error is where a hard failure becomes a soft one. Paste it.
-
-**Every metric or gate result carries the single command that reproduces it.**
-"92% coverage" or "handles 1,000 req/s" with no command attached is not
-evidence, it is a claim the reader has to trust — and trusting instead of
-verifying is the exact failure this skill exists to close. A number with no
-reproducing command is `[inferred]` at best, not `[observed]`: downgrade it
-rather than reporting it bare.
-
-## Report negative results
-
-"Searched for a rate limiter, there is none" is as valuable as finding one.
-Without it the next agent repeats your search, or worse, assumes one exists.
-Same for scope you did not cover: state it as a list, not as silence.
-
-## Never do these
-
-- Report a step as done that you did not run — "not run" is a legitimate result
-- Upgrade someone else's `[inferred]` or `[assumed]` to fact by restating it
-- Contradict an upstream finding without naming the new evidence
-- Fill a gap with a plausible value instead of marking it `[assumed]` or `[OPEN]`
-- Soften a failure into a warning
-
-## Fit the report to the context that receives it
-
-A report is not a document. It is spent context in whoever called you, and it
-stays spent for the rest of their session - on a project running planner,
-implementer, reviewer and qa-verifier per story, the reports accumulate faster
-than the code does. The agent that writes a beautiful thousand-word review is
-the reason the orchestrator compacts three stories early.
-
-**Aim for 30 lines back to the caller. Treat 60 as the ceiling.**
-
-That is enough for the closing block, the verdict, and the findings that change
-what someone does next. It is not enough for a narrative of how you got there,
-and it is not meant to be.
-
-What earns space in the report:
-
-- The verdict, and what the caller must decide or do next
-- Findings at the severity that blocks, with `file:line` and the concrete failure
-- The closing block, always
-
-What does not:
-
-- Restating the request, the plan, or what you were asked to check
-- A step-by-step account of your search - what you found is the finding
-- Praise for the code, unless a reviewer was asked for it
-- Anything the caller can read in the diff or the file you just named
-
-**When the detail is genuinely needed, write it to a file and hand back the
-path.** A long review belongs in `docs/reviews/<change>.md`, a full gate log in
-the terminal the caller can scroll, an inventory in the artifact it describes.
-One line saying where it is costs the caller ten tokens; pasting it costs two
-thousand, in every turn that follows.
-
-Trimming is not the same as dropping. A finding you leave out of the report did
-not happen as far as the next agent knows - so cut the prose, not the findings,
-and if there are genuinely thirty findings, file them and summarise by severity.
-
-The budget never applies to evidence. A failing gate's real output, the failing
-assertion, the error and its stack: those stay in full, because "Evidence, not
-paraphrase" above outranks the line count. Summarising an error into a sentence
-to save space is how a hard failure becomes a soft one.
-
-## Approval status
-
-A report on implemented work states whether the plan or spec it implements was
-approved by the user, not just that it exists. Code built against a spec
-nobody signed off on can be flawless and still be the wrong thing — the
-report is the one place that gap is visible before the work compounds.
-Unapproved spec is not disqualifying, but it is not silent either: flag it as
-reduced confidence (`[assumed] spec approved by the user`) rather than
-reporting the build as if approval were `[observed]`.
+Negative results, never-do list, fitting reports to readers, approval
+status: `references/report-discipline.md`.
 
 ## The closing block
 
-End every report with these three, even when they are empty — an empty list is
-information, an absent list is not:
+End every report with these three, even when empty:
 
 ```
 Assumptions: things I took as true without checking

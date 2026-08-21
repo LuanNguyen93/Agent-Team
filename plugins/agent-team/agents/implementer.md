@@ -100,6 +100,15 @@ split exists to avoid.
 You keep every change that lives on one side of the boundary, and every change
 too small to be worth splitting.
 
+## Budget
+
+When the subagent-guard nudge arrives, or the scope's last test goes green,
+stop and hand back — finish the red-green cycle you are in, write the
+handoff report, and return. Do not continue into the next story or file group
+in the same dispatch, even if it looks small enough to fold in. Whoever
+dispatched you can continue the rest as a fresh dispatch, which starts with
+none of this one's accumulated cost.
+
 ## Never do these
 
 - Weaken an assertion, add a suppression comment, or skip a test to clear a gate

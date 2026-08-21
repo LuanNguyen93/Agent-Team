@@ -78,5 +78,34 @@ OUT="$(node "$SIZER" --transcript "$TMP/empty.jsonl" 2>&1)"; RC=$?
 t="empty transcript reports 0 and exits 0"
 { [ "$OUT" = "0" ] && [ $RC -eq 0 ]; } && ok "$t" || nope "$t" "got '$OUT' rc=$RC"
 
+# --------------------------------------------------------------------------
+# agent_id in the payload resolves to the SUBAGENT's own transcript, not the
+# parent's. Measured on this repository (docs/HARNESS-NOTES.md): the
+# transcript_path a PreToolUse payload carries inside a subagent invocation is
+# the PARENT session's own transcript, not the subagent's - the subagent's own
+# records live at <project>/<session_id>/subagents/agent-<agent_id>.jsonl.
+# --------------------------------------------------------------------------
+PROJ="$TMP/proj"
+SESSION_ID="sess-abc"
+PARENT="$PROJ/$SESSION_ID.jsonl"
+mkdir -p "$PROJ/$SESSION_ID/subagents"
+{ rec 1000 0 0; } > "$PARENT"                                     # parent context = 1000
+{ rec 42000 0 0; } > "$PROJ/$SESSION_ID/subagents/agent-agentXYZ.jsonl"  # subagent context = 42000
+
+OUT="$(printf '{"transcript_path":"%s","session_id":"%s","agent_id":"agentXYZ"}' \
+  "$(native "$PARENT")" "$SESSION_ID" | node "$SIZER" 2>&1)"
+t="agent_id in the payload reports the subagent's own context, not the parent's"
+[ "$OUT" = "42000" ] && ok "$t" || nope "$t" "expected 42000 got '$OUT'"
+
+OUT="$(printf '{"transcript_path":"%s","session_id":"%s"}' \
+  "$(native "$PARENT")" "$SESSION_ID" | node "$SIZER" 2>&1)"
+t="no agent_id still reports the parent's own context"
+[ "$OUT" = "1000" ] && ok "$t" || nope "$t" "expected 1000 got '$OUT'"
+
+OUT="$(printf '{"transcript_path":"%s","session_id":"%s","agent_id":"no-such-agent"}' \
+  "$(native "$PARENT")" "$SESSION_ID" | node "$SIZER" 2>&1)"
+t="an agent_id with no matching subagent file falls back to the parent transcript"
+[ "$OUT" = "1000" ] && ok "$t" || nope "$t" "expected 1000 got '$OUT'"
+
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

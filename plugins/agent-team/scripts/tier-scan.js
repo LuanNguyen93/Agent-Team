@@ -17,8 +17,9 @@
 // edits/Task since it.
 //
 // Usage: node tier-scan.js <transcript-path>
-// Prints one line: "TIER EDITS_SINCE HAS_TASK_SINCE", e.g. "FEATURE 6 0", or
-// "NONE 0 0" when no tier was ever announced.
+// Prints one line: "TIER EDITS READONLY HAS_TASK", e.g. "FEATURE 6 3 0", or
+// "NONE 0 0 0" when no tier was ever announced. READONLY counts top-level
+// Bash/Read/Grep/Glob calls since the announcement, same window as EDITS.
 
 const fs = require('fs');
 
@@ -64,10 +65,12 @@ function findLastAnnouncement(records) {
   return { tier, index };
 }
 
-// Top-level Edit/Write/NotebookEdit count, and whether a top-level Task
-// occurred, at or after startIndex.
+// Top-level Edit/Write/NotebookEdit count, top-level Bash/Read/Grep/Glob
+// count, and whether a top-level Task/Agent occurred, at or after
+// startIndex.
 function countSince(records, startIndex) {
   let edits = 0;
+  let readonly = 0;
   let hasTask = false;
   for (let i = startIndex; i < records.length; i++) {
     const r = records[i];
@@ -78,28 +81,32 @@ function countSince(records, startIndex) {
       if (block.type !== 'tool_use') continue;
       if (block.name === 'Edit' || block.name === 'Write' || block.name === 'NotebookEdit') {
         edits += 1;
-      } else if (block.name === 'Task') {
+      } else if (block.name === 'Bash' || block.name === 'Read' || block.name === 'Grep' || block.name === 'Glob') {
+        readonly += 1;
+      } else if (block.name === 'Task' || block.name === 'Agent') {
+        // "Agent" is the subagent-spawn tool_name in this harness (measured);
+        // "Task" is kept too for older builds.
         hasTask = true;
       }
     }
   }
-  return { edits, hasTask };
+  return { edits, readonly, hasTask };
 }
 
 function main(argv) {
   const transcript = argv[2];
   if (!transcript) {
-    console.log('NONE 0 0');
+    console.log('NONE 0 0 0');
     return;
   }
   const records = readRecords(transcript);
   const { tier, index } = findLastAnnouncement(records);
   if (!tier) {
-    console.log('NONE 0 0');
+    console.log('NONE 0 0 0');
     return;
   }
-  const { edits, hasTask } = countSince(records, index);
-  console.log(`${tier} ${edits} ${hasTask ? 1 : 0}`);
+  const { edits, readonly, hasTask } = countSince(records, index);
+  console.log(`${tier} ${edits} ${readonly} ${hasTask ? 1 : 0}`);
 }
 
 main(process.argv);

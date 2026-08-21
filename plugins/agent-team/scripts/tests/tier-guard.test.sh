@@ -54,6 +54,17 @@ feature_transcript() {  # file edit_count [with_task]
   } > "$f"
 }
 
+# Transcript: FEATURE announced, then N read-only calls (Bash), optionally a Task.
+feature_readonly_transcript() {  # file readonly_count [with_task]
+  local f="$1" n="$2" with_task="${3:-}"
+  {
+    text_record "Routing this as ${BT}FEATURE${BT} - more than one file."
+    local i
+    for ((i=0; i<n; i++)); do tool_record "Bash"; done
+    [ -n "$with_task" ] && tool_record "Task"
+  } > "$f"
+}
+
 quick_transcript() {  # file edit_count
   local f="$1" n="$2" i
   {
@@ -151,11 +162,14 @@ t="agent_id present -> exit 0, never blocks"
 
 # --------------------------------------------------------------------------
 # non-matching tool -> exit 0
+#
+# Bash/Read/Grep/Glob are now matched too (READONLY widening), so a truly
+# non-matching tool is one outside that whole set.
 # --------------------------------------------------------------------------
 T8="$TMP/t8.jsonl"
 feature_transcript "$T8" 5
-OUT="$(printf '{"transcript_path":"%s","tool_name":"Bash","tool_input":{}}' "$(native "$T8")" | run)"; RC=$?
-t="a non-matching tool (Bash) -> exit 0"
+OUT="$(printf '{"transcript_path":"%s","tool_name":"WebFetch","tool_input":{}}' "$(native "$T8")" | run)"; RC=$?
+t="a non-matching tool (WebFetch) -> exit 0"
 { [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
 
 # --------------------------------------------------------------------------
@@ -176,6 +190,37 @@ t="a project dir with no .git fails open: exit 0"
 OUT="$(printf '{"tool_name":"Edit","tool_input":{"file_path":"x.txt"}}' | CLAUDE_PROJECT_DIR="$PROJ" bash "$GUARD" 2>&1)"; RC=$?
 t="missing transcript_path falls back to unknown and fails open: exit 0"
 [ $RC -eq 0 ] && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+# --------------------------------------------------------------------------
+# FEATURE + 16 readonly (Bash) calls + no Task -> blocked
+# --------------------------------------------------------------------------
+T10="$TMP/t10.jsonl"
+feature_readonly_transcript "$T10" 16
+OUT="$(edit_payload "$T10" Bash | run)"; RC=$?
+t="FEATURE announced, 16 readonly calls, no Task -> exit 2"
+[ $RC -eq 2 ] && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+# --------------------------------------------------------------------------
+# FEATURE + 4 edits + 14 readonly calls (both under their own thresholds) -> pass
+# --------------------------------------------------------------------------
+T11="$TMP/t11.jsonl"
+{
+  text_record "Routing this as ${BT}FEATURE${BT} - more than one file."
+  for ((i=0; i<4; i++)); do tool_record "Edit"; done
+  for ((i=0; i<14; i++)); do tool_record "Bash"; done
+} > "$T11"
+OUT="$(edit_payload "$T11" Edit | run)"; RC=$?
+t="4 edits + 14 readonly, both under their own thresholds -> exit 0"
+{ [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+# --------------------------------------------------------------------------
+# a readonly tool (Grep) -> exit 0 when under the readonly threshold
+# --------------------------------------------------------------------------
+T12="$TMP/t12.jsonl"
+feature_readonly_transcript "$T12" 3
+OUT="$(edit_payload "$T12" Grep | run)"; RC=$?
+t="a readonly tool under threshold -> exit 0"
+{ [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
 
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

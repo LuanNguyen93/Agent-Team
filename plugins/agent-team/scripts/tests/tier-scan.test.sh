@@ -61,7 +61,7 @@ T1="$TMP/t1.jsonl"
 } > "$T1"
 OUT="$(run "$T1")"
 t="no announcement -> NONE 0 0"
-[ "$OUT" = "NONE 0 0" ] && ok "$t" || nope "$t" "got '$OUT'"
+[ "$OUT" = "NONE 0 0 0" ] && ok "$t" || nope "$t" "got '$OUT'"
 
 # --------------------------------------------------------------------------
 # announcement, then edits, then Task -> HAS_TASK_SINCE=1
@@ -75,7 +75,7 @@ T2="$TMP/t2.jsonl"
 } > "$T2"
 OUT="$(run "$T2")"
 t="announcement, edits, then Task -> HAS_TASK_SINCE=1"
-[ "$OUT" = "FEATURE 2 1" ] && ok "$t" || nope "$t" "got '$OUT'"
+[ "$OUT" = "FEATURE 2 0 1" ] && ok "$t" || nope "$t" "got '$OUT'"
 
 # --------------------------------------------------------------------------
 # announcement, edits, no Task -> correct count, HAS_TASK_SINCE=0
@@ -91,7 +91,7 @@ T3="$TMP/t3.jsonl"
 } > "$T3"
 OUT="$(run "$T3")"
 t="announcement, 5 edits, no Task -> correct count, 0"
-[ "$OUT" = "PROJECT 5 0" ] && ok "$t" || nope "$t" "got '$OUT'"
+[ "$OUT" = "PROJECT 5 0 0" ] && ok "$t" || nope "$t" "got '$OUT'"
 
 # --------------------------------------------------------------------------
 # QUICK announcement is still reported (scanner is a dumb fact-reporter)
@@ -103,7 +103,7 @@ T4="$TMP/t4.jsonl"
 } > "$T4"
 OUT="$(run "$T4")"
 t="QUICK announcement is still reported"
-[ "$OUT" = "QUICK 1 0" ] && ok "$t" || nope "$t" "got '$OUT'"
+[ "$OUT" = "QUICK 1 0 0" ] && ok "$t" || nope "$t" "got '$OUT'"
 
 # --------------------------------------------------------------------------
 # announcement text inside a record WITH attributionAgent does not count
@@ -115,7 +115,7 @@ T5="$TMP/t5.jsonl"
 } > "$T5"
 OUT="$(run "$T5")"
 t="an announcement inside a record with attributionAgent does not count"
-[ "$OUT" = "NONE 0 0" ] && ok "$t" || nope "$t" "got '$OUT'"
+[ "$OUT" = "NONE 0 0 0" ] && ok "$t" || nope "$t" "got '$OUT'"
 
 # --------------------------------------------------------------------------
 # LAST announcement wins, and edits/Task from subagent records do not count
@@ -131,7 +131,41 @@ T6="$TMP/t6.jsonl"
 } > "$T6"
 OUT="$(run "$T6")"
 t="last announcement wins, subagent tool_use records are excluded"
-[ "$OUT" = "FEATURE 2 0" ] && ok "$t" || nope "$t" "got '$OUT'"
+[ "$OUT" = "FEATURE 2 0 0" ] && ok "$t" || nope "$t" "got '$OUT'"
+
+# --------------------------------------------------------------------------
+# "Agent" is the subagent-spawn tool_name in this harness (measured); it must
+# count as HAS_TASK_SINCE=1 exactly like "Task" does, per
+# docs/HARNESS-NOTES.md.
+# --------------------------------------------------------------------------
+T7="$TMP/t7.jsonl"
+{
+  text_record "$FEATURE_ANNOUNCE"
+  tool_record "Edit"
+  tool_record "Edit"
+  tool_record "Agent"
+} > "$T7"
+OUT="$(run "$T7")"
+t="an Agent call counts as HAS_TASK_SINCE=1"
+[ "$OUT" = "FEATURE 2 0 1" ] && ok "$t" || nope "$t" "got '$OUT'"
+
+# --------------------------------------------------------------------------
+# READONLY counts top-level Bash/Read/Grep/Glob since the announcement,
+# independent of EDITS.
+# --------------------------------------------------------------------------
+T8="$TMP/t8.jsonl"
+{
+  text_record "$FEATURE_ANNOUNCE"
+  tool_record "Edit"
+  tool_record "Bash"
+  tool_record "Read"
+  tool_record "Grep"
+  tool_record "Glob"
+  tool_record "Bash"
+} > "$T8"
+OUT="$(run "$T8")"
+t="READONLY counts Bash/Read/Grep/Glob independently of EDITS"
+[ "$OUT" = "FEATURE 1 5 0" ] && ok "$t" || nope "$t" "got '$OUT'"
 
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

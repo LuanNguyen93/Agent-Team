@@ -23,6 +23,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { execFileSync } = require('child_process');
 
 // List price per million tokens, plus the cache write/read multipliers,
 // loaded from the one file both this script and the Rust TUI read - see
@@ -61,9 +62,23 @@ function contextOf(usage) {
 }
 
 // Claude Code stores a project's transcripts under a directory named after the
+// project's git TOPLEVEL, not the cwd a session happens to be running in - a
+// session started several directories deep still writes to the repo root's
+// project folder. `git rev-parse --show-toplevel` is the source of truth for
+// that path; when cwd is not inside a git repo (or git is unavailable) this
+// falls back to cwd itself, which is the only sane answer left.
+function toplevel(cwd) {
+  try {
+    return execFileSync('git', ['-C', cwd, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim() || cwd;
+  } catch (e) {
+    return cwd;
+  }
+}
+
+// Claude Code stores a project's transcripts under a directory named after the
 // project path with every non-alphanumeric byte replaced by a dash.
 function projectDirFor(cwd) {
-  return path.join(os.homedir(), '.claude', 'projects', cwd.replace(/[^a-zA-Z0-9]/g, '-'));
+  return path.join(os.homedir(), '.claude', 'projects', toplevel(cwd).replace(/[^a-zA-Z0-9]/g, '-'));
 }
 
 function walk(dir) {

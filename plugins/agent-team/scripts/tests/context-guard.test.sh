@@ -67,6 +67,58 @@ t="budget hook can be opted out of for a session"
 [ -z "$OUT" ] && ok "$t" || nope "$t" "expected silence, got '$OUT'"
 
 # --------------------------------------------------------------------------
+# context-budget.sh: agent_id skip, PostToolUse registration, band logic
+# --------------------------------------------------------------------------
+OUT="$(printf '{"transcript_path":"%s","agent_id":"sub-1"}' "$(native "$BIG")" | CLAUDE_PROJECT_DIR="$PROJ" bash "$BUDGET" 2>&1)"; RC=$?
+t="a call carrying agent_id is skipped entirely, even over the limit"
+{ [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+BAND1="$(transcript_at 210000)"
+OUT="$(printf '{"transcript_path":"%s","hook_event_name":"PostToolUse"}' "$(native "$BAND1")" | CLAUDE_PROJECT_DIR="$PROJ" bash "$BUDGET" 2>&1)"; RC=$?
+t="PostToolUse past the limit speaks up, still exits 0"
+{ [ $RC -eq 0 ] && [ -n "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+t="PostToolUse output is the non-blocking JSON envelope, not plain stdout"
+printf '%s' "$OUT" | node -e '
+let s="";
+process.stdin.on("data", (d) => s += d).on("end", () => {
+  try {
+    const p = JSON.parse(s);
+    const ctx = (p.hookSpecificOutput || {}).additionalContext || "";
+    if (p.hookSpecificOutput && p.hookSpecificOutput.hookEventName === "PostToolUse" && ctx.length > 0) {
+      process.exit(0);
+    }
+    process.exit(1);
+  } catch (e) { process.exit(1); }
+});' && ok "$t" || nope "$t" "not valid envelope JSON: $OUT"
+
+# Same band, same transcript, second PostToolUse call -> silent (one-shot per band)
+OUT="$(printf '{"transcript_path":"%s","hook_event_name":"PostToolUse"}' "$(native "$BAND1")" | CLAUDE_PROJECT_DIR="$PROJ" bash "$BUDGET" 2>&1)"; RC=$?
+t="a second call in the same 50k band is silent"
+{ [ $RC -eq 0 ] && [ -z "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+# Crossing into the next 50k band fires again.
+BAND2="$(transcript_at 265000)"
+node -e '
+const fs=require("fs");
+const p1=process.argv[1], p2=process.argv[2];
+fs.writeFileSync(p2, fs.readFileSync(p1,"utf8"));
+' "$BAND2" "$BAND1" >/dev/null 2>&1 || true
+OUT="$(printf '{"transcript_path":"%s","hook_event_name":"PostToolUse"}' "$(native "$BAND2")" | CLAUDE_PROJECT_DIR="$PROJ" bash "$BUDGET" 2>&1)"; RC=$?
+t="crossing into the next 50k band fires again"
+{ [ $RC -eq 0 ] && [ -n "$OUT" ]; } && ok "$t" || nope "$t" "rc=$RC out='$OUT'"
+
+# UserPromptSubmit keeps the plain-stdout contract even with hook_event_name present.
+BAND3="$(transcript_at 405000)"
+OUT="$(printf '{"transcript_path":"%s","hook_event_name":"UserPromptSubmit"}' "$(native "$BAND3")" | CLAUDE_PROJECT_DIR="$PROJ" bash "$BUDGET" 2>&1)"; RC=$?
+t="UserPromptSubmit still emits plain stdout, not the JSON envelope"
+case "$OUT" in
+  '{'*) nope "$t" "looks like JSON envelope: $OUT" ;;
+  *405*) ok "$t" ;;
+  *) nope "$t" "$OUT" ;;
+esac
+
+# --------------------------------------------------------------------------
 # guard-heavy-load.sh
 # --------------------------------------------------------------------------
 OUT="$(payload "$SMALL" claude-api | CLAUDE_PROJECT_DIR="$PROJ" bash "$GUARD" 2>&1)"; RC=$?
