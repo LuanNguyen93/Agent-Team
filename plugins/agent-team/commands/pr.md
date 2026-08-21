@@ -1,19 +1,23 @@
 ---
-description: Draft a PR description in the team's fixed format from the current diff, commits, and the last gate run.
-argument-hint: [work item link or "no work item"]
+description: Open a pull request from the current branch - one gather call, a description in the team's fixed format, one create call on GitHub, GitLab or Azure DevOps.
+argument-hint: [issue id or "no issue"] [--draft] [--dry-run]
 disable-model-invocation: true
 ---
 
-Draft a PR description for the current branch. Work item: **$ARGUMENTS**
+Open a PR for the current branch. Arguments: **$ARGUMENTS**
 
-1. Load the `pr-description` skill.
-2. Gather evidence directly (do not delegate — this is read-only, single-pass):
-   `git diff <base>...HEAD --stat`, `git log <base>..HEAD --oneline`, and the
-   most recent gate output from this session.
-3. If no gates were run this session, state that explicitly in "Tests added"
-   instead of fabricating or estimating numbers — do not run gates
-   automatically as part of this command.
-4. Fill every section of the template. Use explicit "n/a — <reason>" rather
-   than omitting a section with nothing to say.
-5. Do not open the PR — print the drafted body for the user to review and
-   paste, unless the user explicitly asks to open it via `gh pr create`.
+1. Load the `pr-create` skill and follow it; it loads `pr-description` for
+   the body.
+2. Gather with one call - `"${CLAUDE_PLUGIN_ROOT}/scripts/pr-gather.sh"` -
+   not with hand-run `git` commands. Do not delegate; this is read-only and
+   single-pass.
+3. Stop and ask when the gather output flags `onDefaultBranch`, `largeRange`,
+   `dirty`, or `baseMissing`. Otherwise confirm branch → base → provider once.
+4. Write the title and fill the template. "Tests added" carries this
+   session's real gate output or an explicit statement that no gates ran -
+   do not run gates as part of this command, and never estimate numbers.
+5. Show the drafted title and body. If `--dry-run` was given, or the user
+   wants to paste it themselves, stop there with the `--dry-run` command
+   printed. Otherwise push if needed (ask first) and create with
+   `"${CLAUDE_PLUGIN_ROOT}/scripts/pr-create.sh"`, passing `--draft` when
+   asked, and report the URL.
