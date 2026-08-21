@@ -89,3 +89,28 @@ State them the way you would state a query bound:
   makes the wait honest.
 - Say the cost per operation when you report the work, and flag anything that
   scales with a user-controlled number.
+
+## The names these go by, and the two not yet covered
+
+The section above is what OWASP's LLM Top 10 calls **prompt injection** (direct:
+the user instructs the model against its rules; indirect: a retrieved document,
+email, web page, or tool result does) and **insecure output handling**. Use the
+names in reviews and reports so a reader can look them up. Two more belong on
+the same list:
+
+- **Excessive agency.** Give the model the smallest tool set the task needs, and
+  give each tool the smallest permission: read-only where reading suffices,
+  scoped to the tenant, with an explicit allowlist of what it may touch. Any
+  action that is irreversible or leaves the system - send, pay, delete, deploy,
+  publish - gets a human confirmation step outside the model's control, or does
+  not exist as a tool. Log every tool call with its arguments as an audit
+  record (`security-discipline`, audit logging).
+- **Tool and MCP descriptions are prompt input too.** A third-party tool's
+  description, an MCP server's instructions, and a skill file pulled from a
+  registry are text the model follows. Pin versions, read them before enabling
+  them, and treat a changed description as a changed dependency.
+
+System prompt leakage and sensitive data in the context are covered above
+("assume anything in the prompt can come back out"). Supply chain for models
+and datasets - an unpinned model alias, a fine-tune on a dataset nobody
+inspected - follows `security-discipline`, `references/supply-chain.md`.
