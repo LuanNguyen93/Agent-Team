@@ -21,6 +21,13 @@ the static analysis and it costs money per run, so it is opt-in and it is
 **absent** rather than passed when it did not run. Its threshold has to be
 declared before the run, against a pinned model version, or it is not a gate.
 
+A **SAST gate** (semgrep) runs alongside the chain the same way the secret scan
+does - stack-independent, over the working tree, with a project `.semgrep.yml`
+winning over the registry ruleset. No semgrep on PATH, or rules it cannot
+fetch, is **absent**. A finding is fixed or suppressed on the one line with a
+`nosemgrep` comment and a reason, never by disabling the rule repo-wide.
+`AGENT_TEAM_SKIP_SAST=1` opts out.
+
 A **secret scan** runs alongside the chain rather than inside it: it is
 stack-independent, so it applies to every project including one with no gates at
 all. It scans the working tree, not the history — a hit in the history is a
@@ -183,3 +190,17 @@ Give the user a plain table:
 
 Never report a gate as passing that you did not run. "Not run" is a legitimate
 and useful result; a fabricated pass is not.
+
+## File length
+
+No source file over **800 lines**. It is not a gate in the chain above - no
+tool fails on it - but the reviewer blocks on it, and the `file-length-guard`
+hook tells the writer the moment a file crosses the line.
+
+The limit is about responsibility, not arithmetic: a file that long is holding
+more than one concern, and it is also the file a fresh context cannot read
+without paying for all of it. Split by cohesive cluster - a type family, a
+handler group, a helper set - never by cutting at line 800. Generated files
+(lockfiles, bundles, snapshots) are exempt; a deliberate exemption for anything
+else belongs in the plan, named, with the reason. Override the threshold with
+`AGENT_TEAM_MAX_FILE_LINES`.

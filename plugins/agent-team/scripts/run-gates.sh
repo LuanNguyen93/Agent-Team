@@ -25,7 +25,10 @@
 # The secret-scan gate is stack-independent, so it runs for every project - it is
 # the one gate an explicit "gates" list does not replace. It runs gitleaks or
 # trufflehog over the working tree when one is on PATH. It scans the tree, not the history: history is slow and a hit there
-# needs a rotation decision, not a blocked task. AGENT_TEAM_SCAN_HISTORY=1 scans
+# needs a rotation decision, not a blocked task.
+#
+# The SAST gate (semgrep) is stack-independent too: runs when semgrep is on
+# PATH, ABSENT otherwise or when its rules cannot be fetched. AGENT_TEAM_SKIP_SAST=1 opts out. AGENT_TEAM_SCAN_HISTORY=1 scans
 # the full history instead; AGENT_TEAM_SKIP_SECRET_SCAN=1 opts out.
 
 set -uo pipefail
@@ -291,10 +294,68 @@ run_secret_scan() {
 
 run_secret_scan || exit 1
 
+# SAST: semgrep over the working tree, when it is on PATH. Stack-independent
+# like the secret scan, so it runs before the per-stack blocks and is not
+# replaced by an explicit "gates" list. A project-local .semgrep.yml or
+# .semgrep/ wins; otherwise the registry "auto" ruleset, which needs the
+# network - unreachable rules are ABSENT, not a failure and not a pass.
+# AGENT_TEAM_SKIP_SAST=1 opts out.
+run_sast() {
+  if [ "${AGENT_TEAM_SKIP_SAST:-}" = "1" ]; then
+    printf "Gate SKIPPED: SAST (AGENT_TEAM_SKIP_SAST=1)
+"
+    return 0
+  fi
+  if ! command -v semgrep >/dev/null 2>&1; then
+    printf "Gate ABSENT: SAST (semgrep not on PATH)
+"
+    printf "This is not a pass. Nothing checked the code for injection, SSRF, or unsafe-call patterns.
+"
+    return 0
+  fi
+  local cfg="auto"
+  if [ -f .semgrep.yml ]; then cfg=".semgrep.yml"
+  elif [ -f .semgrep.yaml ]; then cfg=".semgrep.yaml"
+  elif [ -d .semgrep ]; then cfg=".semgrep"
+  fi
+  local cmd="semgrep scan --config $cfg --error --quiet --metrics=off ."
+  local out status
+  out=$(eval "$cmd" 2>&1)
+  status=$?
+  [ $status -eq 0 ] && return 0
+  if looks_absent "$out"; then
+    report_absent "SAST"
+    return 0
+  fi
+  case "$out" in
+    *"Failed to download"*|*"unknown flag"*|*"invalid configuration"*|*"No such file"*)
+      report_absent "SAST"
+      return 0
+      ;;
+  esac
+  printf "Gate FAILED: SAST
+"
+  printf "Command: %s
+" "$cmd"
+  printf "Exit code: %s
+
+" "$status"
+  printf "%s
+" "$out" | tail -40
+  printf "
+Fix the finding or, for a true false positive, add a nosemgrep comment with
+"
+  printf "the reason on that line - never silence the rule for the whole repo.
+"
+  return 1
+}
+
 # A prose-only change still gets the secret scan - a token pasted into a README
 # example is one of the commonest ways a credential is committed - but nothing
 # else, because no other gate has anything to say about a paragraph.
 [ "${AGENT_TEAM_SECRET_SCAN_ONLY:-}" = "1" ] && exit 0
+
+run_sast || exit 1
 
 # 1. Explicit configuration wins.
 if [ -f .agent-team.json ] && command -v node >/dev/null 2>&1; then

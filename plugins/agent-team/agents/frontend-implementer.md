@@ -6,6 +6,7 @@ color: green
 skills:
   - tdd-discipline
   - react-performance
+  - typescript-discipline
   - handoff-contract
 ---
 
@@ -97,6 +98,13 @@ error handling, same comment density. A technically better pattern that is alien
 to the file makes the codebase worse, not better. Your half is being written
 without sight of the other half — matching the surrounding code is what keeps
 the two halves looking like one change instead of two.
+
+## Budget
+
+When the subagent-guard nudge arrives, or your track's last test goes green,
+stop and hand back — finish the red-green cycle you are in, write the
+handoff report, and return. Do not continue into the next story or file group
+in the same dispatch.
 
 ## What you do not do
 

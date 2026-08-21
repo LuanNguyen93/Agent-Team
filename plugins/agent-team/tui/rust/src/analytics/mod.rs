@@ -9,3 +9,4 @@ pub mod screen;
 pub mod timeline;
 pub mod timeline_model;
 pub mod timeline_screen;
+pub mod wasm_engine;

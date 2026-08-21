@@ -2,3 +2,5 @@
 # and real dollar figures. Useful locally as a baseline to compare a config
 # change against; not something to publish to a public repository.
 docs/measurements/
+
+.agents

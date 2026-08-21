@@ -47,7 +47,9 @@ TRANSCRIPT="$(printf '%s' "$FIELDS" | sed -n '2p')"
 AGENT_ID="$(printf '%s' "$FIELDS" | sed -n '3p')"
 
 case "$TOOL" in
-  Edit|Write|NotebookEdit|Task) ;;
+  # "Agent" is the subagent-spawn tool_name in this harness (measured); "Task"
+  # is kept too for older builds. Both reset the counter below.
+  Edit|Write|NotebookEdit|Task|Agent) ;;
   *) exit 0 ;;
 esac
 
@@ -73,7 +75,7 @@ KEY="$(basename "$TRANSCRIPT")"
 COUNT_FILE="$DIR/delegation-nudge-count-$KEY"
 FIRED_FILE="$DIR/delegation-nudge-fired-$KEY"
 
-if [ "$TOOL" = "Task" ]; then
+if [ "$TOOL" = "Task" ] || [ "$TOOL" = "Agent" ]; then
   rm -f "$COUNT_FILE" "$FIRED_FILE" 2>/dev/null
   exit 0
 fi

@@ -134,5 +134,16 @@ $(printf '%s\n%s' "$CHANGED" "$UNCOMMITTED" | sed '/^$/d' | sed 's/^/       /')
   fi
 fi
 
+# --- 4. handoff-contract's SKILL.md stays small enough to survive a subagent's
+# own context budget, since every agent in the team loads it -----------------
+HANDOFF_SKILL="$PLUGIN_ROOT/skills/handoff-contract/SKILL.md"
+t="handoff-contract/SKILL.md is 2000 bytes or under"
+if [ -f "$HANDOFF_SKILL" ]; then
+  SIZE="$(wc -c < "$HANDOFF_SKILL" | tr -d ' ')"
+  [ "$SIZE" -le 2000 ] && ok "$t ($SIZE bytes)" || nope "$t" "$SIZE bytes, over the 2000 budget"
+else
+  nope "$t" "file not found at $HANDOFF_SKILL"
+fi
+
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

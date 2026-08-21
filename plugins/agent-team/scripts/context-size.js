@@ -58,6 +58,37 @@ function newestTranscript(dir) {
   return best;
 }
 
+// The transcript_path a PreToolUse payload carries inside a subagent
+// invocation is the PARENT session's own transcript, not the subagent's -
+// measured against this harness, see docs/HARNESS-NOTES.md. A subagent's own
+// records live at <project>/<session_id>/subagents/agent-<agent_id>.jsonl,
+// sitting next to the parent transcript. Matches on the id SUFFIX rather than
+// an exact filename, and picks the newest match, so a harness that prefixes
+// the file differently still resolves. Returns null (falls back to the
+// parent) when nothing matches.
+function subagentTranscriptOf(parentTranscript, sessionId, agentId) {
+  if (!parentTranscript || !sessionId || !agentId) return null;
+  const dir = path.join(path.dirname(parentTranscript), sessionId, 'subagents');
+  let entries;
+  try {
+    entries = fs.readdirSync(dir);
+  } catch (e) {
+    return null;
+  }
+  let best = null;
+  let bestTime = -1;
+  const suffix = agentId + '.jsonl';
+  for (const name of entries) {
+    if (!name.endsWith(suffix)) continue;
+    const full = path.join(dir, name);
+    try {
+      const t = fs.statSync(full).mtimeMs;
+      if (t > bestTime) { bestTime = t; best = full; }
+    } catch (e) { /* raced with a delete; skip */ }
+  }
+  return best;
+}
+
 // Scans backwards: the answer is almost always in the last few lines, and a
 // transcript can be tens of megabytes.
 function contextSizeOf(file) {
@@ -83,15 +114,25 @@ function contextSizeOf(file) {
 
 function main(argv) {
   let transcript = argValue(argv, '--transcript');
+  let agentId = argValue(argv, '--agent-id');
+  let payload = null;
 
   if (!transcript) {
     const raw = readStdin();
     if (raw.trim()) {
       try {
-        const payload = JSON.parse(raw);
+        payload = JSON.parse(raw);
         if (payload && payload.transcript_path) transcript = payload.transcript_path;
       } catch (e) { /* a payload we cannot read is the same as no payload */ }
     }
+  }
+
+  if (!agentId && payload && payload.agent_id) agentId = payload.agent_id;
+
+  if (agentId && transcript) {
+    const sessionId = (payload && payload.session_id) || path.basename(transcript, '.jsonl');
+    const sub = subagentTranscriptOf(transcript, sessionId, agentId);
+    if (sub) transcript = sub;
   }
 
   if (!transcript || !fs.existsSync(transcript)) {

@@ -85,6 +85,17 @@ Most of the code you ship, you did not review. Treat it that way.
 - Redirect targets and file paths taken from user input are open-redirect and
   path-traversal, respectively. Allowlist; do not sanitise.
 
+## The request surface
+
+Injection by family (SQL, command, template, mass assignment, deserialization,
+path), SSRF, authentication mechanics (hashing, sessions, JWT, reset links,
+MFA, webhook signatures), CSRF, file upload, security headers and CSP, and the
+cryptography you are allowed to do - each is one paragraph in
+`references/app-surface.md`, stated as the way it is lost in practice. Read it
+before adding an endpoint that fetches a URL, accepts a file, or touches login.
+The **SAST gate** (semgrep, via `run-gates.sh`) catches the mechanical shapes;
+the design mistakes it cannot see are listed at the end of that file.
+
 ## Make abuse visible and expensive
 
 - **Audit log** anything that moves money, changes permissions, exports data, or

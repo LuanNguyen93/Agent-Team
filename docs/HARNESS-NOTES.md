@@ -222,3 +222,47 @@ non-empty" to actually parsing the JSON and checking
 `hookSpecificOutput.additionalContext`. A test that only checks for non-empty
 output cannot tell a delivered nudge from one shouted into a channel nobody
 reads.
+
+## 15. Inside a subagent, `transcript_path` is the PARENT's transcript, not its own
+
+Measured on this repository by round-tripping a real subagent dispatch: a
+`PreToolUse` payload delivered inside a subagent invocation carries
+`session_id` for the top-level session and `agent_id` for the subagent, but
+`transcript_path` still points at the PARENT session's own `<session>.jsonl`
+- not at the subagent's own transcript.
+
+The subagent's own records live at
+`<project-dir>/<session_id>/subagents/agent-<agent_id>.jsonl`, sitting next to
+the parent transcript's directory. Confirmed on disk after the probe: the
+harness writes `agent-<agent_id>.jsonl` (plus an `agent-<agent_id>.meta.json`)
+under that `subagents/` folder for every subagent dispatched, keyed by the
+same `agent_id` the payload carries.
+
+Method: temporarily instrumented the delegation-nudge.sh copy in the
+**installed plugin cache** (`~/.claude/plugins/cache/agent-team/agent-team/<version>/scripts/`)
+to append any payload carrying `agent_id` to a scratch file, since the
+running harness loads hooks from the installed cache, not from this working
+tree (see section 12) - editing the working-tree script has no effect on a
+live session's hook behaviour. Spawned a trivial subagent that made one tool
+call, inspected the captured payload, confirmed the file layout on disk, then
+reverted the cache copy exactly to its prior content.
+
+This is why `scripts/context-size.js` takes an optional `--agent-id`: given a
+parent `transcript_path` and an `agent_id` (from the CLI flag, or from
+`agent_id`/`session_id` fields in a stdin payload), it resolves the
+subagent's own transcript from that pair and reports the subagent's own
+context size, not the parent's. `scripts/subagent-guard.sh` is built on this
+- reading `transcript_path` directly for a subagent-context budget check
+would have silently measured the wrong context.
+
+## 16. `PostToolUse` takes the same non-blocking JSON envelope as `PreToolUse`
+
+`scripts/context-budget.sh` is registered on both `UserPromptSubmit` and
+`PostToolUse`. On `UserPromptSubmit`, plain stdout is the documented delivery
+mechanism (section 14). On `PostToolUse`, plain stdout is not delivered any
+more than it is on `PreToolUse` - the non-blocking channel is the same
+`{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"..."}}`
+envelope on stdout with exit 0, just with `hookEventName` set to
+`"PostToolUse"` instead of `"PreToolUse"`. The script picks the shape at
+runtime from the payload's own `hook_event_name` field, since one script is
+now registered under both events and the two are not interchangeable.

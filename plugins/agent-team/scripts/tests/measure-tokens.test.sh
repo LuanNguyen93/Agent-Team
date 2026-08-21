@@ -437,5 +437,33 @@ case "$(cat "$FIXTURE_DIR/expected.json")" in
   *) ok "$t";;
 esac
 
+# --- projectDirFor resolves from the git toplevel, not the raw cwd ---------
+#
+# A cwd nested several directories deep inside a repo must resolve to the same
+# transcripts directory as the repo root - the harness names the projects
+# folder after the git toplevel, not after whatever subdirectory a session
+# happens to be running in.
+NESTED="$TMP/nested-repo"
+mkdir -p "$NESTED/sub/dir"
+(cd "$NESTED" && git init -q 2>/dev/null)
+
+TOPLEVEL="$(cd "$NESTED" && git rev-parse --show-toplevel 2>/dev/null)"
+if [ -n "$TOPLEVEL" ]; then
+  ENCODED="$(node -e 'console.log(process.argv[1].replace(/[^a-zA-Z0-9]/g,"-"))' "$TOPLEVEL")"
+  FAKEHOME="$TMP/fakehome"
+  mkdir -p "$FAKEHOME/.claude/projects/$ENCODED"
+  usage_line claude-opus-5 1000 100 10 > "$FAKEHOME/.claude/projects/$ENCODED/eeeeeeee-6666.jsonl"
+
+  OUT="$(cd "$NESTED/sub/dir" && HOME="$FAKEHOME" USERPROFILE="$FAKEHOME" node "$MEASURE" --json 2>&1)"
+  RC=$?
+  t="run from a nested cwd resolves the project dir via git toplevel"
+  case "$OUT" in
+    *"No transcripts"*) nope "$t" "$OUT" ;;
+    *) [ $RC -eq 0 ] && ok "$t" || nope "$t" "exit=$RC out=$OUT" ;;
+  esac
+else
+  echo "  skip projectDirFor git-toplevel test (git not available)"
+fi
+
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -49,7 +49,7 @@ TRANSCRIPT="$(printf '%s' "$FIELDS" | sed -n '2p')"
 AGENT_ID="$(printf '%s' "$FIELDS" | sed -n '3p')"
 
 case "$TOOL" in
-  Edit|Write|NotebookEdit) ;;
+  Edit|Write|NotebookEdit|Bash|Read|Grep|Glob) ;;
   *) exit 0 ;;
 esac
 
@@ -63,15 +63,20 @@ esac
 SCAN_OUT="$(node "$DIR/tier-scan.js" "$TRANSCRIPT" 2>/dev/null)"
 TIER="$(printf '%s' "$SCAN_OUT" | sed -n '1p' | cut -d' ' -f1)"
 EDITS="$(printf '%s' "$SCAN_OUT" | sed -n '1p' | cut -d' ' -f2)"
-HAS_TASK="$(printf '%s' "$SCAN_OUT" | sed -n '1p' | cut -d' ' -f3)"
+READONLY="$(printf '%s' "$SCAN_OUT" | sed -n '1p' | cut -d' ' -f3)"
+HAS_TASK="$(printf '%s' "$SCAN_OUT" | sed -n '1p' | cut -d' ' -f4)"
 
 case "$TIER" in
   FEATURE|PROJECT) ;;
   *) exit 0 ;;
 esac
 [ "$HAS_TASK" = "1" ] && exit 0
-case "$EDITS" in ''|*[!0-9]*) exit 0 ;; esac
-[ "$EDITS" -ge 5 ] || exit 0
+case "$EDITS" in ''|*[!0-9]*) EDITS=0 ;; esac
+case "$READONLY" in ''|*[!0-9]*) READONLY=0 ;; esac
+OVER=0
+[ "$EDITS" -ge 5 ] && OVER=1
+[ "$READONLY" -ge 15 ] && OVER=1
+[ "$OVER" -eq 1 ] || exit 0
 
 ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
 
@@ -101,7 +106,8 @@ else
 fi
 
 {
-  echo "This session announced tier \`$TIER\` and has made $EDITS edits since"
+  echo "This session announced tier \`$TIER\` and has made $EDITS edits and"
+  echo "$READONLY read-only calls since"
   echo "without spawning a single subagent. $TIER names: $AGENTS."
   echo
   echo "Re-read the workflow-router skill's \"Routing means spawning, not"
