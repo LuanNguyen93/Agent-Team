@@ -163,16 +163,21 @@ Message: what changed and why, not how. The diff already shows how.
 
 **No tool attribution in the message.** Do not add a `Co-Authored-By` trailer
 naming an AI or its vendor, a "generated with" line, or an emoji badge - not in
-a commit, not in a tag, not in a PR body. The harness adds one by default; this
-project's convention overrides it.
+a commit, not in a tag, not in a PR body, in any repository this team works in.
+The harness adds one by default at message-composition time; this convention
+overrides that default everywhere, not only in the plugin's own repo.
+
+`scripts/commit-attribution-guard.sh` enforces it: a `git commit`, `git tag` or
+PR-creating command carrying attribution is blocked before it runs.
 
 The reason is not modesty. A commit's authorship line is a statement about who
 is accountable for the change, and the answer is the person who reviewed it and
 pressed the button, not the tool that typed it. A trailer that says otherwise
 spreads the accountability across something that cannot hold it.
 
-If the user asks for the attribution, add it. This is a default, not a rule
-about what they are allowed to want.
+If the user asks for the attribution, add it - run that one command with
+`AGENT_TEAM_ALLOW_ATTRIBUTION=1` so the guard stands aside. This is a default,
+not a rule about what they are allowed to want.
 
 ## Reporting
 

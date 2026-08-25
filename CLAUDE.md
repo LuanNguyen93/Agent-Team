@@ -23,10 +23,11 @@ claude plugin validate ./plugins/agent-team
 Also check that no agent frontmatter uses `hooks`, `mcpServers`, or
 `permissionMode` — plugins ignore all three silently.
 
-If the change touches `plugins/agent-team/tui/**`, `.github/workflows/tui-pr.yml`
-fires and enforces more than a plan's gate list usually names. A green
-`cargo build` and `cargo test` is *not* evidence that CI will pass — commit
-`bfdb25d` shipped three CI failures with every agent honestly reporting green.
+If the change touches `plugins/agent-team/tui/**`, run the full gate list
+yourself. `.github/workflows/tui-pr.yml` no longer runs on pull requests — it
+is manual-only from the Actions tab — so nothing catches these for you. A
+green `cargo build` and `cargo test` is *not* enough on its own: commit
+`bfdb25d` shipped three failures with every agent honestly reporting green.
 Run the real list, from these directories:
 
 ```bash
@@ -43,9 +44,11 @@ bash tests/src-hash-consistency.test.sh
                                # exit 1 or a SKIPPED line = failure
 ```
 
-CI then checks the built binary's `--build-info` `srcHash` against its
-`bin/MANIFEST` line, and runs the whole matrix on Windows, macOS x86 and arm,
-and Linux — so a local pass on one OS is a partial answer, not a complete one.
+A manual run of the workflow also checks the built binary's `--build-info`
+`srcHash` against its `bin/MANIFEST` line and runs the whole matrix on Windows,
+macOS x86 and arm, and Linux — a local pass on one OS is a partial answer, not
+a complete one. Since that run is now opt-in, do the `srcHash`/`MANIFEST`
+cross-check locally before shipping a binary.
 
 ## Writing rules
 

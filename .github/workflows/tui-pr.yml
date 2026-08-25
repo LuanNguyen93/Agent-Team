@@ -1,13 +1,11 @@
 name: TUI PR checks
 
-# Runs on every PR that touches the TUI's Rust crate or its bash wrapper
-# scripts. docs/architecture.md "Binary distribution" and ADR-0002 require
-# this to run on Windows, macOS and Linux, because a committed binary that
-# only ever built on one OS is not verified for the other four.
+# Manual-only. Automatic CI on pull requests is turned off at the user's
+# request; run this from the Actions tab when a TUI change needs the
+# cross-OS matrix that docs/architecture.md "Binary distribution" and
+# ADR-0002 describe (Windows, macOS and Linux).
 on:
-  pull_request:
-    paths:
-      - "plugins/agent-team/tui/**"
+  workflow_dispatch: {}
 
 jobs:
   check:
