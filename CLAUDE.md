@@ -64,6 +64,14 @@ cross-check locally before shipping a binary.
   survives intact and character 1,537 is silently lost.
 - Skills use progressive disclosure: a short `SKILL.md`, detail in `references/`.
 
+## Model Allocation & System One Discipline
+
+Match model tier to cognitive demand to maximize speed and minimize token cost:
+- `haiku`: **System One** operations — `router` agent, fast triage, lightweight gate checks, format validations.
+- `sonnet`: **Core Engineering** — `implementer`, `backend-implementer`, `frontend-implementer`, `planner`, `reviewer`, `qa-verifier`.
+- `opus`: **High-complexity Architecture & RCA** — `architect`, `debugger`.
+
+
 ## Bash scripts
 
 Hook scripts run on Windows (Git Bash), macOS, and Linux. Keep them POSIX-ish,

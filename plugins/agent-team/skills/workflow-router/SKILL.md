@@ -31,6 +31,14 @@ Signals, when the questions are ambiguous:
 escalate mid-flight ("this turned out to need architecture — moving to PROJECT")
 and expensive to make someone sit through a PRD for a typo.
 
+### Fast Routing (System One with Gemini Flash / Flash-Lite)
+For instant sub-second classification without spending high context on large reasoning models:
+- **Native Subagent (Zero API Key)**: Spawn a router subagent with `Model: 'flash_lite'` to classify the task into `QUICK`, `FEATURE`, or `PROJECT` with confidence score.
+- **CLI Script**: Alternatively, run `python plugins/agent-team/scripts/fast_router.py "<user request>"` if an API key or `.env` is configured.
+
+If `confidence < 0.80`, escalate to interactive grilling (`brainstorm-grilling`).
+
+
 ## Route
 
 ### QUICK

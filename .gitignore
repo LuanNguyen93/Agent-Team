@@ -4,3 +4,9 @@
 docs/measurements/
 
 .agents
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
