@@ -31,12 +31,23 @@ Signals, when the questions are ambiguous:
 escalate mid-flight ("this turned out to need architecture — moving to PROJECT")
 and expensive to make someone sit through a PRD for a typo.
 
-### Fast Routing (System One with Gemini Flash / Flash-Lite)
-For instant sub-second classification without spending high context on large reasoning models:
-- **Native Subagent (Zero API Key)**: Spawn a router subagent with `Model: 'flash_lite'` to classify the task into `QUICK`, `FEATURE`, or `PROJECT` with confidence score.
-- **CLI Script**: Alternatively, run `python plugins/agent-team/scripts/fast_router.py "<user request>"` if an API key or `.env` is configured.
+### Fast routing (System One)
 
-If `confidence < 0.80`, escalate to interactive grilling (`brainstorm-grilling`).
+Classification can be delegated to a cheap, fast model instead of spending the
+dispatching context on it:
+
+- **`router` agent** — spawn the `router` agent (its frontmatter pins the model,
+  so pass none). No API key needed. It returns the announce line plus
+  `CONFIDENCE`, `PARALLEL_SAFE`, and `SUGGESTED_AGENTS`.
+- **CLI script (optional)** — `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/fast_router.py" "<request>"`
+  calls Gemini Flash directly. It needs `GEMINI_API_KEY` or `GOOGLE_API_KEY`;
+  exit 2 means no key, which is "absent", not a classification. Fall back to
+  classifying yourself.
+
+The router's answer is advice. **You** still announce the tier (see "Announce
+the routing"), repeating its first line, because `tier-guard` reads only your
+own text. If confidence is below 0.80, escalate to interactive grilling
+(`brainstorm-grilling`).
 
 
 ## Route
