@@ -7,9 +7,9 @@ Route this request through the agent team: **$ARGUMENTS**
 
 Load the `workflow-router` skill and follow it.
 
-1. **Classify** the request as QUICK, FEATURE, or PROJECT, and state the tier and
-   your reason in one line before doing anything else, so the user can correct you.
+1. **Classify** the request as QUICK, FEATURE, or PROJECT (using fast System One evaluation, e.g. via the `router` agent on `haiku`), and state the tier and your reason in one line before doing anything else, so the user can correct you.
 2. **Route** to the agents for that tier.
+
 3. **Stop for sign-off** after the PRD on a PROJECT, before spending tokens on
    architecture and design.
 
