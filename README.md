@@ -46,6 +46,18 @@ Then, in a project:
 /build "add a login form with validation"
 ```
 
+### Antigravity
+
+Antigravity reads the same folder names with different contents. Do not point
+it at this tree; build its own edition instead:
+
+```bash
+bash plugins/agent-team/scripts/build-antigravity.sh   # installs to ~/.gemini/config/plugins/agent-team
+```
+
+Restart Antigravity afterwards, and rebuild whenever the plugin changes. See
+[`docs/HARNESS-NOTES.md`](docs/HARNESS-NOTES.md) section 17 for what differs.
+
 ## Commands
 
 | Command | Does |

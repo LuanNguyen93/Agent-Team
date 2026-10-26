@@ -266,3 +266,47 @@ envelope on stdout with exit 0, just with `hookEventName` set to
 `"PostToolUse"` instead of `"PreToolUse"`. The script picks the shape at
 runtime from the payload's own `hook_event_name` field, since one script is
 now registered under both events and the two are not interchangeable.
+
+## 17. Antigravity reads the same folders with different contents
+
+Antigravity (Google) loads plugins from `~/.gemini/config/plugins/<name>/` and
+looks for `agents/`, `skills/` and `hooks.json` - the same names this plugin
+uses, but it reads them differently. Installing the Claude Code tree as is gives
+an Antigravity plugin whose agents and hooks fail without any visible error:
+
+- **Agent `tools`.** An Antigravity agent gets exactly the tools listed in
+  `tools:`, and none when the list is missing. The Claude Code agents have no
+  list (they inherit everything), so every subagent came up with only
+  `view_file` and `send_message`. It could read files but not write them or run
+  commands. Tool names are Antigravity's own (`view_file`, `edit_file`,
+  `write_file`, `run_command`, `search_web` in the CLI). Antigravity's docs say
+  an unknown name can hang the subagent, so add a name only after you have seen
+  it in a real tool call.
+- **Agent `skills`.** Antigravity reads these entries as paths relative to the
+  agent. Inside a plugin that resolution fails
+  (`Cannot resolve agent-relative path handoff-contract: AgentBasePath is not
+  set`), and there is no Skill tool either. The converted agent lists absolute
+  `SKILL.md` paths for the agent to open with `view_file`.
+- **Agent `model`.** Only `inherit`, `flash` and `pro` are valid tiers.
+- **Hooks.** `hooks.json` sits at the plugin root and is keyed by hook name.
+  Commands run through `sh -c`, with the plugin root as the working directory.
+  The payload is camelCase (`conversationId`, `toolCall.args.CommandLine`,
+  `workspacePaths`). Every handler must print a JSON object. A `PreToolUse`
+  handler blocks by printing `{"decision":"deny"}`, not by exiting 2, and
+  passes by printing `{}`. Printing `"allow"` auto-approves the call and skips
+  the user's own permission prompt, so a guard must never print it. A
+  `PostToolUse` handler can only answer `{}`, so `file-length-guard.sh` queues
+  its note and delivers it from `PreInvocation`.
+- **No node.** The shell Antigravity runs hooks in often has no node on PATH.
+  The Antigravity branches of the hooks use only sh, sed and awk
+  (`scripts/agy-lib.sh`).
+- **Exec bit.** A command that calls `./scripts/x.sh` directly fails with exit
+  126 when the mode is lost on copy. Always call such scripts through `bash`.
+  The same applies to Claude Code's `hooks/hooks.json`.
+
+`scripts/build-antigravity.sh` derives the Antigravity edition from the Claude
+Code sources and installs it, so the Claude Code files stay the single source.
+Agents with `disallowedTools` that names Edit or Write get the read-only set;
+the others also get `write_file` and `edit_file`. Rebuild after every change,
+then restart Antigravity. `scripts/tests/antigravity.test.sh` covers the build
+and the hooks without node.
