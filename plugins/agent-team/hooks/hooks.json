@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/context-budget.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/context-budget.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/commit-attribution-guard.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/commit-attribution-guard.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/guard-heavy-load.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/guard-heavy-load.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/delegation-nudge.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/delegation-nudge.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/tier-guard.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/tier-guard.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/subagent-guard.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/subagent-guard.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/context-budget.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/context-budget.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -85,7 +85,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/file-length-guard.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/file-length-guard.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -97,7 +97,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/session-routing.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/session-routing.sh",
             "shell": "bash",
             "timeout": 10
           }
@@ -109,7 +109,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/gate-task-complete.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}\"/scripts/gate-task-complete.sh",
             "shell": "bash",
             "timeout": 600,
             "statusMessage": "Running quality gates before completing task"
