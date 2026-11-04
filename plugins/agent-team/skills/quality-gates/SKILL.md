@@ -28,6 +28,21 @@ fetch, is **absent**. A finding is fixed or suppressed on the one line with a
 `nosemgrep` comment and a reason, never by disabling the rule repo-wide.
 `AGENT_TEAM_SKIP_SAST=1` opts out.
 
+A **brand & trade-dress sweep** (`scripts/sweep.py`) runs automatically when
+`docs/brand.json`, `replica/brand.json`, or a `"sweep"` block in
+`.agent-team.json` exists. It scans source files, filenames, and directory names
+for forbidden competitor names (including compound identifiers like
+`CalendlyEmbed`), domains, and signature hex colours (including 3-digit
+shorthand), skipping `docs/` and `replica/` planning directories. Any hit exits
+`1` and blocks the line. `AGENT_TEAM_SKIP_SWEEP=1` opts out.
+
+A **feature parity gate** (`scripts/parity.py`) runs automatically when
+`docs/features.csv` or `replica/features.csv` exists. It computes the weighted
+feature parity score (`must`=3, `should`=2, `could`=1; `yes`=1.0, `partial`=0.5,
+`no`=0.0; `skip` and `original=no` excluded and listed separately) and blocks
+when any `must` feature is not yet `yes` (`--require-must-haves`) or when the
+score falls below `AGENT_TEAM_PARITY_MIN`. `AGENT_TEAM_SKIP_PARITY=1` opts out.
+
 A **secret scan** runs alongside the chain rather than inside it: it is
 stack-independent, so it applies to every project including one with no gates at
 all. It scans the working tree, not the history — a hit in the history is a

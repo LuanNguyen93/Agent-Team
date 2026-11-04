@@ -94,6 +94,13 @@ if you must break it, say so loudly rather than shipping it quietly. Details:
 - IDs opaque and non-sequential where they are exposed.
 - Every external call has a timeout. A missing timeout is an unbounded one.
 
+## SaaS integrations (Auth, Stripe, Email, OAuth, RLS)
+
+When building or reviewing authentication, account deletion, Row-Level Security
+and second-user isolation tests, Stripe Checkout/Portal and webhook lifecycle
+handlers, transactional email, or third-party OAuth integrations, follow
+`references/saas-integrations.md`.
+
 ## Reporting
 
 Say which of these you checked and which you did not. "Idempotency not

@@ -10,8 +10,14 @@ What hurts today, in the user's words. Who feels it, how often, what they do
 instead. No solution language here.
 
 ## Evidence
-What makes us believe this is real - a quote, a metric, an observed workaround.
+What makes us believe this is real - a quote, a metric, an observed workaround,
+or ranked public review themes from `docs/feedback.md` (with review count,
+source count, and verbatim linked quotes).
 If there is none, say so: `[OPEN: no evidence yet]`.
+
+## Positioning angle (when competing with or cloning an existing product)
+`For <who> who <hate this about the original>, <our product> <does this instead>.`
+Cite the supporting theme from `docs/feedback.md` and sample size.
 
 ## Cost of doing nothing
 If this is "not much", question whether to build at all.
@@ -26,7 +32,10 @@ Observable and checkable. How we would know, some weeks later, that this worked.
 Technical, business, timeline, compliance. Include the inconvenient ones.
 
 ## Out of scope
-Explicit exclusions. The most valuable section, and the one most often skipped.
+Explicit exclusions, including non-replicable moats (`skip` rows in
+`docs/features.csv`: licensed content, network liquidity, proprietary data,
+partner deals, regulated licences). The most valuable section, and the one most
+often skipped.
 
 ## Glossary
 | Term | Meaning | Identity rule (what makes two records the same one) |

@@ -23,12 +23,15 @@ produce.
    or Tailwind config, extend it. Do not impose a new one over the top — that is
    how codebases end up with three button styles.
 2. **Establish tokens before components**: colour by role, type scale, spacing
-   scale, radius, shadow, border.
+   scale, radius, shadow, border. Write `docs/tokens.json` (following
+   `skills/design-intelligence/references/tokens.json` with a `pairs` list) and
+   run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" docs/tokens.json`
+   until it exits 0 with zero AA failures.
 3. **Specify every screen in all four states**: loading, empty, error, populated.
    The populated state alone is the one users see least.
 4. **Specify behaviour**, not just appearance: what is focusable, what happens on
    submit, what happens on failure, what the URL does.
-5. **Write `docs/design-system.md` and `docs/ui-spec.md`.**
+5. **Write `docs/tokens.json`, `docs/design-system.md` and `docs/ui-spec.md`.**
 
 ## The bar
 
@@ -82,7 +85,8 @@ Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
 assumptions / not-covered / open block from `handoff-contract`.
 
 Write the files, then report: the style direction you chose and why, the token
-set, and any place the existing codebase conflicts with the system you specified.
+set, the real `contrast.py` command and output (`[observed]`), and any place
+the existing codebase conflicts with the system you specified.
 
 ## Scope
 

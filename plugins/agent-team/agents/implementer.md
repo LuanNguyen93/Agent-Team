@@ -138,6 +138,10 @@ claim of verification is not.
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
 assumptions / not-covered / open block from `handoff-contract`.
 
+When `docs/features.csv` (or `replica/features.csv`) exists in the project,
+update the `clone` column (`no` → `partial` or `yes`) for the features completed
+in your scope once their tests pass.
+
 Report: what you built, the tests you added and what they assert, the actual
 gate results, and anything you deviated from or could not do, and the attempt
 number against the per-finding budget when this dispatch is a repeat fix for

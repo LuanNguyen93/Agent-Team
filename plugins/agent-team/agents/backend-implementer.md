@@ -56,7 +56,10 @@ That makes the contract the only thing you may not quietly change.
 
 Route handlers, services, domain logic, jobs and queue consumers, queries, and
 migrations. Trust boundaries, transaction scope, idempotency, and unbounded
-queries are yours — `backend-discipline` is where the rules live.
+queries are yours — `backend-discipline` is where the rules live (and its
+`references/saas-integrations.md` covers auth, account deletion, RLS and
+second-user isolation tests, Stripe Checkout/Portal and webhook handlers,
+transactional email, and OAuth integrations).
 
 ## Match the codebase
 
@@ -98,6 +101,10 @@ it to a copy of yourself.
 
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
 assumptions / not-covered / open block from `handoff-contract`.
+
+When `docs/features.csv` (or `replica/features.csv`) exists in the project,
+update the `clone` column (`no` → `partial` or `yes`) for the features completed
+in your scope once their tests pass.
 
 Report: what you built, the tests you added and what they assert, the actual
 gate results, **every point where you diverged from or extended the contract**,
