@@ -31,7 +31,7 @@ AGY=0
 agy_is_payload "$PAYLOAD" && AGY=1
 
 pass() {
-  [ "$AGY" = "1" ] && echo '{}'
+  [ "$AGY" = "1" ] && echo '{"decision": "allow"}'
   exit 0
 }
 

@@ -54,10 +54,16 @@ was true when the choice was made.
 ```
 docs/
 ├── brief.md
+├── recon.md          # optional: clean-room screen/flow/entity map (market-recon)
+├── reviews.csv       # optional: verbatim linked public reviews (market-recon)
+├── feedback.md       # optional: ranked review themes from reviews.py
+├── features.csv      # optional: feature parity matrix scored by parity.py
 ├── prd.md
 ├── architecture.md
+├── tokens.json       # machine-readable design tokens checked by contrast.py
 ├── design-system.md
 ├── ui-spec.md
+├── brand.json        # optional: competitor names/domains/hex colours for sweep.py
 ├── adr/0001-<slug>.md
 └── stories/<epic>-<n>-<slug>.md
 ```

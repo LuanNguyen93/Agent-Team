@@ -91,6 +91,13 @@ You do not introduce a style direction, a colour palette, a type scale, or a
 spacing scale that the codebase does not already have. If your states cannot be
 built without one, that is a gap to report, not to fill.
 
+- When `docs/tokens.json` exists or when introducing/modifying any colour token,
+  run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" docs/tokens.json`
+  (or `contrast.py "<fg>" "<bg>"` for ad-hoc pairs) to verify WCAG AA compliance
+  before reporting done.
+- When starting a new UI surface, build reusable UI primitives on an isolated
+  `/design` route before assembling multi-screen flows.
+
 ## Match the codebase
 
 Write code that reads like the code around it: same naming, same structure, same
@@ -136,6 +143,10 @@ it to a copy of yourself.
 
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
 assumptions / not-covered / open block from `handoff-contract`.
+
+When `docs/features.csv` (or `replica/features.csv`) exists in the project,
+update the `clone` column (`no` → `partial` or `yes`) for the features completed
+in your scope once their tests pass.
 
 Report: what you built, the tests you added and what they assert, the actual
 gate results, **the fixtures you stubbed and any shape you had to guess**, every

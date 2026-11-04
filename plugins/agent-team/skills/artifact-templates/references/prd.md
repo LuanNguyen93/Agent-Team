@@ -17,10 +17,13 @@ Two or three sentences linking back to the brief. Link, do not restate.
 ### Out of scope
 
 ## Functional requirements
-Numbered so stories and tests can cite them.
+Numbered so stories and tests can cite them. When `docs/recon.md` or
+`docs/features.csv` exists, cite the screen IDs (`S01..Snn`), flow IDs (`F01..Fnn`
+and happy-path click-count target), and `features.csv` row each FR covers.
 
 **FR-1 - <title>**
 - Description:
+- Screens / Flows: `S01`, `F01` (if applicable)
 - Acceptance criteria:
   - [ ] Given <state>, when <action>, then <observable result>
   - [ ] Edge: empty / one / many / far too many

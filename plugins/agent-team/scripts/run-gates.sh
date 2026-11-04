@@ -357,6 +357,53 @@ Fix the finding or, for a true false positive, add a nosemgrep comment with
 
 run_sast || exit 1
 
+run_brand_sweep() {
+  [ "${AGENT_TEAM_SKIP_SWEEP:-}" = "1" ] && { printf 'Gate SKIPPED: brand sweep (AGENT_TEAM_SKIP_SWEEP=1)\n'; return 0; }
+  local cfg="" script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [ -f docs/brand.json ]; then cfg="docs/brand.json"
+  elif [ -f replica/brand.json ]; then cfg="replica/brand.json"
+  elif [ -f .agent-team.json ] && grep -q '"sweep"' .agent-team.json 2>/dev/null; then cfg=".agent-team.json"
+  else return 0
+  fi
+  command -v python3 >/dev/null 2>&1 && [ -f "$script_dir/sweep.py" ] || { printf 'Gate ABSENT: brand sweep (python3 or sweep.py missing)\n'; return 0; }
+  local out status
+  out=$(python3 "$script_dir/sweep.py" . --config "$cfg" 2>&1)
+  status=$?
+  if [ $status -eq 0 ]; then
+    printf 'Gate PASSED: brand sweep (%s)\n' "$cfg"
+    return 0
+  fi
+  [ $status -eq 2 ] && return 0
+  printf 'Gate FAILED: brand sweep\nCommand: python3 %s/sweep.py . --config %s\n\n%s\n' "$script_dir" "$cfg" "$out"
+  return 1
+}
+
+run_parity_check() {
+  [ "${AGENT_TEAM_SKIP_PARITY:-}" = "1" ] && { printf 'Gate SKIPPED: feature parity (AGENT_TEAM_SKIP_PARITY=1)\n'; return 0; }
+  local csv="" script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [ -f docs/features.csv ]; then csv="docs/features.csv"
+  elif [ -f replica/features.csv ]; then csv="replica/features.csv"
+  else return 0
+  fi
+  command -v python3 >/dev/null 2>&1 && [ -f "$script_dir/parity.py" ] || { printf 'Gate ABSENT: feature parity (python3 or parity.py missing)\n'; return 0; }
+  local flags="--require-must-haves"
+  [ -n "${AGENT_TEAM_PARITY_MIN:-}" ] && flags="$flags --fail-under $AGENT_TEAM_PARITY_MIN"
+  local out status
+  out=$(python3 "$script_dir/parity.py" "$csv" $flags 2>&1)
+  status=$?
+  if [ $status -eq 0 ]; then
+    printf 'Gate PASSED: feature parity (%s)\n' "$csv"
+    return 0
+  fi
+  printf 'Gate FAILED: feature parity\nCommand: python3 %s/parity.py %s %s\n\n%s\n' "$script_dir" "$csv" "$flags" "$out"
+  return 1
+}
+
+run_brand_sweep || exit 1
+run_parity_check || exit 1
+
 # 1. Explicit configuration wins.
 if [ -f .agent-team.json ] && command -v node >/dev/null 2>&1; then
   mapfile -t GATES < <(node -e '

@@ -32,6 +32,16 @@ system.
 
 - Colour: `references/palettes.md`
 - Type: `references/typography.md`
+- Machine-readable token template: `references/tokens.json` (`color`, `pairs`, `font`, `type`, `space`, `radius`, `shadow`, `motion`)
+
+Run the deterministic WCAG 2.2 contrast checker against your token file (or two hex colours directly) after every palette choice or rebrand:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" docs/tokens.json
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" "#5b6470" "#ffffff"
+```
+
+Exit code `1` (any AA failure: `< 4.5:1` normal text, `< 3.0:1` large text or UI boundaries) blocks handoff and must be fixed in the tokens, never per-component.
 
 ### 4. Lay out with a spacing scale
 Use a geometric scale (4, 8, 12, 16, 24, 32, 48, 64). Space is how grouping is
@@ -44,6 +54,12 @@ afterthought. See `references/ux-rules.md`.
 
 ### 6. Check accessibility
 Not optional, and cheaper to do now than to retrofit. See `references/a11y.md`.
+
+### 7. Build primitives in isolation first
+Before building multi-screen flows, render all core component primitives and
+their states (buttons, inputs, cards, badges, modals, tables, empty/loading/error)
+together on an isolated preview route (`/design` or Storybook) and screenshot it
+to verify hierarchy, spacing, and states side by side.
 
 ## The pre-delivery checklist
 
@@ -58,7 +74,7 @@ modes directly:
 - [ ] **Alignment** - elements share edges; nothing is off by 2px
 - [ ] **States** - hover, focus, active, disabled, loading, empty, error all exist
 - [ ] **Empty state** - says what to do next, not just "No data"
-- [ ] **Contrast** - 4.5:1 body, 3:1 large text and UI boundaries
+- [ ] **Contrast** - 4.5:1 body, 3:1 large text and UI boundaries (`contrast.py` exit 0)
 - [ ] **Focus visible** - keyboard focus ring on every interactive element
 - [ ] **Narrow viewport** - holds at 375px without horizontal scroll
 - [ ] **Dark mode** - if supported, tokens redefined, nothing hardcoded
@@ -66,7 +82,7 @@ modes directly:
 
 ## Things to avoid
 
-These read as "AI made this":
+These read as "AI made this" or violate clean-room rules:
 
 - Purple-to-blue gradient as the primary brand device
 - Every card with the same shadow and the same emphasis
@@ -75,3 +91,4 @@ These read as "AI made this":
 - Placeholder text used as a label - it disappears on focus, and fails a11y
 - Pure black on pure white
 - Uniform 16px padding on everything regardless of relationship
+- Copying a reference app's proprietary logos, icons, illustrations, licensed font files, verbatim UI copy, or signature brand hex values (use open icon sets like Lucide, Phosphor, Heroicons, or Tabler, and open fonts like Inter, Geist, IBM Plex, Manrope, or Source Serif)

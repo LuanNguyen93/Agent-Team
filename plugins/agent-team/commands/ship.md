@@ -24,4 +24,10 @@ working around it.
 Do not push unless the user asks. If the current branch is the default branch,
 create a branch first.
 
+5. **Production launch / cutover (when requested)** — if the user is preparing a
+   public launch, store submission, rebrand, or production domain cutover, load
+   `product-launch` and run its preflight checklist (`references/preflight.md`),
+   `${CLAUDE_PLUGIN_ROOT}/scripts/sweep.py`, `${CLAUDE_PLUGIN_ROOT}/scripts/parity.py --require-must-haves`, and
+   `${CLAUDE_PLUGIN_ROOT}/skills/product-launch/scripts/listing.py`.
+
 Report the gate table, the review outcome, and the commit.

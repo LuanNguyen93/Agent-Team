@@ -54,7 +54,7 @@ OUT="$STAGE/agent-team"
 mkdir -p "$OUT/agents"
 
 # --- content shared verbatim --------------------------------------------------
-for dir in skills stacks workflows; do
+for dir in skills stacks workflows tests; do
   [ -d "$SRC/$dir" ] && cp -R "$SRC/$dir" "$OUT/$dir"
 done
 
@@ -80,7 +80,8 @@ mkdir -p "$OUT/scripts"
 for f in "$SRC"/scripts/*; do
   [ -f "$f" ] && cp "$f" "$OUT/scripts/"
 done
-chmod +x "$OUT"/scripts/*.sh
+chmod +x "$OUT"/scripts/*.sh "$OUT"/scripts/*.py 2>/dev/null || true
+chmod +x "$OUT"/skills/*/scripts/*.py 2>/dev/null || true
 
 # Skills, converted commands among them, call scripts through
 # ${CLAUDE_PLUGIN_ROOT}, which Antigravity never sets. Bake in the install path.
@@ -107,17 +108,17 @@ EOF
 # explicitly so a lost executable bit cannot disable a hook. Only the hooks
 # that understand Antigravity's payload are registered; the rest read Claude
 # Code fields and would fail open on every call.
-cat > "$OUT/hooks.json" <<'EOF'
+cat > "$OUT/hooks.json" <<EOF
 {
   "agent-team": {
     "SessionStart": [
-      { "type": "command", "command": "bash ./scripts/session-routing.sh", "timeout": 10 }
+      { "type": "command", "command": "bash $DEST/scripts/session-routing.sh", "timeout": 10 }
     ],
     "PreToolUse": [
       {
         "matcher": "run_command",
         "hooks": [
-          { "type": "command", "command": "bash ./scripts/commit-attribution-guard.sh", "timeout": 10 }
+          { "type": "command", "command": "bash $DEST/scripts/commit-attribution-guard.sh", "timeout": 10 }
         ]
       }
     ],
@@ -125,12 +126,12 @@ cat > "$OUT/hooks.json" <<'EOF'
       {
         "matcher": "edit_file|write_file|write_to_file|replace_file_content|multi_replace_file_content",
         "hooks": [
-          { "type": "command", "command": "bash ./scripts/file-length-guard.sh", "timeout": 10 }
+          { "type": "command", "command": "bash $DEST/scripts/file-length-guard.sh", "timeout": 10 }
         ]
       }
     ],
     "PreInvocation": [
-      { "type": "command", "command": "bash ./scripts/file-length-guard.sh", "timeout": 10 }
+      { "type": "command", "command": "bash $DEST/scripts/file-length-guard.sh", "timeout": 10 }
     ]
   }
 }
