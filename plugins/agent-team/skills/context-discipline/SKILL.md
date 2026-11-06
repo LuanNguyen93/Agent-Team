@@ -154,6 +154,27 @@ Run `node scripts/measure-tokens.js --fillers` to see the same breakdown for the
 project you are in. It reports the main/subagent split per session, so "we should
 delegate more" becomes a number rather than an opinion.
 
+## 6. Small Models (SLMs) & Selective Inspection
+
+Frontier reasoning models (`opus`, `pro`) are expensive and slow. Modern small models
+(`haiku`, `flash`, `flash_lite`) are 10-20x cheaper and respond in milliseconds:
+
+1. **Tiered Model Delegation**:
+   - **Triage & Routing**: Always run on `haiku` / `flash_lite` (instant System One).
+   - **Quality Gates, Test Execution & Verification (`qa-verifier`)**: Run on `haiku` / `flash`.
+     Running full test suites or verifying exit codes on `opus` / `sonnet` wastes ~90% of token budget.
+   - **Core Implementation**: `sonnet` / `inherit` for balanced reasoning and speed.
+   - **Architecture & RCA Debugging**: Reserve `opus` / `pro` exclusively for deep causal analysis
+     and non-trivial system design.
+2. **Selective File Inspection**:
+   - Never dump an entire 800-line file into context just to inspect a 20-line function.
+   - Use targeted line ranges (`StartLine`/`EndLine`), `grep`, or structural code navigation.
+3. **Piped Output & Log Sanitization**:
+   - A passing test suite needs one line (`"59 tests passed in 0.6s"`), not 500 lines of dots or verbose logs. When a command fails, pipe or filter to include only the relevant error message and stack trace.
+4. **Strict Handoff Capsule (30-50 lines)**:
+   - Inter-agent reports must be concise capsules (`[observed]`, `[inferred]`, `[assumed]`),
+     never narrative essays re-explaining the entire project history.
+
 ## Never do these
 
 - Load the whole repository "for context" when the task names its files

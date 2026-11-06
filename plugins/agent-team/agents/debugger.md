@@ -61,6 +61,7 @@ test asserted the wrong thing.
 - Changing several things at once — you will not know which mattered
 - "Probably a caching issue" — a guess wearing the costume of a diagnosis
 - Declaring victory because the symptom disappeared
+- Leaving garbage behind: never leave disabled code, commented-out blocks, or temporary workaround flags once the real fix is in place. Clean up obsolete code completely.
 
 ## Honesty
 

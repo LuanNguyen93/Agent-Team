@@ -56,12 +56,21 @@ wastes it.
 - What here is expensive and reachable without logging in?
 - If this were disputed in six months, what record proves what happened?
 
-**Data**
-- Where does the data come from, who owns it, what is the source of truth?
-- What about existing rows that predate this rule?
-- Permissions: who may see it, who may change it?
-- Is any of it personal data? If so, how long is it kept, and what happens on a
-  deletion request?
+**Data & Business State**
+- Where does the data come from, who owns it, what is the single source of truth?
+- What are the finite lifecycle states? (e.g. Draft -> Pending -> Approved -> Completed).
+  Any lifecycle requires an explicit state transition matrix.
+- What business invariants (`BR-xx`) must never be violated under any condition?
+- Permissions: who may see it, who may trigger each state transition?
+- What about existing rows that predate this rule? How are they migrated?
+- What existing code, fields, or endpoints become obsolete and MUST be deleted rather than left as technical debt?
+
+## Move 2b — Frame Decisions as Grounded Trade-offs, Never Open Surveys
+
+Never interrogate the user with naive, generic survey questions like "What are your business goals?" or "Who is the user?".
+A Lead Analyst reads the codebase first, identifies the real technical and business fork in the road, and frames the question as a concrete trade-off with a recommended default:
+
+> *"In the database, `Order` already has statuses `PENDING`, `PAID`, `SHIPPED`. For cancellation: (A) only allow cancellation in `PENDING` (safe, rigid), or (B) allow cancellation in `PAID` with automated Stripe refund webhook (better UX, handles refund race conditions). I recommend (B). Shall we proceed with that?"*
 
 ## Move 3 — Build shared vocabulary
 

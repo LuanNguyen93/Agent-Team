@@ -14,6 +14,22 @@ What shape the system has and why, in a paragraph. Then the diagram.
 The constraints that actually forced choices - team size, existing stack,
 latency budget, cost ceiling. If a constraint did not change a decision, cut it.
 
+## Solution Options & CTO Trade-off Matrix
+Compare 2-3 architectural alternatives before choosing:
+| Option | Complexity | Scalability / Performance | Operational Cost (TCO) | Verdict |
+|---|---|---|---|---|
+| Option A: Pragmatic In-Process | Lowest | Up to 100 QPS | $0 extra | Simple, fastest delivery |
+| Option B: Decoupled Async / Queued | Moderate | High (scalable workers) | Minimal (Redis/DB) | **RECOMMENDED** |
+| Option C: Microservices / Distributed | High | Extreme | High ops tax | Rejected (Overkill) |
+
+Rationale for the chosen option: ...
+
+## Performance, Concurrency & Data Access Strategy
+- **Sync vs Async boundaries**: Which flows run in HTTP request vs background queue.
+- **Database Indexing & Query Plan**: Explicit indexes, N+1 query prevention.
+- **Concurrency Control & Idempotency**: Optimistic locking, idempotency keys on mutations.
+- **Caching**: Specific keys, TTL, and mutation invalidation triggers.
+
 ## Components
 | Component | Responsible for | NOT responsible for |
 |---|---|---|
