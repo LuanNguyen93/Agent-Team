@@ -87,6 +87,25 @@ Write the best algorithm the problem admits, and say what it is.
 Cost and clarity conflict rarely. When they do, take the faster algorithm and
 explain it in a comment — but only once the input bound proves it matters.
 
+## 5. CTO System Design & Operational Architecture
+
+A Principal Architect designs solutions for production reliability and operational simplicity,
+not textbook purity:
+
+1. **Async vs Sync Workload Partitioning**:
+   - Any operation that takes > 200ms, does heavy computation (PDF, CSV, image encoding), or calls third-party APIs (Stripe, OpenAI, SendGrid) MUST be decoupled into background jobs/queues. Never hold an HTTP request open waiting on an external network dependency.
+2. **Data Access & Query Optimization**:
+   - All foreign keys and query filter columns must declare database indexes.
+   - N+1 query waterfalls are architectural defects: mandate batch loading (`JOIN`, `IN (?, ?)`, or DataLoader).
+   - Use atomic transactions (ACID) for multi-table mutations. Require idempotency keys for any mutation involving money, inventory, or irreversible state changes.
+3. **Concurrency & Race Conditions**:
+   - For concurrent record updates, use optimistic locking (a `version` column checked on update).
+   - For inventory/balance deductions, use atomic database updates (`UPDATE accounts SET balance = balance - 10 WHERE balance >= 10`).
+4. **Caching Strategy with Invalidation**:
+   - Never introduce caching without stating: (1) what is cached, (2) the TTL, and (3) the exact mutation events that invalidate the cache.
+5. **Infrastructure Pragmatism & TCO**:
+   - Maximize existing stack components before recommending new services. A PostgreSQL database with standard indexes can easily handle tens of thousands of queries per second before requiring specialized search engines or NoSQL clusters.
+
 ## Conformance
 
 Before reporting a change complete, state:

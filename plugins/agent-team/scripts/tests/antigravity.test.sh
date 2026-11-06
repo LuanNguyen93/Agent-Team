@@ -46,8 +46,8 @@ OUT="$(bash "$BUILD" "$DEST" 2>&1)"; RC=$?
 t="manifest carries only fields Antigravity reads"
 grep -q '"author"\|"keywords"\|"license"' "$DEST/plugin.json" && nope "$t" "$(cat "$DEST/plugin.json")" || ok "$t"
 
-t="hook commands go through bash, relative to the plugin root"
-BAD="$(grep '"command"' "$DEST/hooks.json" | grep -v '"bash \./scripts/')"
+t="hook commands go through bash with absolute script paths"
+BAD="$(grep '"command"' "$DEST/hooks.json" | grep -v "\"bash $DEST/scripts/")"
 [ -z "$BAD" ] && ok "$t" || nope "$t" "$BAD"
 
 t="no agent keeps a Claude-only key or a bare skill name"
@@ -80,7 +80,7 @@ BAD="$(grep -rl 'CLAUDE_PLUGIN_ROOT' "$DEST/skills" "$DEST/agents")"
 
 t="commands ship as skills, with no commands/ folder"
 BAD=""
-for c in build pr ship spec stack-init; do
+for c in build pr ship spec stack-init upgrade; do
   grep -q "^name: $c$" "$DEST/skills/$c/SKILL.md" 2>/dev/null || BAD="$BAD $c"
 done
 [ -d "$DEST/commands" ] && BAD="$BAD commands/"
@@ -113,13 +113,13 @@ OUT="$(hook session-routing.sh "{$COMMON}")"
 case "$OUT" in *"no UI surface"*) ok "$t" ;; *) nope "$t" "out='$OUT'" ;; esac
 rm -f "$WS/.agent-team.json"
 
-t="attribution guard: ordinary command -> {} (never allow)"
+t="attribution guard: ordinary command -> allow"
 OUT="$(hook commit-attribution-guard.sh "$(cmd_payload 'git status')")"
-[ "$OUT" = "{}" ] && ok "$t" || nope "$t" "out='$OUT'"
+[ "$OUT" = '{"decision": "allow"}' ] && ok "$t" || nope "$t" "out='$OUT'"
 
-t="attribution guard: clean commit -> {}"
+t="attribution guard: clean commit -> allow"
 OUT="$(hook commit-attribution-guard.sh "$(cmd_payload 'git commit -m \"fix: x\"')")"
-[ "$OUT" = "{}" ] && ok "$t" || nope "$t" "out='$OUT'"
+[ "$OUT" = '{"decision": "allow"}' ] && ok "$t" || nope "$t" "out='$OUT'"
 
 t="attribution guard: AI trailer -> deny"
 OUT="$(hook commit-attribution-guard.sh "$(cmd_payload 'git commit -m \"fix: x\\n\\nCo-Authored-By: Claude <noreply@anthropic.com>\"')")"
@@ -129,9 +129,9 @@ t="attribution guard: escaped robot badge -> deny"
 OUT="$(hook commit-attribution-guard.sh "$(cmd_payload 'gh pr create --body \"🤖 done\"')")"
 case "$OUT" in *'"decision":"deny"'*'robot badge'*) ok "$t" ;; *) nope "$t" "out='$OUT'" ;; esac
 
-t="attribution guard: opt-out -> {}"
+t="attribution guard: opt-out -> allow"
 OUT="$(cd "$DEST" && printf '%s' "$(cmd_payload 'git commit -m \"Co-Authored-By: Claude\"')" | AGENT_TEAM_ALLOW_ATTRIBUTION=1 sh -c 'bash ./scripts/commit-attribution-guard.sh')"
-[ "$OUT" = "{}" ] && ok "$t" || nope "$t" "out='$OUT'"
+[ "$OUT" = '{"decision": "allow"}' ] && ok "$t" || nope "$t" "out='$OUT'"
 
 i=1; : > "$WS/big.ts"; while [ $i -le 820 ]; do echo "line $i" >> "$WS/big.ts"; i=$((i+1)); done
 edit_payload() { printf '{%s,"toolCall":{"name":"edit_file","args":{"Path":"%s","Target":"a","Replacement":"b"}}}' "$COMMON" "$1"; }

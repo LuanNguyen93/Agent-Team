@@ -66,6 +66,7 @@ Restart Antigravity afterwards, and rebuild whenever the plugin changes. See
 | `/spec <request>` | Planning artifacts only, no code |
 | `/ship` | Gates, review, verification, then an atomic commit |
 | `/stack-init` | Detect the stack and record its gate commands |
+| `/upgrade` | Run gates, sync upstream, and self-upgrade across Claude, Antigravity, and Codex |
 | `/agent-team:review-panel` | Multi-lens review with adversarial verification (workflow) |
 
 Commands also resolve under their namespaced form, `/agent-team:build`. Use that

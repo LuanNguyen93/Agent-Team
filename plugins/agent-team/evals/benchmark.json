@@ -1,0 +1,148 @@
+{
+  "version": "1.0.0",
+  "routing_cases": [
+    {
+      "id": "quick-01",
+      "input": "Fix typo in README line 42",
+      "expected_tier": "QUICK",
+      "expected_parallel_safe": false,
+      "category": "trivial_fix"
+    },
+    {
+      "id": "quick-02",
+      "input": "Change button background hover color from blue-500 to blue-600 in Header.tsx",
+      "expected_tier": "QUICK",
+      "expected_parallel_safe": false,
+      "category": "single_file_css"
+    },
+    {
+      "id": "quick-03",
+      "input": "Add missing null check in calculateDiscount utility function",
+      "expected_tier": "QUICK",
+      "expected_parallel_safe": false,
+      "category": "unit_bugfix"
+    },
+    {
+      "id": "quick-04",
+      "input": "Update copyright year to 2026 in footer component and legal notice",
+      "expected_tier": "QUICK",
+      "expected_parallel_safe": false,
+      "category": "minor_text"
+    },
+    {
+      "id": "quick-05",
+      "input": "Rename userProfileUrl to avatarUrl in types/user.ts and its callers",
+      "expected_tier": "QUICK",
+      "expected_parallel_safe": false,
+      "category": "simple_refactor"
+    },
+    {
+      "id": "feature-01",
+      "input": "Add user avatar upload API with S3 storage and an upload dialog in profile settings",
+      "expected_tier": "FEATURE",
+      "expected_parallel_safe": true,
+      "category": "fullstack_feature"
+    },
+    {
+      "id": "feature-02",
+      "input": "Implement Stripe webhook handler to record successful subscription invoices in PostgreSQL",
+      "expected_tier": "FEATURE",
+      "expected_parallel_safe": false,
+      "category": "backend_feature"
+    },
+    {
+      "id": "feature-03",
+      "input": "Build a responsive data table with sorting, column filtering, and pagination for order history",
+      "expected_tier": "FEATURE",
+      "expected_parallel_safe": false,
+      "category": "frontend_feature"
+    },
+    {
+      "id": "feature-04",
+      "input": "Add export orders to CSV background job and download notification",
+      "expected_tier": "FEATURE",
+      "expected_parallel_safe": true,
+      "category": "async_job_feature"
+    },
+    {
+      "id": "feature-05",
+      "input": "Add 2-Factor Authentication (TOTP) setup flow with QR code and recovery codes",
+      "expected_tier": "FEATURE",
+      "expected_parallel_safe": true,
+      "category": "security_feature"
+    },
+    {
+      "id": "project-01",
+      "input": "Design and build a multi-tenant B2B billing and subscription platform from scratch",
+      "expected_tier": "PROJECT",
+      "expected_parallel_safe": false,
+      "category": "greenfield_system"
+    },
+    {
+      "id": "project-02",
+      "input": "Migrate monolithic database and background queue into a distributed event-driven microservices architecture",
+      "expected_tier": "PROJECT",
+      "expected_parallel_safe": false,
+      "category": "re_architecture"
+    },
+    {
+      "id": "project-03",
+      "input": "Rewrite our mobile app from React Native to native Flutter with offline-first local sync",
+      "expected_tier": "PROJECT",
+      "expected_parallel_safe": false,
+      "category": "platform_rewrite"
+    },
+    {
+      "id": "project-04",
+      "input": "Build an AI copilot workspace with streaming markdown chat, vector search indexing, and real-time canvas collaboration",
+      "expected_tier": "PROJECT",
+      "expected_parallel_safe": false,
+      "category": "complex_product"
+    }
+  ],
+  "agent_rubrics": {
+    "analyst": {
+      "required_sections": [
+        "Business Invariants & Rules",
+        "Business State Machine",
+        "Deprecations & Cleanup Targets"
+      ],
+      "anti_patterns": [
+        "What is your business goal?",
+        "Who is the user?",
+        "Please describe the requirements"
+      ]
+    },
+    "architect": {
+      "required_sections": [
+        "Solution Options & CTO Trade-off Matrix",
+        "Performance, Concurrency & Data Access Strategy",
+        "Dependency rule"
+      ],
+      "anti_patterns": [
+        "Microservices for simple CRUD",
+        "Clean architecture without naming trade-offs"
+      ]
+    },
+    "frontend": {
+      "required_states": [
+        "Default / Populated",
+        "Hover & Focus / Active",
+        "Loading",
+        "Empty",
+        "Error"
+      ],
+      "required_architecture": [
+        "CVA or variant maps",
+        "Presentational vs Container separation",
+        "Semantic tokens",
+        "Zod runtime validation"
+      ],
+      "forbidden_practices": [
+        "Hardcoded hex colors like #3b82f6",
+        "Raw uncoordinated booleans isLoading and isError",
+        "div onClick without role or tabIndex"
+      ]
+    }
+  }
+}

@@ -27,10 +27,10 @@ See `references/styles.md` for the catalogue and when each fits.
 
 ### 3. Build the token set before any component
 Colour, type scale, spacing scale, radius, shadow, border. Components consume
-tokens; they never hardcode values. This is what makes a system feel like one
-system.
+semantic tokens; they never hardcode raw hex values or arbitrary pixel values.
+This is what makes a system feel like one cohesive product.
 
-- Colour: `references/palettes.md`
+- Colour: Semantic hierarchy (`primary`, `primary-foreground`, `surface`, `muted`, `muted-foreground`, `accent`, `destructive`, `border`, `ring`) in `references/palettes.md`
 - Type: `references/typography.md`
 - Machine-readable token template: `references/tokens.json` (`color`, `pairs`, `font`, `type`, `space`, `radius`, `shadow`, `motion`)
 
@@ -42,6 +42,16 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" "
 ```
 
 Exit code `1` (any AA failure: `< 4.5:1` normal text, `< 3.0:1` large text or UI boundaries) blocks handoff and must be fixed in the tokens, never per-component.
+### 3b. Design System Architecture: Primitives, CVA & Composition
+Expert frontend engineering treats UI as a composable Design System, never as ad-hoc utility strings:
+
+1. **Atomic Primitives First**: Build or reuse atomic primitives (`Button`, `Input`, `Dialog`, `Card`, `Badge`) before assembling screens.
+2. **Class Variance Authority (CVA)**: Manage component variants (`primary`, `secondary`, `outline`, `destructive`) and sizes (`sm`, `md`, `lg`) using CVA or strict typed variant maps. Never concatenate dynamic strings with ternary spaghetti.
+3. **Slot & `asChild` Composition**: Support polymorphic rendering (e.g., a button rendered as an `<a>` link) via Slot composition (Radix `Slot`) rather than nesting unnecessary `<div>` or duplicate markup.
+4. **Presentational vs Container Separation**:
+   - **Presentational Component**: Pure UI, accepts typed props, renders semantic tokens, zero API fetching, 100% testable and reusable.
+   - **Container / Custom Hook**: Encapsulates state machines, API queries, cache invalidation, and business logic.
+5. **No Blind Tailwind Injection**: Do not litter arbitrary utilities like `className="p-[13px] bg-[#234567] text-white"`. Every class must resolve to design system scales.
 
 ### 4. Lay out with a spacing scale
 Use a geometric scale (4, 8, 12, 16, 24, 32, 48, 64). Space is how grouping is
