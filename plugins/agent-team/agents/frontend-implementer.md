@@ -112,6 +112,13 @@ Blind TDD (writing minimal markup just to pass a test query) is strictly forbidd
 - When a dev server or browser environment is available, use `browser-verify` to
   inspect the real rendered output. Never infer visual correctness from shallow DOM unit tests.
 
+- When `docs/tokens.json` exists or when introducing/modifying any colour token,
+  run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" docs/tokens.json`
+  (or `contrast.py "<fg>" "<bg>"` for ad-hoc pairs) to verify WCAG AA compliance
+  before reporting done.
+- When starting a new UI surface, build reusable UI primitives on an isolated
+  `/design` route before assembling multi-screen flows.
+
 ## Match the codebase
 
 Write code that reads like the code around it: same naming, same structure, same

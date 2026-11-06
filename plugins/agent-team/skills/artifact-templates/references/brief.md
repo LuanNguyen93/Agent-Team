@@ -36,7 +36,6 @@ Explicit exclusions, including non-replicable moats (`skip` rows in
 `docs/features.csv`: licensed content, network liquidity, proprietary data,
 partner deals, regulated licences). The most valuable section, and the one most
 often skipped.
-
 ## Business Invariants & Rules
 Non-negotiable domain rules that code must never violate.
 - `BR-01`: ...

@@ -42,7 +42,6 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" "
 ```
 
 Exit code `1` (any AA failure: `< 4.5:1` normal text, `< 3.0:1` large text or UI boundaries) blocks handoff and must be fixed in the tokens, never per-component.
-
 ### 3b. Design System Architecture: Primitives, CVA & Composition
 Expert frontend engineering treats UI as a composable Design System, never as ad-hoc utility strings:
 
