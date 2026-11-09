@@ -45,7 +45,7 @@ if [ "$AGY" = "1" ]; then
   CMD="$(agy_string_field "$PAYLOAD" CommandLine)"
   BADGE=""
   # The badge arrives either as raw UTF-8 or as a 🤖 escape.
-  if printf '%s' "$PAYLOAD" | LC_ALL=C grep -q -i -e "$(printf '\360\237\244\226')" -e '\\ud83e\\udd16'; then
+  if printf '%s' "$PAYLOAD" | LC_ALL=C grep -q -e "$(printf '\360\237\244\226')" || printf '%s' "$PAYLOAD" | LC_ALL=C grep -q -i -e '\\ud83e\\udd16'; then
     BADGE="badge"
   fi
 else

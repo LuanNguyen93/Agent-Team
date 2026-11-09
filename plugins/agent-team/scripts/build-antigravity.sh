@@ -31,6 +31,11 @@ for arg in "$@"; do
   esac
 done
 DEST="${DEST:-$HOME/.gemini/config/plugins/agent-team}"
+if command -v cygpath >/dev/null 2>&1; then
+  case "$DEST" in
+    /[a-zA-Z]/*) DEST="$(cygpath -m "$DEST")" ;;
+  esac
+fi
 MARKER=".agent-team-build"
 
 if [ -e "$DEST" ] && [ ! -f "$DEST/$MARKER" ] && [ "$FORCE" != "1" ]; then
@@ -135,6 +140,20 @@ cat > "$OUT/hooks.json" <<EOF
     ]
   }
 }
+EOF
+
+# On Windows, Antigravity executes hooks with `cmd /c "bash ..."`. If WSL is
+# registered without a Linux distro, System32\bash.exe intercepts the call and
+# fails. Placing bash.cmd in the plugin root ensures cmd.exe finds Git Bash
+# in the working directory before System32.
+cat > "$OUT/bash.cmd" <<'EOF'
+@echo off
+set "BASH_EXE="
+if exist "C:\Program Files\Git\bin\bash.exe" set "BASH_EXE=C:\Program Files\Git\bin\bash.exe"
+if not defined BASH_EXE if exist "C:\Program Files\Git\usr\bin\bash.exe" set "BASH_EXE=C:\Program Files\Git\usr\bin\bash.exe"
+if not defined BASH_EXE set "BASH_EXE=bash.exe"
+"%BASH_EXE%" %*
+exit /b %ERRORLEVEL%
 EOF
 
 # --- agents -------------------------------------------------------------------
