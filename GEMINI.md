@@ -21,6 +21,15 @@ Whenever the user prompts `/build <request>`, `build <request>`, or requests to 
    - Query CodeGraph/symbols before reading entire files.
    - Never write code before an approved plan (except on `QUICK` tier).
 
+## Autonomous Decision Doctrine (Zero-Nudge Execution)
+- **Zero-Nudge Execution**: Sub-agents and main agent MUST NOT ask the user for permission to read files, write tests, modify code, run linters/tests, or refactor within the scope of the task/plan.
+- **Decision Boundary**:
+  - *Decide and proceed*: Implementation details, file structure, test cases, bug fixing iterations, error handling. Execute completely and provide a concise summary report at the end.
+  - *Only ask when*:
+    1. A destructive, irreversible action is required (e.g. dropping DB, hard git resets losing uncommitted work).
+    2. Missing fundamental domain decisions or business requirements not in the spec.
+    3. Loop budget or quality gate is hard-blocked.
+
 ## Language & Artifact Conventions
 - **Chat Response**: Respond to the user in Vietnamese (or user's preferred language).
 - **Files & Codebase**: All created/modified files, documentation (`docs/*.md`, artifacts, PRD, comments, code, commit messages) **MUST be written in English throughout**, adhering strictly to CLAUDE.md / Agent Team writing rules.

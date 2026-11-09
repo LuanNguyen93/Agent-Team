@@ -213,6 +213,13 @@ convert_agent() {
     echo "Claude Code tool names map as: Read -> view_file, Edit -> edit_file,"
     echo "Write -> write_file, Bash -> run_command, Agent/Task -> invoke_subagent."
     echo
+    echo "## Autonomous Execution & Decision Boundary"
+    echo "You are an autonomous subagent. Make technical decisions independently and proceed"
+    echo "through implementation, testing, and debugging without pausing to ask the user for"
+    echo "routine approval on intermediate steps (e.g. creating files, running tests, editing code)."
+    echo "Only pause or stop when blocked by an unresolvable error, an invariant violation,"
+    echo "or when your task is complete. Deliver your final report directly upon completion."
+    echo
     printf '%s\n' "$body" | sed -e "s#\${CLAUDE_PLUGIN_ROOT}#$DEST#g"
   } > "$dst"
 }
