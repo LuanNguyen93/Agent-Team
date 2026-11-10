@@ -31,6 +31,11 @@ for arg in "$@"; do
   esac
 done
 DEST="${DEST:-$HOME/.gemini/config/plugins/agent-team}"
+if command -v cygpath >/dev/null 2>&1; then
+  case "$DEST" in
+    /[a-zA-Z]/*) DEST="$(cygpath -m "$DEST")" ;;
+  esac
+fi
 MARKER=".agent-team-build"
 
 if [ -e "$DEST" ] && [ ! -f "$DEST/$MARKER" ] && [ "$FORCE" != "1" ]; then
@@ -137,6 +142,20 @@ cat > "$OUT/hooks.json" <<EOF
 }
 EOF
 
+# On Windows, Antigravity executes hooks with `cmd /c "bash ..."`. If WSL is
+# registered without a Linux distro, System32\bash.exe intercepts the call and
+# fails. Placing bash.cmd in the plugin root ensures cmd.exe finds Git Bash
+# in the working directory before System32.
+cat > "$OUT/bash.cmd" <<'EOF'
+@echo off
+set "BASH_EXE="
+if exist "C:\Program Files\Git\bin\bash.exe" set "BASH_EXE=C:\Program Files\Git\bin\bash.exe"
+if not defined BASH_EXE if exist "C:\Program Files\Git\usr\bin\bash.exe" set "BASH_EXE=C:\Program Files\Git\usr\bin\bash.exe"
+if not defined BASH_EXE set "BASH_EXE=bash.exe"
+"%BASH_EXE%" %*
+exit /b %ERRORLEVEL%
+EOF
+
 # --- agents -------------------------------------------------------------------
 # Tool names are the Antigravity CLI's own. An unknown name can hang the
 # subagent, so add one only after seeing it in a real tool call.
@@ -193,6 +212,13 @@ convert_agent() {
     fi
     echo "Claude Code tool names map as: Read -> view_file, Edit -> edit_file,"
     echo "Write -> write_file, Bash -> run_command, Agent/Task -> invoke_subagent."
+    echo
+    echo "## Autonomous Execution & Decision Boundary"
+    echo "You are an autonomous subagent. Make technical decisions independently and proceed"
+    echo "through implementation, testing, and debugging without pausing to ask the user for"
+    echo "routine approval on intermediate steps (e.g. creating files, running tests, editing code)."
+    echo "Only pause or stop when blocked by an unresolvable error, an invariant violation,"
+    echo "or when your task is complete. Deliver your final report directly upon completion."
     echo
     printf '%s\n' "$body" | sed -e "s#\${CLAUDE_PLUGIN_ROOT}#$DEST#g"
   } > "$dst"
