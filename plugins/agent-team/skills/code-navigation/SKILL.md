@@ -19,11 +19,16 @@ unavailable:
    means one query returns the relevant source, the call paths between symbols,
    and the blast radius, including dynamic-dispatch hops. Commands in
    `references/codegraph.md`.
-2. **Language tooling** — the type checker, "find references", the build
+2. **AST Skeleton & Surgical Extraction (`context_kernel.py`)** — when no
+   `.codegraph/` exists, run `python3 plugins/agent-team/scripts/context_kernel.py skeleton <path>`
+   to get the AST signature map with `[Lstart-Lend]` spans (~93% token reduction),
+   then `python3 plugins/agent-team/scripts/context_kernel.py extract <file> <symbol>`
+   to read only the target AST node instead of dumping entire files.
+3. **Language tooling** — the type checker, "find references", the build
    system's dependency graph. It knows what text search cannot.
-3. **Search** — `rg` for a symbol, `git log -S` for when a behaviour appeared,
+4. **Search** — `rg` for a symbol, `git log -S` for when a behaviour appeared,
    `git blame` for why.
-4. **Reading files**, once you know which ones.
+5. **Reading files**, once you know which ones.
 
 Most crawling is step 3 and 4 doing step 1's job.
 

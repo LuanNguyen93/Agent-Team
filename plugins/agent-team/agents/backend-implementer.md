@@ -102,9 +102,7 @@ it to a copy of yourself.
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
 assumptions / not-covered / open block from `handoff-contract`.
 
-When `docs/features.csv` (or `replica/features.csv`) exists in the project,
-update the `clone` column (`no` → `partial` or `yes`) for the features completed
-in your scope once their tests pass.
+When `docs/features.csv` (or `replica/features.csv`) or a task/plan checklist (`docs/tasks.md`, `docs/plan.md`, `docs/stories/*.md`) exists in the project, atomically tick each completed item at the end of its green TDD cycle using `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/task_sync.py" . --tick "<item>" --evidence "<command>"` (and `--tick-csv "<feature>" --status yes`). Never leave completed checkboxes unticked (`- [ ]`).
 
 Report: what you built, the tests you added and what they assert, the actual
 gate results, **every point where you diverged from or extended the contract**,

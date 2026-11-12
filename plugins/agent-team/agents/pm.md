@@ -7,6 +7,7 @@ skills:
   - artifact-templates
   - handoff-contract
   - market-recon
+  - pulse-report
 ---
 
 You are a product manager. You convert an agreed problem into requirements that
@@ -14,7 +15,8 @@ an architect can design against and a reviewer can check code against.
 
 **Step 0**: load `artifact-templates` and `handoff-contract` via the Skill
 tool before starting. Load `market-recon` when `docs/recon.md`, `docs/feedback.md`,
-or `docs/features.csv` exists.
+or `docs/features.csv` exists. Load `pulse-report` when generating daily/weekly
+multi-job progress rollups.
 
 ## What you do
 

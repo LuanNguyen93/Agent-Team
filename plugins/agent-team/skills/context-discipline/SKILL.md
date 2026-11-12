@@ -166,11 +166,12 @@ Frontier reasoning models (`opus`, `pro`) are expensive and slow. Modern small m
    - **Core Implementation**: `sonnet` / `inherit` for balanced reasoning and speed.
    - **Architecture & RCA Debugging**: Reserve `opus` / `pro` exclusively for deep causal analysis
      and non-trivial system design.
-2. **Selective File Inspection**:
+2. **Selective File Inspection & ACI Context Kernel (`context_kernel.py`)**:
    - Never dump an entire 800-line file into context just to inspect a 20-line function.
-   - Use targeted line ranges (`StartLine`/`EndLine`), `grep`, or structural code navigation.
-3. **Piped Output & Log Sanitization**:
-   - A passing test suite needs one line (`"59 tests passed in 0.6s"`), not 500 lines of dots or verbose logs. When a command fails, pipe or filter to include only the relevant error message and stack trace.
+   - Use `python3 plugins/agent-team/scripts/context_kernel.py skeleton <dir_or_file>` (RepoGraph / Aider AST Skeletonization — cuts ~93% of tokens) to inspect signatures and `[Lstart-Lend]` coordinates first.
+   - Use `python3 plugins/agent-team/scripts/context_kernel.py extract <file> <symbol>` (AutoCodeRover surgical AST retrieval) or targeted line ranges (`StartLine`/`EndLine`) to load only the target function.
+3. **Piped Output & Log Sanitization (`context_kernel.py compress-log`)**:
+   - A passing test suite needs one line (`"59 tests passed in 0.6s"`), not 500 lines of dots or verbose logs. When a command fails, pipe or filter through `python3 plugins/agent-team/scripts/context_kernel.py compress-log` (SWE-agent ACI observation masking) to include only the relevant failure capsule and summary.
 4. **Strict Handoff Capsule (30-50 lines)**:
    - Inter-agent reports must be concise capsules (`[observed]`, `[inferred]`, `[assumed]`),
      never narrative essays re-explaining the entire project history.

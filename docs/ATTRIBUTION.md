@@ -21,6 +21,9 @@ condensed version here.
 | [react-best-practices](https://github.com/vercel-labs/agent-skills) (Vercel) | React/Next rules ordered by real impact | `react-performance` |
 | [webapp-testing](https://github.com/anthropics/skills) (Anthropic) | Driving the real app to verify, rather than trusting unit tests | `browser-verify` |
 | [excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill) | Editable diagrams with a self-review pass for layout defects | `diagram-excalidraw` |
+| [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) (Steph Ango) | Local-first Obsidian Flavored Markdown (`[[wikilinks]]`, YAML properties, callouts) and atomic evergreen note synthesis | `obsidian-second-brain` |
+| [Reflexion](https://arxiv.org/abs/2303.11366) (Shinn et al.) & Addy Osmani AI Engineering | Verbal reinforcement learning, Failed-Hypothesis Ledger, and hard Two-Strike circuit breakers against FlipFlop loops | `debug-rca`, `tdd-discipline`, `workflow-router` |
+| Replica Clean-Room Engineering | Structured product recon (`S01..Snn`, `F01..Fnn`), anti-hallucination review mining (`reviews.py`), and store listing / brand sweep gates | `market-recon`, `product-launch`, `scripts/sweep.py`, `scripts/parity.py` |
 
 Harness behaviour was verified against the
 [Claude Code documentation](https://code.claude.com/docs/en/features-overview);

@@ -71,6 +71,21 @@ Only now:
 3. Confirm the test passes and the full suite stays green.
 4. Ask where else the same mechanism applies. Bugs of a kind travel in packs.
 
+## In-Flight Self-Correction & Two-Strike Circuit Breaker (Reflexion)
+
+The most destructive failure mode in autonomous coding is the **repeated failure loop** (FlipFlop / blind refinement): trying a plausible fix, seeing the same test fail, and tweaking the same lines again without updating the causal model.
+
+1. **Failed-Hypothesis Ledger (Mandatory after Strike 1)**:
+   Whenever a fix attempt fails with the same **Error Signature** `(file/test, error_type, message_slug)`, you MUST record a ledger row before touching any file again:
+   `Attempt # | Error Signature | Hypothesis Tested | Why Falsified (Observed Output) | Negative Constraint (Forbidden Next)`
+2. **The Two-Strike Rule (Hard Circuit Breaker)**:
+   If **2 consecutive attempts** fail on the same Error Signature within a turn:
+   - **STOP editing immediately.** A 3rd blind edit is strictly forbidden.
+   - **Revert speculative churn**: restore the working tree to the last clean/known state (`git checkout -- <files>`) so failed patches do not compound.
+   - **Pivot or Escalate**: return to Phase 2 (add boundary instrumentation to observe real runtime values) or escalate to `debugger` / the human operator with the Failed-Hypothesis Ledger.
+3. **Distil to Second Brain**:
+   Once a non-trivial root cause is verified green (`[observed]`), distil the causal mechanism and permanent invariant into the Obsidian vault via `obsidian-second-brain` (`obsidian_distill.py --type rca`) so the team never repeats the same bug class in future sessions.
+
 ## Anti-patterns
 
 - **Shotgun debugging** — changing several things at once. You will not know

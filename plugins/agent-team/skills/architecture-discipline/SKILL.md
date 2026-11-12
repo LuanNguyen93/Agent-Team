@@ -105,6 +105,29 @@ not textbook purity:
    - Never introduce caching without stating: (1) what is cached, (2) the TTL, and (3) the exact mutation events that invalidate the cache.
 5. **Infrastructure Pragmatism & TCO**:
    - Maximize existing stack components before recommending new services. A PostgreSQL database with standard indexes can easily handle tens of thousands of queries per second before requiring specialized search engines or NoSQL clusters.
+6. **Anti-Hype Single Fit-for-Purpose Solution (Do Not Follow the Crowd)**:
+   - Never adopt microservices, event sourcing, Kafka, or complex multi-layer abstractions simply because they are popular in industry blogs.
+   - Always converge on **one decisive, right-sized architecture** tailored to the actual input bound, latency budget, and team size. When presenting options, name the crowd-hype option explicitly under Rejected/Overkill and recommend the single simplest design that holds under production load.
+
+## 6. The 7 Immutable Software Engineering Invariants
+
+Frameworks and languages change every year; these seven laws of software engineering are invariant across every stack and harness:
+
+1. **Parse, Don't Validate at Trust Boundaries**: Transform untrusted raw input (HTTP body, CLI args, env vars, LLM JSON, DB rows) into strongly-typed domain structures at the perimeter. Downstream core logic never re-checks raw strings or nullable maps.
+2. **Make Illegal States Unrepresentable**: Model state lifecycles using discriminated unions or explicit state machines (`Draft | PendingReview | Approved | Rejected`), never uncoordinated boolean flags (`isApproved && isRejected`).
+3. **Locality of Behaviour & High Cohesion / Low Coupling**: Things that change together live together. A reader should understand what a unit does without jumping across five pass-through files.
+4. **Idempotency & Deterministic State Transitions**: Every network retry, webhook handler, queue consumer, and financial mutation must produce the exact same state whether delivered once or five times.
+5. **Bounded Resource Contracts**: Every list query has a `LIMIT`, every queue has a maximum depth/backpressure policy, every loop has a known input bound, and every external I/O call has an explicit timeout.
+6. **Zero Garbage & Root-Cause Fix**: Fix the mechanism in the model, never patch-on-patch with nested defensive `if` wrappers. Delete dead code, orphaned types, and obsolete flags in the same commit.
+7. **Mechanical Enforcement over Verbal Wishes**: An invariant that matters is enforced by a type, a database constraint, a deterministic test, or a blocking hook — never just a comment asking developers to be careful.
+
+## 7. Modern Global Business Domain Invariants
+
+Align technical architecture directly with modern global business realities:
+- **AI-Native & Agentic Unit Economics**: Bound token/context cost per request, isolate untrusted prompt inputs from tool-execution privileges, cache deterministic lookups, and evaluate non-deterministic outputs against golden datasets (`ai-engineering`).
+- **FinTech & Ledger Integrity**: Store money in integer minor units (never IEEE-754 floats), enforce double-entry or append-only audit trails, and guard every balance mutation with an idempotency key and atomic row check (`balance >= amount`).
+- **Multi-Tenant B2B SaaS Isolation**: Enforce tenant isolation at the data layer (Row-Level Security or mandatory `tenant_id` composite indexes) verified by a second-tenant isolation test, plus usage metering and RBAC on the object.
+- **Global Privacy & Data Residency**: Classify PII at the schema level, support deterministic right-to-erasure (`DELETE` / anonymisation cascades), and never leak PII or secrets into logs, analytics, or LLM prompts.
 
 ## Conformance
 

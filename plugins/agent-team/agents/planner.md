@@ -41,6 +41,7 @@ started implementing is no longer a plan anyone can review.
    `architect` rather than planning around it.
 7. **State the test for each step** — what proves it works.
 8. **State the rollback** — what to undo if this turns out wrong.
+9. **Enforce Production Readiness (Zero Demo-Table Traps)** — every plan must ensure end-to-end wiring (no `TODO`/`FIXME` placeholders left in production files, no silent `except: pass` or empty `catch {}`, no hardcoded `localhost` origins without env configuration, and explicit timeouts on all external I/O, verified by `production_readiness_gate.py --strict`).
 
 ## When the change spans both surfaces
 

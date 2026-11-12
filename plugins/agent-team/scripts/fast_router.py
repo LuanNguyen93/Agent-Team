@@ -14,11 +14,12 @@ Exit codes: 0 routed, 1 routing failed, 2 no API key (absent, not a result).
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 TIERS = ("QUICK", "FEATURE", "PROJECT")
 
@@ -105,7 +106,7 @@ def _read_dotenv_key(path: str) -> Optional[str]:
                 if line.startswith(("GEMINI_API_KEY=", "GOOGLE_API_KEY=")):
                     return line.split("=", 1)[1].strip().strip("'\"") or None
     except OSError:
-        pass
+        return None
     return None
 
 
@@ -172,6 +173,91 @@ def route_request(
         raise RuntimeError(f"Failed to parse structured response from Gemini: {err}") from None
 
 
+def normalize_error_signature(error_text: str) -> str:
+    """Normalize a stack trace or failure line into a stable Error Signature."""
+    cleaned = re.sub(r"line\s+\d+|:\d+:\d+|0x[0-9a-fA-F]+", "", error_text.strip().lower())
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned[:160]
+
+
+def check_strike_loop(error_history: List[str], max_strikes: int = 2) -> Dict[str, object]:
+    """Deterministic System One circuit breaker for repeated in-flight failure signatures."""
+    if not error_history:
+        return {"circuit_break": False, "strikes": 0, "signature": "", "action": "CONTINUE"}
+
+    sigs = [normalize_error_signature(e) for e in error_history if e and e.strip()]
+    if not sigs:
+        return {"circuit_break": False, "strikes": 0, "signature": "", "action": "CONTINUE"}
+
+    latest = sigs[-1]
+    consecutive = 0
+    for s in reversed(sigs):
+        if s == latest:
+            consecutive += 1
+        else:
+            break
+
+    broken = consecutive >= max_strikes
+    return {
+        "circuit_break": broken,
+        "strikes": consecutive,
+        "signature": latest,
+        "action": "STOP_REVERT_AND_PIVOT" if broken else "RECORD_HYPOTHESIS_AND_RETRY",
+    }
+
+
+def classify_offline(prompt: str) -> RouteDecision:
+    """Zero-token deterministic System One classifier when no API key is present."""
+    lower = prompt.strip().lower()
+
+    project_signals = (
+        "from scratch", "rewrite", "architecture", "microservices",
+        "copilot workspace", "multi-tenant", "platform", "greenfield", "migrate monolithic",
+    )
+    quick_signals = (
+        "typo", "fix typo", "null check", "copyright", "rename",
+        "hover color", "button color", "bump", "code comment",
+    )
+
+    has_backend = any(w in lower for w in ("api", "endpoint", "s3", "webhook", "job", "database", "postgresql", "totp", "auth", "csv"))
+    has_frontend = any(w in lower for w in ("dialog", "ui", "table", "screen", "button", "form", "qr code", "notification", "profile"))
+
+    if any(w in lower for w in project_signals):
+        return RouteDecision(
+            tier="PROJECT",
+            confidence=0.90,
+            reason="Requires system architecture, multi-epic planning, or platform-level design.",
+            parallel_safe=False,
+            suggested_agents=["analyst", "pm", "architect", "planner", "implementer", "reviewer", "qa-verifier"],
+        )
+
+    if any(w in lower for w in quick_signals) and not (has_backend and has_frontend):
+        return RouteDecision(
+            tier="QUICK",
+            confidence=0.90,
+            reason="Single-surface localized fix, rename, or minor adjustment with no new contract.",
+            parallel_safe=False,
+            suggested_agents=["implementer", "reviewer"],
+        )
+
+    parallel_safe = bool(has_backend and has_frontend)
+
+    agents = ["planner"]
+    if parallel_safe:
+        agents.extend(["backend-implementer", "frontend-implementer"])
+    else:
+        agents.append("implementer")
+    agents.extend(["reviewer", "qa-verifier"])
+
+    return RouteDecision(
+        tier="FEATURE",
+        confidence=0.85,
+        reason="Adds or modifies user-observable feature behaviour within existing architecture.",
+        parallel_safe=parallel_safe,
+        suggested_agents=agents,
+    )
+
+
 def format_line(decision: RouteDecision) -> str:
     """The announce line workflow-router expects, which tier-scan.js recognises."""
     agents = ",".join(decision.suggested_agents) or "-"
@@ -183,10 +269,11 @@ def format_line(decision: RouteDecision) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="System One Router using Gemini Flash")
+    parser = argparse.ArgumentParser(description="System One Router using Gemini Flash or Offline Rules")
     parser.add_argument("request", nargs="?", help="Task request string to classify")
     parser.add_argument("--model", default="gemini-2.5-flash", help="Gemini model to use")
     parser.add_argument("--api-key", help="Gemini/Google API key (or set GEMINI_API_KEY)")
+    parser.add_argument("--offline", action="store_true", help="Use zero-token deterministic System One rules")
     parser.add_argument("--format", choices=["json", "line"], default="json")
     args = parser.parse_args()
 
@@ -203,11 +290,19 @@ def main() -> None:
             parser.print_help()
             sys.exit(1)
 
+    if args.offline:
+        decision = classify_offline(request_text)
+        if args.format == "json":
+            print(json.dumps(asdict(decision), indent=2))
+        else:
+            print(format_line(decision))
+        sys.exit(0)
+
     api_key = get_gemini_api_key(args.api_key)
     if not api_key:
         sys.stderr.write(
             "fast_router: absent - GEMINI_API_KEY or GOOGLE_API_KEY is not set.\n"
-            "Set it in the environment, pass --api-key, or add it to the project's .env.\n"
+            "Set it in the environment, pass --api-key, add it to .env, or pass --offline.\n"
         )
         sys.exit(2)
 

@@ -28,6 +28,7 @@ Full templates live alongside this skill. Read the one you need:
 - `references/architecture.md` — technical design (architect → planner)
 - `references/adr.md` — architecture decision record
 - `references/story.md` — user story with acceptance criteria (PM → planner)
+- `docs/prototype.html` — self-contained clickable bio-adaptive HTML prototype (`ux-designer` → human visual review & `frontend-implementer`, generated and audited via `bio_design_gate.py`)
 
 ## Rules that apply to all of them
 
@@ -53,20 +54,33 @@ was true when the choice was made.
 
 ```
 docs/
-├── brief.md
+├── brief.md          # ONE canonical active brief (SSOT)
 ├── recon.md          # optional: clean-room screen/flow/entity map (market-recon)
 ├── reviews.csv       # optional: verbatim linked public reviews (market-recon)
 ├── feedback.md       # optional: ranked review themes from reviews.py
 ├── features.csv      # optional: feature parity matrix scored by parity.py
-├── prd.md
-├── architecture.md
+├── prd.md            # ONE canonical active PRD (SSOT)
+├── architecture.md   # ONE canonical active architecture doc (SSOT)
 ├── tokens.json       # machine-readable design tokens checked by contrast.py
-├── design-system.md
-├── ui-spec.md
+├── design-system.md  # ONE canonical active design system (SSOT)
+├── ui-spec.md        # ONE canonical active UI spec (SSOT)
 ├── brand.json        # optional: competitor names/domains/hex colours for sweep.py
 ├── adr/0001-<slug>.md
-└── stories/<epic>-<n>-<slug>.md
+├── stories/<epic>-<n>-<slug>.md
+└── archive/          # superseded phase/historical docs stamped "Status: Superseded"
 ```
+
+### Big-Tech SSOT & Anti-Doc-Sprawl Rule (Stripe / Linear / Uber Standard)
+
+Never create competing phase-suffixed files in `docs/` (`brief-v2.md`, `prd-new.md`, `architecture-phase2.md`, `plan-e7.md`). Leaving multiple versions of a spec in `docs/` destroys transparency and causes downstream agents to read stale requirements:
+
+1. **In-Place Canonical Update**: Always update the single canonical file (`docs/brief.md`, `docs/prd.md`, `docs/architecture.md`, `docs/ui-spec.md`) in place.
+2. **Supersede & Archive When Replacing a Phase**: If an older phase's document must be preserved for historical audit, run:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/garbage_sweep.py" . --archive-stale-docs
+   ```
+   which stamps the old file with `Status: Superseded by docs/<canonical>.md` and moves it into `docs/archive/`.
+3. **Immutable ADRs**: ADRs in `docs/adr/` are never overwritten; when a decision changes, write a new ADR and mark the old ADR's status header `Status: Superseded by ADR-XXXX`.
 
 Check whether the project already has a docs convention and follow it instead.
 Do not impose this layout on a repo that has its own.

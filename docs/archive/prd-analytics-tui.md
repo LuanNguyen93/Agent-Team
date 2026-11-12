@@ -1,3 +1,6 @@
+<!-- Status: Superseded by docs/prd.md (2026-11-12) -->
+> **Status**: Superseded by `docs/prd.md` on 2026-11-12 (archived for historical reference only — do not use as active spec).
+
 # PRD: TUI Analytics Screen
 
 ## Context

@@ -1,3 +1,6 @@
+<!-- Status: Superseded by docs/ui-spec.md (2026-11-12) -->
+> **Status**: Superseded by `docs/ui-spec.md` on 2026-11-12 (archived for historical reference only — do not use as active spec).
+
 # UI spec: TUI Analytics screen (E7)
 
 - **Date**: 2026-08-14

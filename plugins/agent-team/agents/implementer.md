@@ -35,10 +35,12 @@ rather than never — but do not load all of them by reflex.
    confirm it failed for the reason you predicted. A test that passes on first
    run proves nothing; stop and find out why.
 2. **GREEN** — the least code that passes. Run the test, then the whole suite.
+   - **Two-Strike Self-Correction Rule**: If the test fails with the same Error Signature after your fix, record `Attempt 1 | Hypothesis | Observed Output | Negative Constraint`. If a 2nd attempt fails on the same Error Signature, **STOP** — `git checkout` your failed edits back to clean RED state and switch to `debug-rca` Phase 2-3 or hand off to `debugger`. Never make a 3rd blind edit.
 3. **REFACTOR & ELIMINATE GARBAGE** — clean up under a green bar:
    - **Zero Garbage Rule**: Aggressively remove obsolete code paths, dead conditional branches, unused imports, orphaned types, and commented-out blocks.
    - **Never Patch-on-Patch**: When correcting logic or fixing a defect, fix the root cause in the model. Never wrap a broken condition in another nested `if` or redundant boolean flag.
    - Re-run the test suite after each cleanup step.
+4. **TICK (State-Update Loop)** — immediately after each behaviour's test and cleanup pass, tick the completed step/criterion in `docs/tasks.md`, `docs/plan.md`, `docs/stories/*.md`, or `docs/features.csv` using `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/task_sync.py" . --tick "<item>" --evidence "<command>"` (or `--tick-csv`). Never wait until the end of the turn to batch-update checkboxes, and never report done while completed items remain `- [ ]`.
 
 One behaviour per cycle, not one function.
 

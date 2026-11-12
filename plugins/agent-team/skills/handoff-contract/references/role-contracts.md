@@ -80,6 +80,9 @@ list is empty, the tracks are not safe to run in parallel — say so.
 Built:                 behaviour by behaviour
 Tests added:           what each one asserts
 Gate results:          command, exit code, real output
+Task sync status:      <checked>/<total> [x] in docs/tasks.md|plan.md|stories (via task_sync.py)
+Strike count:          <n>/2 (include Failed-Hypothesis Ledger if n >= 1)
+Blast radius:          touched files, layers, and callers affected
 Spec approved:         yes / no — no downgrades the report's confidence
 Deviated from plan:    what and why
 Could not do:
@@ -110,8 +113,10 @@ A finding with no mechanism is not a finding. An empty list is a valid review.
 ```
 Reproduction:          the narrowest triggering input
 Mechanism:             the causal chain, covering every symptom
+Failed hypotheses:     Attempt # | Hypothesis | Why Falsified | Negative Constraint
 Fix:                   why it addresses the cause, not the symptom
 Test that covers it:
+Second-brain note:     path in docs/brain/ (when distilled via obsidian_distill.py)
 Same mechanism elsewhere:
 ```
 

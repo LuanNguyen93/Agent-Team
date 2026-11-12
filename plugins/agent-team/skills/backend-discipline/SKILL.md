@@ -94,6 +94,21 @@ if you must break it, say so loudly rather than shipping it quietly. Details:
 - IDs opaque and non-sequential where they are exposed.
 - Every external call has a timeout. A missing timeout is an unbounded one.
 
+## Production Epistemology: Bridging the Demo-to-Production Chasm
+
+Code that works for a single user on `localhost` with 5 clean rows is a **demo**, not a production system. Grounded in **Amazon's *Design for Failure***, **Toyota's *Genchi Genbutsu & Jidoka***, **Google SRE's *Production Readiness Review (PRR)***, and **Stripe's *Zero-Hollow-Code Discipline***, every implementation must survive the **4 Production Reality Laws** (enforced mechanically by `scripts/production_readiness_gate.py`):
+
+1. **Zero Silent Failure Swallowing (`silent_exception_swallow`)**:
+   - Never write `except Exception: pass` or empty `catch (e) {}` blocks to make a test or demo appear green. Every caught exception must either log structured context, return an explicit domain fallback, or re-raise.
+2. **Zero Hollow Demo Stubs (`hollow_demo_marker`)**:
+   - Never leave `# TODO:`, `// TODO:`, `FIXME:`, `HACK:`, or fake `setTimeout` / mock arrays inside production modules outside `tests/`.
+3. **Zero Hardcoded Localhost Origins (`hardcoded_localhost_origin`)**:
+   - Never hardcode `http://localhost:<port>` or `127.0.0.1:<port>` in production code without reading from an environment variable (`os.getenv`, `process.env`, `import.meta.env`).
+4. **Mandatory Bounded I/O (`unbounded_network_timeout`)**:
+   - Every outbound HTTP/network call (`requests.get/post`, `fetch`, RPC) must specify an explicit timeout.
+
+Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/production_readiness_gate.py" . --strict` before declaring any feature production-ready.
+
 ## SaaS integrations (Auth, Stripe, Email, OAuth, RLS)
 
 When building or reviewing authentication, account deletion, Row-Level Security
