@@ -1,11 +1,21 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
 
 from _load import ROOT
+
+
+def find_bash():
+    if os.name == "nt":
+        for cand in [r"C:\Program Files\Git\bin\bash.exe", r"C:\Program Files\Git\usr\bin\bash.exe"]:
+            if os.path.isfile(cand):
+                return cand
+    b = shutil.which("bash")
+    return b or "bash"
 
 
 def frontmatter(path):
@@ -104,7 +114,7 @@ class PluginIntegrity(unittest.TestCase):
                 json.dump({"avoid": ["Calendly"]}, fh)
             with open(os.path.join(d, "src", "app.ts"), "w") as fh:
                 fh.write("export const title = 'Calendly clone';\n")
-            res = subprocess.run(["bash", run_gates], cwd=d, capture_output=True, text=True)
+            res = subprocess.run([find_bash(), run_gates], cwd=d, capture_output=True, text=True)
             self.assertNotEqual(res.returncode, 0)
             self.assertIn("brand sweep", res.stdout)
 
@@ -114,7 +124,7 @@ class PluginIntegrity(unittest.TestCase):
             with open(os.path.join(d, "docs", "features.csv"), "w") as fh:
                 fh.write("feature,area,priority,original,clone,notes\n"
                          "Book slot,booking,must,yes,no,\n")
-            res2 = subprocess.run(["bash", run_gates], cwd=d, capture_output=True, text=True)
+            res2 = subprocess.run([find_bash(), run_gates], cwd=d, capture_output=True, text=True)
             self.assertNotEqual(res2.returncode, 0)
             self.assertIn("feature parity", res2.stdout)
 
@@ -122,7 +132,7 @@ class PluginIntegrity(unittest.TestCase):
             with open(os.path.join(d, "docs", "features.csv"), "w") as fh:
                 fh.write("feature,area,priority,original,clone,notes\n"
                          "Book slot,booking,must,yes,yes,\n")
-            res3 = subprocess.run(["bash", run_gates], cwd=d, capture_output=True, text=True)
+            res3 = subprocess.run([find_bash(), run_gates], cwd=d, capture_output=True, text=True)
             self.assertEqual(res3.returncode, 0, res3.stdout + res3.stderr)
             self.assertIn("Gate PASSED: brand sweep", res3.stdout)
             self.assertIn("Gate PASSED: feature parity", res3.stdout)

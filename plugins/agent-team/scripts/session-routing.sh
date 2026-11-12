@@ -34,6 +34,8 @@ design software in this session:
   result. Never claim a gate passed that you did not run.
 - Review runs on a fresh context via the `reviewer` agent - never the context
   that wrote the code.
+- Autonomous execution: Make decisions and proceed through implementation and
+  testing without pausing for routine approval. Deliver final report on completion.
 
 Answer questions directly; this applies to build requests, not to explanations.'
 
