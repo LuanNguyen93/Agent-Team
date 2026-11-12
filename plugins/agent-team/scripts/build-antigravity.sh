@@ -232,8 +232,9 @@ printf 'built from %s version %s\n' "$SRC" "$VERSION" > "$OUT/$MARKER"
 
 # --- install ------------------------------------------------------------------
 mkdir -p "$(dirname "$DEST")"
-rm -rf "$DEST"
-cp -R "$OUT" "$DEST"
+rm -rf "$DEST" 2>/dev/null || true
+mkdir -p "$DEST"
+cp -Rf "$OUT/." "$DEST/"
 
 echo "Installed agent-team $VERSION for Antigravity at $DEST"
 echo "  agents: $(ls "$DEST/agents" | wc -l | tr -d ' ')  skills: $(ls "$DEST/skills" | wc -l | tr -d ' ')"

@@ -26,7 +26,7 @@ agy_is_payload() {
 # The first string value of key $2 anywhere in JSON $1, with \\ and \/
 # unescaped. Good enough for paths and ids; not a JSON parser.
 agy_string_field() {
-  printf '%s' "$1" | tr -d '\r\n' \
+  printf '%s' "$1" | LC_ALL=C tr -d '\r\n' \
     | LC_ALL=C sed -n -E "s/.*\"$2\"[[:space:]]*:[[:space:]]*\"(([^\"\\\\]|\\\\.)*)\".*/\\1/p" \
     | head -n 1 | LC_ALL=C sed -e 's#\\/#/#g' -e 's#\\\\#\\#g'
 }
@@ -34,7 +34,7 @@ agy_string_field() {
 # The first entry of workspacePaths - the project root, since the hook's own
 # working directory is the plugin.
 agy_workspace() {
-  printf '%s' "$1" | tr -d '\r\n' \
+  printf '%s' "$1" | LC_ALL=C tr -d '\r\n' \
     | LC_ALL=C sed -n -E 's/.*"workspacePaths"[[:space:]]*:[[:space:]]*\[[[:space:]]*"([^"]*)".*/\1/p' \
     | head -n 1
 }

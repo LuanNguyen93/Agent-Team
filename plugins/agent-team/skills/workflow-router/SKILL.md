@@ -31,18 +31,28 @@ Signals, when the questions are ambiguous:
 escalate mid-flight ("this turned out to need architecture — moving to PROJECT")
 and expensive to make someone sit through a PRD for a typo.
 
-### Fast routing (System One)
+### Fast routing & System One Decision Protocol
 
-Classification can be delegated to a cheap, fast model instead of spending the
-dispatching context on it:
+Classification and binary triage decisions MUST be delegated to a cheap, fast model (`haiku` / `flash-lite`) or deterministic script instead of spending frontier tokens on them:
 
 - **`router` agent** — spawn the `router` agent (its frontmatter pins the model,
   so pass none). No API key needed. It returns the announce line plus
   `CONFIDENCE`, `PARALLEL_SAFE`, and `SUGGESTED_AGENTS`.
-- **CLI script (optional)** — `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/fast_router.py" "<request>"`
-  calls Gemini Flash directly. It needs `GEMINI_API_KEY` or `GOOGLE_API_KEY`;
-  exit 2 means no key, which is "absent", not a classification. Fall back to
-  classifying yourself.
+- **CLI script (`--offline` or API)** — `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/fast_router.py" --offline --format line "<request>"`
+  runs zero-token deterministic System One classification instantly without an API key; omitting `--offline` calls Gemini Flash when `GEMINI_API_KEY` or `GOOGLE_API_KEY` is set (exit 2 means no key).
+
+#### System One Small-Model Decision Matrix
+
+Always route the decision to the smallest cognitive tier that can answer it truthfully:
+
+| Decision Type | Model Tier | Mechanism |
+|---|---|---|
+| Request tier (`QUICK` / `FEATURE` / `PROJECT`) & `PARALLEL_SAFE` | `haiku` / `flash-lite` / `--offline` | `router` agent or `fast_router.py --offline` |
+| Strike-count & repeated-error loop check (`Strike >= 2`) | Deterministic / `haiku` | `fast_router.py` (`check_strike_loop`) or Error Signature match |
+| Gate runner execution & exit-code pass/fail verification | `haiku` / `flash` | `qa-verifier` agent + `run-gates.sh` |
+| Scope & file-length boundary checks | Deterministic (`0` tokens) | `file-length-guard.sh`, `tier-guard.sh`, `.agent-team.json` |
+| Feature planning, contract authoring, TDD implementation, code review | `sonnet` / `inherit` | `planner`, `implementer`, `reviewer` |
+| Deep causal RCA (after Strike 2) & system architecture trade-offs | `opus` / `pro` | `debugger`, `architect` |
 
 The router's answer is advice. **You** still announce the tier (see "Announce
 the routing"), repeating its first line, because `tier-guard` reads only your
@@ -81,13 +91,13 @@ skip `analyst` and go straight to `planner`.
 1. `analyst` → `docs/brief.md`
 2. `pm` → `docs/prd.md` + `docs/stories/*.md`
 3. `architect` → `docs/architecture.md`, ADRs, diagrams
-4. `ux-designer` → `docs/design-system.md`, `docs/ui-spec.md` (skip if no UI)
-5. Then per story: `planner` → implementation (step 3 of FEATURE — the
+4. `ux-designer` → `docs/tokens.json`, `docs/design-system.md`, `docs/ui-spec.md`, AND the clickable bio-adaptive prototype `docs/prototype.html` (skip if no UI)
+5. **Human Prototype Gate (when UI exists)**: Present `docs/prototype.html` (with its 4 interactive UX states and 3 circadian ambient modes verified via `bio_design_gate.py`) for human visual review before writing production frontend code.
+6. Then per story: `planner` → implementation (step 3 of FEATURE — the
    `Parallel safe:` check applies per story) → `reviewer`, plus `qa-verifier`
    under the same runnable-surface condition as FEATURE step 4
 
-Get the user's sign-off after step 2 before spending tokens on steps 3-4. A PRD
-built on a misunderstood brief is worse than no PRD.
+Get the user's sign-off after step 2 before spending tokens on steps 3-4, and after step 4 (`docs/prototype.html`) when a UI surface exists. A PRD built on a misunderstood brief — or production React code built on an unreviewed markdown UI spec — wastes the entire downstream budget.
 
 ## Split the implementation when it spans both surfaces
 

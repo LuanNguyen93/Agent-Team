@@ -1,3 +1,6 @@
+<!-- Status: Superseded by docs/architecture.md (2026-11-12) -->
+> **Status**: Superseded by `docs/architecture.md` on 2026-11-12 (archived for historical reference only — do not use as active spec).
+
 # Architecture: E7 — the ratatui shell and the analytics screen
 
 - **Date**: 2026-08-14

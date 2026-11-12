@@ -39,6 +39,20 @@ Now improve names, extract duplication, simplify. Re-run after each change.
 If the bar goes red, undo and go smaller. Refactoring means changing structure
 without changing behaviour — if a test needed updating, it was not a refactor.
 
+### TICK — atomic task & checklist state synchronization
+The most common multi-step agent failure is **attention decay on task tracking**: finishing the code and tests, then declaring "done" while leaving `- [ ]` checkboxes in `docs/tasks.md`, `docs/plan.md`, `docs/stories/*.md`, or rows in `docs/features.csv` unticked.
+
+Immediately at the end of each green REFACTOR — **before starting the next behaviour or writing your report**:
+1. **Never batch-tick at the end of a turn.** Tick each completed item the moment its test goes green, attaching the `[observed]` test command as proof:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/task_sync.py" . --tick "<step or criterion substring>" --evidence "<test command>"
+   ```
+2. **When `docs/features.csv` exists**, update the completed feature row atomically:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/task_sync.py" . --tick-csv "<feature substring>" --status yes --evidence "<test command>"
+   ```
+3. **Verify zero stale items before handing off**: run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/task_sync.py" .` so your report states the exact `checked/total` count (`[observed]`).
+
 ## What counts as one cycle
 
 One behaviour, not one function. "Rejects an empty email" is a cycle. "Implements
@@ -71,6 +85,13 @@ A bug fix is a TDD cycle where RED reproduces the bug:
 3. Fix. The test goes green.
 
 That failing test is the fix's proof. A bug fix without one will regress.
+
+## In-Flight Self-Correction (Two-Strike Rule)
+
+When a GREEN step fails with the same **Error Signature** twice in a row:
+1. **Never make a 3rd blind edit.** Alternating between two broken implementations (FlipFlop loop) wastes tokens and corrupts the diff.
+2. **Record the Failed-Hypothesis Ledger**: write down `Attempt # | Hypothesis | Exact Error | Negative Constraint`.
+3. **Revert & Pivot**: `git checkout` the failed attempt back to clean RED state and switch to `debug-rca` Phase 2-3 (inspect actual boundary values) or hand off to `debugger`.
 
 ## Honest reporting
 

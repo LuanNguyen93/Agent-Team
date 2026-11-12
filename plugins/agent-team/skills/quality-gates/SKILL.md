@@ -43,6 +43,18 @@ feature parity score (`must`=3, `should`=2, `could`=1; `yes`=1.0, `partial`=0.5,
 when any `must` feature is not yet `yes` (`--require-must-haves`) or when the
 score falls below `AGENT_TEAM_PARITY_MIN`. `AGENT_TEAM_SKIP_PARITY=1` opts out.
 
+A **task & checklist sync gate** (`scripts/task_sync.py`) runs automatically when
+`docs/tasks.md` or `docs/plan.md` exists, blocking completion if any `- [ ]`
+checkbox was left unticked. `AGENT_TEAM_SKIP_TASK_SYNC=1` opts out.
+
+A **docs SSOT & code zero-garbage gate** (`scripts/garbage_sweep.py --strict`)
+runs automatically to block: (1) competing phase-suffixed doc variants in `docs/`
+(`brief-*.md`, `prd-*.md`, `architecture-*.md`, `plan-*.md` — use
+`garbage_sweep.py . --archive-stale-docs` to move superseded docs to
+`docs/archive/`), and (2) code garbage left behind during iterative bug fixing
+(unused imports, backup symbols ending in `_old`/`_v2`/`_backup`/`_temp`/`_legacy`,
+and multi-line commented-out code blocks). `AGENT_TEAM_SKIP_GARBAGE_SWEEP=1` opts out.
+
 A **secret scan** runs alongside the chain rather than inside it: it is
 stack-independent, so it applies to every project including one with no gates at
 all. It scans the working tree, not the history — a hit in the history is a

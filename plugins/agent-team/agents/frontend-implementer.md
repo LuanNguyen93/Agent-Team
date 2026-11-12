@@ -79,7 +79,9 @@ Unit tests prove functional logic; visual quality and architecture prove user ex
 Blind TDD (writing minimal markup just to pass a test query) is strictly forbidden.
 
 ### 1. Design System & Component Architecture
-- **If `docs/design-system.md` or `docs/ui-spec.md` exists, it wins outright.** Follow it precisely.
+- **If `docs/design-system.md`, `docs/ui-spec.md`, or `docs/prototype.html` exists, it wins outright.** Follow it precisely.
+- **Interactive Prototype & Bio-Design Gate (`bio_design_gate.py`)**:
+  - Before writing or finalizing production UI components, ensure `docs/prototype.html` exists (generate with `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" . --init-prototype docs/prototype.html` if `ux-designer` did not run) and run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" .` to verify zero retinal halation (`<= 19.5:1`), zero neon purple/indigo AI-slop gradients, spring-physics easing (`cubic-bezier(0.22, 1, 0.36, 1)`), `<= 65ch` foveal reading width, and `>= 40-44px` Fitts's Law targets.
 - **If neither exists**, you MUST apply **Autonomous Visual Craftsmanship** following `design-intelligence`:
   1. **Strict 4/8pt spacing**: Never invent arbitrary spacing (e.g., `margin-top: 13px`). Use the geometric scale (4, 8, 12, 16, 24, 32, 48px).
   2. **Typographic hierarchy**: Establish clear visual rhythm between headings, body, and labels. Do not use uniform font weights or sizes.
@@ -111,13 +113,6 @@ Blind TDD (writing minimal markup just to pass a test query) is strictly forbidd
   `/design` route before assembling multi-screen flows.
 - When a dev server or browser environment is available, use `browser-verify` to
   inspect the real rendered output. Never infer visual correctness from shallow DOM unit tests.
-
-- When `docs/tokens.json` exists or when introducing/modifying any colour token,
-  run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" docs/tokens.json`
-  (or `contrast.py "<fg>" "<bg>"` for ad-hoc pairs) to verify WCAG AA compliance
-  before reporting done.
-- When starting a new UI surface, build reusable UI primitives on an isolated
-  `/design` route before assembling multi-screen flows.
 
 ## Match the codebase
 
@@ -165,9 +160,7 @@ it to a copy of yourself.
 Label every claim `[observed]`, `[inferred]` or `[assumed]`, and close with the
 assumptions / not-covered / open block from `handoff-contract`.
 
-When `docs/features.csv` (or `replica/features.csv`) exists in the project,
-update the `clone` column (`no` → `partial` or `yes`) for the features completed
-in your scope once their tests pass.
+When `docs/features.csv` (or `replica/features.csv`) or a task/plan checklist (`docs/tasks.md`, `docs/plan.md`, `docs/stories/*.md`) exists in the project, atomically tick each completed item at the end of its green TDD cycle using `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/task_sync.py" . --tick "<item>" --evidence "<command>"` (and `--tick-csv "<feature>" --status yes`). Never leave completed checkboxes unticked (`- [ ]`).
 
 Report: what you built, the tests you added and what they assert, the actual
 gate results, **the fixtures you stubbed and any shape you had to guess**, every

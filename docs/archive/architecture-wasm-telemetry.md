@@ -1,3 +1,6 @@
+<!-- Status: Superseded by docs/architecture.md (2026-11-12) -->
+> **Status**: Superseded by `docs/architecture.md` on 2026-11-12 (archived for historical reference only — do not use as active spec).
+
 # Architecture: WASM Agent Manager & Analytics Engine
 
 - **Date**: 2026-08-15

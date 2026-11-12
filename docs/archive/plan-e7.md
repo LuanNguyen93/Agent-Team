@@ -1,3 +1,6 @@
+<!-- Status: Superseded by docs/plan.md (2026-11-12) -->
+> **Status**: Superseded by `docs/plan.md` on 2026-11-12 (archived for historical reference only — do not use as active spec).
+
 # Plan: E7 — ratatui shell + analytics screen
 
 Sources read: `docs/architecture-e7.md`, ADR-0007, ADR-0002,

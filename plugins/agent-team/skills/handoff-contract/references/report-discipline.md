@@ -69,4 +69,17 @@ Unapproved spec is not disqualifying, but it is not silent either: flag it as
 reduced confidence (`[assumed] spec approved by the user`) rather than
 reporting the build as if approval were `[observed]`.
 
+## Executive Human-Control & Radical Honesty Dashboard
+
+A human operator reading your report must be able to audit and control the system in 10 seconds without reading the transcript. Every final or handoff report MUST surface:
+
+1. **Truthfulness & Evidence Audit**:
+   - Every `[observed]` claim cites `file:line` or the exact command + exit code + output.
+   - Never hide failed attempts: state `Strike count: <n>/2` and include the **Failed-Hypothesis Ledger** whenever `n >= 1`.
+   - Never claim a gate passed if it was skipped, absent, or not run (`ABSENT` and `NOT RUN` are honest statuses; `PASS` without a command is a lie).
+2. **Blast Radius & Risk Visibility**:
+   - List touched files/layers, shared callers affected, and whether any database schema, public API contract, or auth boundary changed.
+3. **Single Decision & Next Control Point**:
+   - When human sign-off or escalation is needed, state the **one recommended decision** and the concrete trade-off so the human can approve, redirect, or roll back immediately.
+
 Role-specific report shapes: `references/role-contracts.md`.

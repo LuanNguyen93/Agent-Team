@@ -1,3 +1,6 @@
+<!-- Status: Superseded by docs/brief.md (2026-11-12) -->
+> **Status**: Superseded by `docs/brief.md` on 2026-11-12 (archived for historical reference only — do not use as active spec).
+
 # Project Brief: WASM Dashboard for Agent-Team
 
 Date: 2026-08-15

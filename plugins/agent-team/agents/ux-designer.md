@@ -31,7 +31,10 @@ produce.
    The populated state alone is the one users see least.
 4. **Specify behaviour**, not just appearance: what is focusable, what happens on
    submit, what happens on failure, what the URL does.
-5. **Write `docs/tokens.json`, `docs/design-system.md` and `docs/ui-spec.md`.**
+5. **Write `docs/tokens.json`, `docs/design-system.md`, `docs/ui-spec.md`, AND the interactive visual prototype `docs/prototype.html`.**
+   - Scaffold or customize `docs/prototype.html` using `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" . --init-prototype docs/prototype.html --tokens docs/tokens.json --title "<Surface Name>"` so the human can click through all 4 UX states (`populated`, `loading`, `empty`, `error`), 3 circadian environments (`daylight`, `studio`, `night`), and the Eudaimonic shared-positivity surface (`data-eudaimonia="share-joy"`) in a real browser before production code is written.
+   - Apply **Positive Design Philosophy (Desmet & Pohlmeyer / Norman / Fetell Lee)**: use sunlit biophilic warmth (`#FAF8F5`, `#1C1917`), compassionate non-punitive state copy (Fresh Canvas empty state, Safe Pause error state), and built-in affordances to celebrate and share positive milestones.
+   - Run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" . --require-prototype` until it exits `0` with zero halation, AI-slop, negative-energy copy, or prototype state findings.
 
 ## The bar
 

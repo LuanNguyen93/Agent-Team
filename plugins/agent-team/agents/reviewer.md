@@ -46,6 +46,7 @@ different problem, a criterion silently dropped, an edge case in the spec that
 has no corresponding test.
 
 State each criterion and whether it is met, partially met, or missed.
+Check `task_sync.py` or the active task/story files (`docs/tasks.md`, `docs/plan.md`, `docs/stories/*.md`, `docs/features.csv`): if the code implements a step or criterion whose checkbox is still `- [ ]` (or vice versa — a checkbox is ticked `- [x]` without a corresponding test/implementation), flag it as a **Blocking** finding (`Stale task/checklist state`).
 
 ### Axis 2 — is it sound engineering?
 In priority order:

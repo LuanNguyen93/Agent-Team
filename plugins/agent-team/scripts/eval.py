@@ -14,7 +14,7 @@ import json
 import os
 import re
 import sys
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PLUGIN_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
@@ -140,31 +140,60 @@ def eval_structural_invariants(dataset: dict, verbose: bool = False) -> Tuple[in
             if verbose:
                 print(f"  [FAIL] {label}")
 
+    # 5. Universal v0.8.0 Upgrade Invariants (Obsidian, Reflexion Two-Strike, Immutable Invariants, System One, Honesty)
+    obsidian_text = read_text("skills/obsidian-second-brain/SKILL.md")
+    pulse_text = read_text("skills/pulse-report/SKILL.md")
+    arch_disc_text = read_text("skills/architecture-discipline/SKILL.md")
+    rca_text = read_text("skills/debug-rca/SKILL.md")
+    tdd_text = read_text("skills/tdd-discipline/SKILL.md")
+    router_skill_text = read_text("skills/workflow-router/SKILL.md")
+    report_disc_text = read_text("skills/handoff-contract/references/report-discipline.md")
+    attrib_text = read_text("../../docs/ATTRIBUTION.md")
+
+    v08_checks = [
+        ("Obsidian Second Brain: Atomic distillation & 00-MOC", obsidian_text, r"obsidian_distill\.py|00-MOC\.md|\[\[wikilinks\]\]"),
+        ("In-Flight Self-Correction: Two-Strike & Failed-Hypothesis Ledger", rca_text + "\n" + tdd_text, r"Two-Strike Rule.*Failed-Hypothesis Ledger"),
+        ("Engineering Invariants: 7 Immutable Software Laws", arch_disc_text, r"7 Immutable Software Engineering Invariants|Parse, Don't Validate.*Make Illegal States Unrepresentable"),
+        ("Modern Business Domains: AI, FinTech, Multi-Tenant SaaS", arch_disc_text, r"Modern Global Business Domain Invariants.*FinTech & Ledger Integrity"),
+        ("Anti-Hype Single Fit-for-Purpose Solution Rule", arch_disc_text, r"Anti-Hype Single Fit-for-Purpose Solution|Do Not Follow the Crowd"),
+        ("System One Small-Model Decision Matrix", router_skill_text, r"System One Small-Model Decision Matrix.*--offline"),
+        ("Executive Human-Control & Radical Honesty Dashboard", report_disc_text, r"Executive Human-Control & Radical Honesty Dashboard.*Strike count"),
+        ("Task & Checklist State Sync (RED-GREEN-REFACTOR-TICK)", tdd_text, r"TICK — atomic task & checklist state synchronization.*task_sync\.py"),
+        ("Multi-Job Daily/Weekly Pulse Reporting", pulse_text, r"pulse_report\.py.*Copy-Paste Standup"),
+        ("Big-Tech SSOT Docs & Zero Code Garbage Gate", read_text("skills/artifact-templates/SKILL.md") + "\n" + read_text("skills/quality-gates/SKILL.md"), r"Big-Tech SSOT & Anti-Doc-Sprawl Rule.*garbage_sweep\.py"),
+        ("Distilled Attribution: Obsidian & Reflexion credited", attrib_text, r"kepano/obsidian-skills.*Reflexion"),
+    ]
+
+    for label, text_blob, pattern in v08_checks:
+        total += 1
+        if re.search(pattern, text_blob, re.IGNORECASE | re.DOTALL):
+            passed += 1
+            if verbose:
+                print(f"  [PASS] {label}")
+        else:
+            failures.append(f"{label} missing matching pattern '{pattern}'")
+            if verbose:
+                print(f"  [FAIL] {label}")
+
     return passed, total, failures
 
 
 def eval_routing_benchmark(dataset: dict, live: bool = False, verbose: bool = False) -> Tuple[int, int, List[str]]:
-    """Evaluates routing test cases from benchmark dataset."""
+    """Evaluates routing test cases from benchmark dataset using fast_router.classify_offline."""
+    sys.path.insert(0, SCRIPT_DIR)
+    import fast_router
+
     cases = dataset.get("routing_cases", [])
     passed = 0
     total = len(cases)
     failures = []
-
-    # Simple deterministic rule engine matching workflow-router doctrine
-    def classify_offline(text: str) -> str:
-        lower = text.lower()
-        if any(w in lower for w in ["scratch", "rewrite", "from scratch", "architecture", "microservices", "copilot workspace", "platform"]):
-            return "PROJECT"
-        if any(w in lower for w in ["typo", "fix typo", "null check", "copyright", "rename", "hover color", "color"]):
-            return "QUICK"
-        return "FEATURE"
 
     for case in cases:
         req_id = case["id"]
         inp = case["input"]
         expected_tier = case["expected_tier"]
 
-        predicted_tier = classify_offline(inp)
+        predicted_tier = fast_router.classify_offline(inp).tier
 
         if predicted_tier == expected_tier:
             passed += 1

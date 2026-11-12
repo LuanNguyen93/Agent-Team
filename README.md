@@ -66,6 +66,7 @@ Restart Antigravity afterwards, and rebuild whenever the plugin changes. See
 | `/spec <request>` | Planning artifacts only, no code |
 | `/ship` | Gates, review, verification, then an atomic commit |
 | `/stack-init` | Detect the stack and record its gate commands |
+| `/pulse [daily\|weekly]` | Generate multi-job daily/weekly progress report & copy-paste standups |
 | `/upgrade` | Run gates, sync upstream, and self-upgrade across Claude, Antigravity, and Codex |
 | `/agent-team:review-panel` | Multi-lens review with adversarial verification (workflow) |
 
@@ -112,17 +113,18 @@ than by instruction.
 
 See [`docs/AGENTS.md`](docs/AGENTS.md) and [`docs/FLOW.md`](docs/FLOW.md).
 
-## The eighteen skills
+## The twenty-three skills
 
 Doctrine lives in skills so it is defined once rather than duplicated across
-nine system prompts.
+eleven system prompts.
 
 `workflow-router` · `brainstorm-grilling` · `artifact-templates` ·
 `tdd-discipline` · `typescript-discipline` · `quality-gates` · `debug-rca` · `design-intelligence` ·
 `react-performance` · `browser-verify` · `diagram-excalidraw` ·
 `handoff-contract` · `backend-discipline` · `architecture-discipline` ·
 `code-navigation` · `app-verify` · `context-discipline` · `ai-engineering` ·
-`security-discipline`
+`security-discipline` · `market-recon` · `product-launch` · `pr-create` ·
+`pr-description` · `obsidian-second-brain` · `pulse-report`
 
 `react-performance`, `backend-discipline`, `typescript-discipline` and `ai-engineering` auto-activate on matching paths
 rather than costing context every session.

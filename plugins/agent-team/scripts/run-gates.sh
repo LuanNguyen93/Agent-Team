@@ -401,8 +401,63 @@ run_parity_check() {
   return 1
 }
 
+run_task_sync_check() {
+  [ "${AGENT_TEAM_SKIP_TASK_SYNC:-}" = "1" ] && { printf 'Gate SKIPPED: task sync (AGENT_TEAM_SKIP_TASK_SYNC=1)\n'; return 0; }
+  local target="" script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [ -f docs/tasks.md ]; then target="docs/tasks.md"
+  elif [ -f docs/plan.md ]; then target="docs/plan.md"
+  else return 0
+  fi
+  command -v python3 >/dev/null 2>&1 && [ -f "$script_dir/task_sync.py" ] || { printf 'Gate ABSENT: task sync (python3 or task_sync.py missing)\n'; return 0; }
+  local out status
+  out=$(python3 "$script_dir/task_sync.py" . --file "$target" --require-all-checked 2>&1)
+  status=$?
+  if [ $status -eq 0 ]; then
+    printf 'Gate PASSED: task sync (%s)\n' "$target"
+    return 0
+  fi
+  printf 'Gate FAILED: task sync (%s has unticked - [ ] checkboxes)\nCommand: python3 %s/task_sync.py . --file %s --require-all-checked\n\n%s\n' "$target" "$script_dir" "$target" "$out"
+  return 1
+}
+
+run_garbage_sweep_check() {
+  [ "${AGENT_TEAM_SKIP_GARBAGE_SWEEP:-}" = "1" ] && { printf 'Gate SKIPPED: garbage sweep (AGENT_TEAM_SKIP_GARBAGE_SWEEP=1)\n'; return 0; }
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  command -v python3 >/dev/null 2>&1 && [ -f "$script_dir/garbage_sweep.py" ] || { printf 'Gate ABSENT: garbage sweep (python3 or garbage_sweep.py missing)\n'; return 0; }
+  local out status
+  out=$(python3 "$script_dir/garbage_sweep.py" . --strict 2>&1)
+  status=$?
+  if [ $status -eq 0 ]; then
+    printf 'Gate PASSED: garbage sweep (SSOT docs & zero code garbage)\n'
+    return 0
+  fi
+  printf 'Gate FAILED: garbage sweep (competing doc variants or dead/patch-on-patch code garbage found)\nCommand: python3 %s/garbage_sweep.py . --strict\n\n%s\n' "$script_dir" "$out"
+  return 1
+}
+
+run_production_readiness_check() {
+  [ "${AGENT_TEAM_SKIP_PRR:-}" = "1" ] && { printf 'Gate SKIPPED: production readiness (AGENT_TEAM_SKIP_PRR=1)\n'; return 0; }
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  command -v python3 >/dev/null 2>&1 && [ -f "$script_dir/production_readiness_gate.py" ] || { printf 'Gate ABSENT: production readiness (python3 or production_readiness_gate.py missing)\n'; return 0; }
+  local out status
+  out=$(python3 "$script_dir/production_readiness_gate.py" . --strict 2>&1)
+  status=$?
+  if [ $status -eq 0 ]; then
+    printf 'Gate PASSED: production readiness (zero demo stubs, silent catches, or unbounded I/O)\n'
+    return 0
+  fi
+  printf 'Gate FAILED: production readiness (demo-table trap detected)\nCommand: python3 %s/production_readiness_gate.py . --strict\n\n%s\n' "$script_dir" "$out"
+  return 1
+}
+
 run_brand_sweep || exit 1
 run_parity_check || exit 1
+run_task_sync_check || exit 1
+run_garbage_sweep_check || exit 1
+run_production_readiness_check || exit 1
 
 # 1. Explicit configuration wins.
 if [ -f .agent-team.json ] && command -v node >/dev/null 2>&1; then
