@@ -18,13 +18,17 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import os
 import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
+
+GEMINI_IMPLICIT_CACHE_MIN_TOKENS = 4096
+GEMINI_TURN_BATCH_MIN_TOKENS = 2050
 
 SKIP_DIRS = {
     ".git",
@@ -387,6 +391,125 @@ def compress_log_output(raw_log: str, max_failure_lines: int = 40) -> dict:
     }
 
 
+def _first_sentence(text: str, max_chars: int = 110) -> str:
+    clean = re.sub(r"\s+", " ", (text or "").strip())
+    if not clean:
+        return ""
+    first = re.split(r"(?<=[.!?])\s+", clean)[0]
+    if len(first) <= max_chars:
+        return first
+    return first[: max_chars - 3].rstrip() + "..."
+
+
+def compress_mcp_schemas(
+    tools_payload: Any,
+    query: str = "",
+    limit: int = 20,
+) -> Dict[str, Any]:
+    """ScaleMCP / Tool Space Interference eliminator: strips schema bloat & filters tools."""
+    if isinstance(tools_payload, dict):
+        raw_tools = tools_payload.get("tools", [])
+    elif isinstance(tools_payload, list):
+        raw_tools = tools_payload
+    else:
+        raw_tools = []
+
+    raw_json = json.dumps(raw_tools)
+    raw_tokens = estimate_tokens(raw_json)
+    query_terms = [t.lower() for t in re.findall(r"[a-zA-Z0-9_-]+", query or "") if len(t) > 1]
+
+    scored: List[tuple] = []
+    for idx, t in enumerate(raw_tools):
+        if not isinstance(t, dict):
+            continue
+        name = str(t.get("name", f"tool_{idx}"))
+        desc = str(t.get("description", ""))
+        haystack = f"{name} {desc}".lower()
+        score = sum(3 if term in name.lower() else 1 for term in query_terms if term in haystack)
+        scored.append((score, -idx, t))
+
+    if query_terms:
+        scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+
+    selected = [item[2] for item in scored[: max(1, limit)]]
+    compressed_tools: List[Dict[str, Any]] = []
+
+    for t in selected:
+        name = str(t.get("name", ""))
+        short_desc = _first_sentence(str(t.get("description", "")), max_chars=95)
+        schema = t.get("inputSchema") or t.get("parameters") or {}
+        props = schema.get("properties", {}) if isinstance(schema, dict) else {}
+        req_set = set(schema.get("required", [])) if isinstance(schema, dict) else set()
+        compact_params: Dict[str, str] = {}
+        if isinstance(props, dict):
+            for pname, pmeta in props.items():
+                if not isinstance(pmeta, dict):
+                    compact_params[pname] = "any"
+                    continue
+                ptype = str(pmeta.get("type", "any"))
+                req_marker = "*" if pname in req_set else ""
+                pdesc = _first_sentence(str(pmeta.get("description", "")), max_chars=45)
+                compact_params[pname] = f"{ptype}{req_marker}" + (f": {pdesc}" if pdesc else "")
+
+        compressed_tools.append(
+            {
+                "name": name,
+                "desc": short_desc,
+                "params": compact_params,
+            }
+        )
+
+    comp_json = json.dumps(compressed_tools, separators=(",", ":"))
+    comp_tokens = estimate_tokens(comp_json)
+    reduction = round((1.0 - (comp_tokens / max(1, raw_tokens))) * 100.0, 1)
+
+    return {
+        "tools_input": len(raw_tools),
+        "tools_retained": len(compressed_tools),
+        "raw_tokens_est": raw_tokens,
+        "compressed_tokens_est": comp_tokens,
+        "reduction_pct": max(0.0, reduction),
+        "tools": compressed_tools,
+    }
+
+
+def build_gemini_prefix_bundle(
+    target: Path,
+    limit: int = 50,
+    system_invariant: str = "",
+) -> Dict[str, Any]:
+    """Constructs an immutable static prefix aligned with Gemini 2.5/3/4 Context Caching."""
+    resolved = target.resolve()
+    root = resolved if resolved.is_dir() else resolved.parent
+    skels = build_skeleton(resolved, root)[: max(1, limit)]
+
+    prefix_blocks: List[str] = ["=== GEMINI IMMUTABLE STATIC PREFIX ==="]
+    if system_invariant:
+        prefix_blocks.append(f"[SYSTEM INVARIANTS]\n{system_invariant.strip()}")
+
+    prefix_blocks.append("[REPOSITORY AST SKELETON MAP]")
+    for s in skels:
+        prefix_blocks.append(render_file_skeleton_text(s.file, s.total_lines, s.symbols))
+
+    static_prefix = "\n\n".join(prefix_blocks)
+    prefix_tokens = estimate_tokens(static_prefix)
+    raw_tokens = sum(s.raw_tokens_est for s in skels) + estimate_tokens(system_invariant)
+    reduction = round((1.0 - (prefix_tokens / max(1, raw_tokens))) * 100.0, 1)
+    cache_hash = hashlib.sha256(static_prefix.encode("utf-8")).hexdigest()
+
+    return {
+        "cache_key_sha256": cache_hash,
+        "files_included": len(skels),
+        "raw_tokens_est": raw_tokens,
+        "prefix_tokens_est": prefix_tokens,
+        "reduction_pct": max(0.0, reduction),
+        "gemini_implicit_cache_min_tokens": GEMINI_IMPLICIT_CACHE_MIN_TOKENS,
+        "gemini_turn_batch_min_tokens": GEMINI_TURN_BATCH_MIN_TOKENS,
+        "implicit_cache_eligible": prefix_tokens >= GEMINI_IMPLICIT_CACHE_MIN_TOKENS,
+        "static_prefix": static_prefix,
+    }
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="ACI Context Kernel: AST Skeletonization, Surgical Extraction & Log Compression."
@@ -405,6 +528,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     p_log = sub.add_parser("compress-log", help="Compress verbose test/build logs from stdin or file")
     p_log.add_argument("--file", help="Optional log file path (reads stdin if omitted)")
     p_log.add_argument("--json", action="store_true", help="Output JSON")
+
+    p_mcp = sub.add_parser("compress-mcp", help="Compress MCP tool schemas to prevent Tool Space Interference")
+    p_mcp.add_argument("input", help="Path to MCP tools JSON file")
+    p_mcp.add_argument("--query", default="", help="Optional task keyword filter")
+    p_mcp.add_argument("--limit", type=int, default=20, help="Max tools to retain")
+    p_mcp.add_argument("--json", action="store_true", help="Output JSON")
+
+    p_pref = sub.add_parser("prefix-pack", help="Build Gemini prefix-stable context cache bundle")
+    p_pref.add_argument("path", help="Directory or file path")
+    p_pref.add_argument("--limit", type=int, default=50, help="Max files in prefix")
+    p_pref.add_argument("--json", action="store_true", help="Output JSON")
 
     args = parser.parse_args(argv)
 
@@ -470,6 +604,34 @@ def main(argv: Optional[List[str]] = None) -> int:
                 f"\n[ACI Log Kernel] lines: {res['raw_lines']} -> {res['compressed_lines']} | "
                 f"tokens: {res['raw_tokens_est']} -> {res['compressed_tokens_est']} "
                 f"(saved {res['reduction_pct']}%)"
+            )
+        return 0
+
+    if args.cmd == "compress-mcp":
+        payload = json.loads(Path(args.input).read_text(encoding="utf-8", errors="replace"))
+        res = compress_mcp_schemas(payload, query=args.query, limit=args.limit)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            for t in res["tools"]:
+                print(f"- {t['name']}: {t['desc']} | params={json.dumps(t['params'])}")
+            print(
+                f"\n[ACI MCP Kernel] tools: {res['tools_input']} -> {res['tools_retained']} | "
+                f"tokens: {res['raw_tokens_est']} -> {res['compressed_tokens_est']} "
+                f"(saved {res['reduction_pct']}%)"
+            )
+        return 0
+
+    if args.cmd == "prefix-pack":
+        res = build_gemini_prefix_bundle(Path(args.path), limit=args.limit)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            print(res["static_prefix"])
+            print(
+                f"\n[Gemini Cache Prefix] sha256={res['cache_key_sha256'][:12]} | "
+                f"files={res['files_included']} | tokens={res['prefix_tokens_est']} "
+                f"(saved {res['reduction_pct']}% | implicit_cache_ready={res['implicit_cache_eligible']})"
             )
         return 0
 

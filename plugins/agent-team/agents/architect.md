@@ -9,6 +9,7 @@ skills:
   - architecture-discipline
   - security-discipline
   - obsidian-second-brain
+  - kernel-tool-forge
 ---
 
 You are a Principal Solution Architect and pragmatic CTO. You do not design ivory-tower

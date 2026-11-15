@@ -159,20 +159,23 @@ delegate more" becomes a number rather than an opinion.
 Frontier reasoning models (`opus`, `pro`) are expensive and slow. Modern small models
 (`haiku`, `flash`, `flash_lite`) are 10-20x cheaper and respond in milliseconds:
 
-1. **Tiered Model Delegation**:
-   - **Triage & Routing**: Always run on `haiku` / `flash_lite` (instant System One).
-   - **Quality Gates, Test Execution & Verification (`qa-verifier`)**: Run on `haiku` / `flash`.
-     Running full test suites or verifying exit codes on `opus` / `sonnet` wastes ~90% of token budget.
-   - **Core Implementation**: `sonnet` / `inherit` for balanced reasoning and speed.
-   - **Architecture & RCA Debugging**: Reserve `opus` / `pro` exclusively for deep causal analysis
-     and non-trivial system design.
+1. **Tiered Model Delegation (`Hydrogen + Flash + Pro` Triad)**:
+   - **Triage & Routing**: Always run on `haiku` / `flash_lite` or `--offline` (instant System One).
+   - **Quality Gates, Test Execution & Search Folding (`qa-verifier`)**: Run on `haiku` / `flash`.
+     Running full test suites, wide searches, or verifying exit codes on heavier models wastes ~90% of token budget.
+   - **Core TDD Implementation & Planning (`sonnet` / `inherit` -> Gemini 4 Hydrogen `medium`/`high`)**:
+     Handles 80%+ of execution (`analyst`, `pm`, `ux-designer`, `planner`, `implementer`, `backend-implementer`, `frontend-implementer`, `reviewer`) with fast tool-calling and flat token economics (`$1.50/$7.50`), avoiding Argon/Carbon latency and cost overhead.
+   - **Architecture & Strike-2 RCA Debugging (`opus` / `pro` or Hydrogen `xhigh`)**: Reserve `pro` exclusively for `architect` (system boundaries/ADRs) and `debugger` after Two-Strike escalation.
 2. **Selective File Inspection & ACI Context Kernel (`context_kernel.py`)**:
    - Never dump an entire 800-line file into context just to inspect a 20-line function.
    - Use `python3 plugins/agent-team/scripts/context_kernel.py skeleton <dir_or_file>` (RepoGraph / Aider AST Skeletonization — cuts ~93% of tokens) to inspect signatures and `[Lstart-Lend]` coordinates first.
    - Use `python3 plugins/agent-team/scripts/context_kernel.py extract <file> <symbol>` (AutoCodeRover surgical AST retrieval) or targeted line ranges (`StartLine`/`EndLine`) to load only the target function.
 3. **Piped Output & Log Sanitization (`context_kernel.py compress-log`)**:
    - A passing test suite needs one line (`"59 tests passed in 0.6s"`), not 500 lines of dots or verbose logs. When a command fails, pipe or filter through `python3 plugins/agent-team/scripts/context_kernel.py compress-log` (SWE-agent ACI observation masking) to include only the relevant failure capsule and summary.
-4. **Strict Handoff Capsule (30-50 lines)**:
+4. **MCP Schema Compression & Gemini Prefix Caching (`context_kernel.py compress-mcp` / `prefix-pack`)**:
+   - Eliminate Tool Space Interference (TSI) by compressing MCP tool schemas via `python3 plugins/agent-team/scripts/context_kernel.py compress-mcp <mcp_tools.json> --query "<task>" --limit 10`.
+   - Structure immutable static prefixes ($\ge 4,096$ tokens) for Gemini Implicit/Explicit Context Caching via `python3 plugins/agent-team/scripts/context_kernel.py prefix-pack <dir_or_file> --limit 50`, keeping mutable tool outputs redirected to files (`kernel-tool-forge`).
+5. **Strict Handoff Capsule (30-50 lines)**:
    - Inter-agent reports must be concise capsules (`[observed]`, `[inferred]`, `[assumed]`),
      never narrative essays re-explaining the entire project history.
 

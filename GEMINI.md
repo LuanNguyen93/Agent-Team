@@ -13,12 +13,14 @@ Whenever the user prompts `/build <request>`, `build <request>`, or requests to 
    - `QUICK`: Execute straight with TDD test & implementation.
    - `FEATURE`: Generate implementation plan & API contract -> Execute Backend & Frontend with strict TDD -> Run quality gates & verification.
    - `PROJECT`: Analysis -> PRD -> User Approval -> Architecture & Plan -> Parallel implementation -> QA & Review.
-4. **Model Allocation & Token Discipline**:
-   - **Router / Triage / Guardrails**: `flash-lite` (instant System One decision, no extra API key when run in-session).
-   - **Code Review / Test & Gate Checks**: `flash` (Fast analysis of diffs, lint, and test logs).
-   - **Complex Planning / Architecture / Core Implementation**: `pro` or `inherit` (Deep reasoning, PRD, refactoring).
+4. **Model Allocation & Token Discipline (`Hydrogen + Flash + Pro` Triad)**:
+   - **Primary Session Model**: Set active model to **Gemini 4 Hydrogen** (`medium` or `high` thinking). All `inherit` agents run on Hydrogen for high-speed, flat-rate (`$1.50/$7.50`) execution without Argon/Carbon overhead.
+   - **Tier 0 — Deterministic CLI (`0` tokens)**: `fast_router.py --offline`, `context_kernel.py`, `kernel_forge.py`, `run-gates.sh`.
+   - **Tier 1 — Router / Triage / QA Gate Checks (`flash_lite` & `flash`)**: `router` (`flash_lite`), `qa-verifier` (`flash`), wide search/fetch folding, and diff/log checks.
+   - **Tier 2 — Planning, Core TDD Implementation & Fresh-Context Review (`inherit` -> Gemini 4 Hydrogen)**: `analyst`, `pm`, `ux-designer`, `planner`, `implementer`, `backend-implementer`, `frontend-implementer`, and `reviewer`.
+   - **Tier 3 — System Architecture & Strike-2 RCA Escalation (`pro` or Hydrogen `xhigh`)**: Reserved strictly for `architect` (system design/ADRs) and `debugger` (only after Two-Strike repeated failure).
    - Limit handoff reports to 30-60 lines.
-   - Query CodeGraph/symbols before reading entire files.
+   - Query CodeGraph/AST skeleton (`context_kernel.py skeleton` / `prefix-pack`) before reading entire files.
    - Never write code before an approved plan (except on `QUICK` tier).
 
 ## Autonomous Decision Doctrine (Zero-Nudge Execution)
