@@ -64,6 +64,68 @@ class TestContextKernel(unittest.TestCase):
         self.assertIn("FAILED (failures=1)", res["output"])
         self.assertNotIn("test_case_50 ... ok", res["output"])
 
+    def test_compress_mcp_schemas_eliminates_bloat_and_filters_tools(self):
+        bloated_tools = [
+            {
+                "name": f"enterprise_tool_{i}",
+                "description": (
+                    f"This is an extremely verbose enterprise tool description for tool {i}. "
+                    + ("Detailed marketing prose and redundant documentation examples. " * 20)
+                ),
+                "inputSchema": {
+                    "type": "object",
+                    "description": "Root input object schema with redundant explanation",
+                    "required": ["query"],
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query string to execute against the backend database. " * 6,
+                            "examples": ["example 1", "example 2", "example 3"],
+                            "default": "",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of records to return from the query. " * 6,
+                            "default": 50,
+                        },
+                    },
+                },
+            }
+            for i in range(15)
+        ]
+        bloated_tools[3]["name"] = "market_recon_search"
+        bloated_tools[3]["description"] = "Searches market competitors and user reviews for pain points. " + ("Extra prose. " * 15)
+
+        res = context_kernel.compress_mcp_schemas(bloated_tools, query="market review", limit=5)
+        self.assertGreater(res["reduction_pct"], 80.0)
+        self.assertLessEqual(res["tools_retained"], 5)
+        retained_names = [t["name"] for t in res["tools"]]
+        self.assertIn("market_recon_search", retained_names)
+        # Ensure property types and required fields are preserved while bloat is stripped
+        matched = next(t for t in res["tools"] if t["name"] == "market_recon_search")
+        self.assertIn("query", matched["params"])
+
+    def test_build_gemini_prefix_bundle_tracks_cache_threshold(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for i in range(3):
+                p = Path(tmp) / f"mod_{i}.py"
+                p.write_text(
+                    f'def service_fn_{i}(user_id: str, limit: int = 10) -> dict:\n'
+                    f'    """Fetches service records for module {i}."""\n'
+                    f'    return {{"user_id": user_id, "limit": limit}}\n',
+                    encoding="utf-8",
+                )
+            bundle = context_kernel.build_gemini_prefix_bundle(
+                Path(tmp),
+                limit=10,
+                system_invariant="IMMUTABLE_SYSTEM_PREFIX_V1",
+            )
+            self.assertIn("cache_key_sha256", bundle)
+            self.assertEqual(bundle["files_included"], 3)
+            self.assertIn("IMMUTABLE_SYSTEM_PREFIX_V1", bundle["static_prefix"])
+            self.assertIn("gemini_implicit_cache_min_tokens", bundle)
+            self.assertEqual(bundle["gemini_implicit_cache_min_tokens"], 4096)
+
 
 if __name__ == "__main__":
     unittest.main()

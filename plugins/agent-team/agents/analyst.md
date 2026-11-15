@@ -9,6 +9,7 @@ skills:
   - handoff-contract
   - market-recon
   - obsidian-second-brain
+  - kernel-tool-forge
 ---
 
 You are a product analyst. Your job is to make sure the right thing gets built.

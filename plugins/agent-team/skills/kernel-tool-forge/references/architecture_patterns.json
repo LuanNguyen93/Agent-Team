@@ -1,0 +1,41 @@
+{
+  "gemini_context_economics": {
+    "implicit_cache_min_tokens": 4096,
+    "turn_batch_min_tokens": 2050,
+    "prefix_order": [
+      "1. Static System Rules & Invariants (Immutable)",
+      "2. Compressed MCP Primordial Tool Catalog (<2,000 tokens)",
+      "3. Repository AST Skeleton Map (context_kernel.py prefix-pack)",
+      "4. Dynamic Conversation & File-Redirected Tool Outputs (Tail Only)"
+    ],
+    "hydrogen_flash_pro_tiering": {
+      "tier_0_deterministic": "0-token CLI scripts (fast_router.py --offline, context_kernel.py, kernel_forge.py)",
+      "tier_1_triage_and_gates": "flash_lite / flash — router, qa-verifier, log/diff inspection, wide search folding",
+      "tier_2_core_execution": "Gemini 4 Hydrogen (inherit, medium/high thinking) — analyst, pm, ux-designer, planner, implementer, backend-implementer, frontend-implementer, reviewer",
+      "tier_3_architecture_and_rca": "pro (or Hydrogen xhigh) — architect (system seam/ADRs) and debugger (only after Two-Strike escalation)"
+    }
+  },
+  "architecture_blueprints": [
+    {
+      "id": "local-first-sync-engine",
+      "triggers": ["offline", "sync", "latency", "local-first", "collaborative", "state loss", "crash"],
+      "recommended_stack": "SQLite / IndexedDB (CRDT or Outbox Queue) + Deterministic Sync Worker + PostgreSQL Backend",
+      "token_tooling_strategy": "Synthesize deterministic CLI state-verifier and schema-migration tools; keep sync conflict logs folded via ACI compress-log.",
+      "rationale": "Eliminates network round-trip fragility and state loss complaints while keeping backend compute minimal."
+    },
+    {
+      "id": "self-tooling-mcp-gateway",
+      "triggers": ["mcp", "token", "tool", "agent", "cli", "schema", "context", "llm"],
+      "recommended_stack": "Primordial CLI + Dynamic MCP Stdio Gateway + File-Redirected JSON Payloads (--output)",
+      "token_tooling_strategy": "Use compress-mcp to drop 85-95% of schema bloat; synthesize task-specific Python stdlib CLI scripts with file-locked rate limiting instead of loading monolithic MCP servers.",
+      "rationale": "Prevents Tool Space Interference (TSI) and preserves Gemini Implicit Context Cache hits across long multi-turn trajectories."
+    },
+    {
+      "id": "modular-monolith-async-queue",
+      "triggers": ["saas", "subscription", "pricing", "expensive", "api", "webhook", "enterprise", "billing"],
+      "recommended_stack": "Modular Monolith + PostgreSQL (JSONB + Row Locking + SKIP LOCKED Queue) + Idempotent Webhook Boundary",
+      "token_tooling_strategy": "Front-load domain invariants and state transitions in static prefix; synthesize CLI contract-checkers for external APIs.",
+      "rationale": "Avoids premature microservice tax while delivering lower cost per seat and strict transactional reliability."
+    }
+  ]
+}

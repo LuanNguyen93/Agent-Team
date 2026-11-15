@@ -51,8 +51,8 @@ Always route the decision to the smallest cognitive tier that can answer it trut
 | Strike-count & repeated-error loop check (`Strike >= 2`) | Deterministic / `haiku` | `fast_router.py` (`check_strike_loop`) or Error Signature match |
 | Gate runner execution & exit-code pass/fail verification | `haiku` / `flash` | `qa-verifier` agent + `run-gates.sh` |
 | Scope & file-length boundary checks | Deterministic (`0` tokens) | `file-length-guard.sh`, `tier-guard.sh`, `.agent-team.json` |
-| Feature planning, contract authoring, TDD implementation, code review | `sonnet` / `inherit` | `planner`, `implementer`, `reviewer` |
-| Deep causal RCA (after Strike 2) & system architecture trade-offs | `opus` / `pro` | `debugger`, `architect` |
+| Feature planning, contract authoring, TDD implementation, code review | `sonnet` / `inherit` (**Gemini 4 Hydrogen** `medium`/`high`) | `planner`, `implementer`, `backend-implementer`, `frontend-implementer`, `reviewer` |
+| Deep causal RCA (after Strike 2) & system architecture trade-offs | `opus` / `pro` (or **Hydrogen `xhigh`**) | `debugger`, `architect` |
 
 The router's answer is advice. **You** still announce the tier (see "Announce
 the routing"), repeating its first line, because `tier-guard` reads only your
