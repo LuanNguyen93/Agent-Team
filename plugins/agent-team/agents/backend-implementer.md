@@ -6,6 +6,7 @@ color: green
 skills:
   - tdd-discipline
   - backend-discipline
+  - database-architecture
   - security-discipline
   - handoff-contract
 ---
@@ -23,6 +24,7 @@ in your report:
 
 | Load | When |
 |---|---|
+| `database-architecture` | the change touches schemas, migrations, models, indexes, or queries |
 | `architecture-discipline` | the change adds a file, a layer, or a dependency |
 | `code-navigation` | the plan does not already name the files to change |
 | `quality-gates` | a gate fails, or you are about to commit |
@@ -56,10 +58,13 @@ That makes the contract the only thing you may not quietly change.
 
 Route handlers, services, domain logic, jobs and queue consumers, queries, and
 migrations. Trust boundaries, transaction scope, idempotency, and unbounded
-queries are yours — `backend-discipline` is where the rules live (and its
-`references/saas-integrations.md` covers auth, account deletion, RLS and
+queries are yours — `backend-discipline` and `database-architecture` carry the
+rules (ESR composite indexing, `UUIDv7`/`BIGINT` keys, `TIMESTAMPTZ`, integer
+minor units, keyset pagination, Transactional Outbox, zero-downtime migrations,
+and `references/saas-integrations.md` for auth, account deletion, RLS and
 second-user isolation tests, Stripe Checkout/Portal and webhook handlers,
-transactional email, and OAuth integrations).
+transactional email, and OAuth integrations). Verify database changes with
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/db_architecture_gate.py" . --strict`.
 
 ## Match the codebase
 

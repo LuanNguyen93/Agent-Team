@@ -44,8 +44,40 @@ This is the row every later change is checked against, so it is not optional.
 |---|---|---|
 
 ## Data model
-Entities, relationships, identity rules, and where each field's source of truth
-lives. Note which fields are denormalised and what keeps them in sync.
+Domain-driven data strategy, workload-to-storage-engine selection, aggregate boundaries, nature of business truth, strict column types, and access-pattern indexing (`database-architecture`).
+
+### 1. Domain Data Strategy & Workload-Driven Storage Engine Choice
+- **Storage Engine Selection**: Justify why the chosen engine(s) fit the workload shape (e.g., PostgreSQL/MySQL for transactional OLTP, SQLite `WAL` for local-first/CLI/embedded, ClickHouse/DuckDB for analytical OLAP, built-in `tsvector`/`pgvector` vs dedicated search).
+- **Aggregate Boundaries**: Which entities mutate together in a single ACID transaction vs. which cross-aggregate side effects synchronize asynchronously via **Transactional Outbox**.
+- **Nature of Business Truth**:
+  - *Mutable Current State*: Tables updated in-place with optimistic concurrency (`version`).
+  - *Point-in-Time Historical Snapshots*: Transaction attributes frozen at creation time (`unit_price_cents_at_purchase`, `tax_rate_bps_snapshot`, `shipping_address_snapshot`) so future master-data edits never corrupt history.
+  - *Immutable Append-Only Ledgers / Audit Facts*: Financial postings, inventory movements, and state transitions stored as `INSERT`-only records.
+
+### 2. Entity-Relationship & Aggregate Diagram (`erDiagram` or `./diagrams/data-model.excalidraw`)
+```mermaid
+erDiagram
+    TENANT ||--o{ ORDER : owns
+    ORDER ||--|{ ORDER_LINE_ITEM : contains_snapshot
+```
+
+### 3. Schema & Table Contract (Domain Invariants, 3NF Write Model & Read Projections)
+| Table / Aggregate | Truth Type (`State` / `Snapshot` / `Immutable Ledger`) | PK & Public ID Strategy | Columns & Strict Types (`TIMESTAMPTZ`, minor-unit `BIGINT`) | FK & `ON DELETE` Policy | DB Constraints (`CHECK` / Partial `UNIQUE` / `EXCLUDE`) | SSOT & Sync Contract (if denormalised) | Tenancy / RLS |
+|---|---|---|---|---|---|---|---|
+| `orders` | `State` + `Snapshot` items | `UUIDv7` internal, `ord_...` public | `subtotal_cents BIGINT`, `created_at TIMESTAMPTZ` | `tenant_id -> tenants(id) RESTRICT` | `CHECK (subtotal_cents >= 0)`, `UNIQUE (tenant_id, idempotency_key)` | Canonical SSOT | `ENABLE + FORCE RLS` on `tenant_id` |
+
+### 4. Access-Pattern & Composite Index Matrix (ORM Projections & The ESR Rule: Equality -> Sort -> Range)
+| Query / Access Pattern | Read/Write Path & N+1 Prevention (`selectinload` / `IN` / flat DTO) | Equality Columns (E) | Sort Columns (S) | Range Columns (R) | Index DDL & Type (B-Tree / `INCLUDE` / Partial `WHERE` / `GIN` / `HNSW`) | Pagination Strategy |
+|---|---|---|---|---|---|---|
+| List tenant orders by status | Flat DTO projection (`SELECT` explicit cols) | `tenant_id, status` | `created_at DESC, id DESC` | `subtotal_cents >= $3` | `CREATE INDEX CONCURRENTLY ... ON orders (tenant_id, status, created_at DESC, id DESC, subtotal_cents) INCLUDE (customer_id) WHERE deleted_at IS NULL` | Keyset cursor `(created_at, id) < ($1, $2)` |
+
+### 5. Concurrency, Reservation Leases & Transactional Outbox Strategy
+- **Row contention & locking**: Optimistic locking (`version`), atomic conditional updates (`balance_cents >= $1`), time-bounded **Reservation Leases** (`expires_at` for inventory/seat holds), or `FOR UPDATE SKIP LOCKED`.
+- **Dual-write elimination**: Transactional Outbox (`outbox_events` written in the same ACID transaction) for webhooks, queues, search sync, and external side effects.
+
+### 6. Data Lifecycle, Temporal/Audit History, Privacy (PII) & Zero-Downtime Evolution Policy
+- **Soft-delete vs Audit history**: Partial unique indexes (`WHERE deleted_at IS NULL`) or append-only `_history` tables.
+- **PII isolation & High-growth partitioning**: Separate PII tables for GDPR right-to-erasure, declarative `PARTITION BY RANGE (created_at)` for tables > 50M rows, and Expand-and-Contract migration plan.
 
 ## Key flows
 For each significant flow: trigger, steps, what crosses a process or trust

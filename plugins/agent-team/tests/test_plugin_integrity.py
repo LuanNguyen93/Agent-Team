@@ -160,6 +160,29 @@ class PluginIntegrity(unittest.TestCase):
         _, ship_text = frontmatter(ship_path)
         self.assertIn("product-launch", ship_text)
 
+    def test_package_6_database_architecture_wired(self):
+        for rel in (
+            ("skills", "database-architecture", "SKILL.md"),
+            ("skills", "database-architecture", "references", "relational-and-indexing.md"),
+            ("skills", "database-architecture", "references", "scalability-and-consistency.md"),
+            ("scripts", "db_architecture_gate.py"),
+        ):
+            self.assertTrue(os.path.isfile(os.path.join(ROOT, *rel)), "/".join(rel))
+        _, da_text = frontmatter(os.path.join(ROOT, "skills", "database-architecture", "SKILL.md"))
+        self.assertIn("ESR", da_text)
+        self.assertIn("UUIDv7", da_text)
+        self.assertIn("TIMESTAMPTZ", da_text)
+        self.assertIn("db_architecture_gate.py", da_text)
+        for agent_fn in ("architect.md", "backend-implementer.md", "implementer.md", "reviewer.md"):
+            fm, a_text = frontmatter(os.path.join(ROOT, "agents", agent_fn))
+            self.assertIn("database-architecture", fm, agent_fn)
+            self.assertIn("database-architecture", a_text, agent_fn)
+        _, arch_tmpl = frontmatter(
+            os.path.join(ROOT, "skills", "artifact-templates", "references", "architecture.md")
+        )
+        self.assertIn("Access-Pattern & Composite Index Matrix", arch_tmpl)
+        self.assertIn("Schema & Table Contract", arch_tmpl)
+
 
 if __name__ == "__main__":
     unittest.main()

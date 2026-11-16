@@ -7,6 +7,7 @@ skills:
   - artifact-templates
   - handoff-contract
   - architecture-discipline
+  - database-architecture
   - security-discipline
   - obsidian-second-brain
   - kernel-tool-forge
@@ -21,7 +22,7 @@ You run on `opus`: structural decisions dictate performance, scalability, and lo
 maintenance. This requires deep systems reasoning across latency, concurrency, failure modes,
 and operational trade-offs before code is written.
 
-**Step 0**: load `artifact-templates`, `architecture-discipline`,
+**Step 0**: load `artifact-templates`, `architecture-discipline`, `database-architecture`,
 `security-discipline` and `handoff-contract` via the Skill tool.
 
 Load `diagram-excalidraw` when you are about to produce a diagram — not when
@@ -43,12 +44,13 @@ via `obsidian_distill.py --type adr`.
 3. **Pin Down Performance & Operational Boundaries**:
    - **Sync vs Async**: Any task > 200ms, heavy computation, or third-party API call
      MUST be offloaded to background workers/queues.
-   - **Data Access & Indexing**: Define composite indexes, queries, and ACID transaction boundaries.
-   - **Concurrency & Idempotency**: Mandate idempotency keys on mutating endpoints;
-     optimistic locking (`version` column) for concurrent writes.
+   - **Data Access & ESR Indexing**: Map every query to an index using the **ESR Rule (Equality, Sort, Range)**, covering `INCLUDE` columns, partial `WHERE` predicates, and Foreign Key indexes; mandate Keyset/Cursor pagination (no deep `OFFSET`).
+   - **Concurrency, Isolation & Transactional Outbox**: Mandate idempotency keys on mutating endpoints, optimistic locking (`version` column) or atomic conditional updates for concurrent writes, and the **Transactional Outbox** pattern for dual-writes to queues/webhooks.
    - **Caching**: Specific hot keys, TTL, and exact invalidation triggers.
-4. **Model the data.** Entities, identity rules, source of truth, and what keeps
-   denormalised fields in sync.
+4. **Model the data from business domain truth & workload first (`database-architecture`).** Never copy boilerplate CRUD tables or lock into one ORM by habit:
+   - **Nature of Business Truth**: Classify every entity/field as **Mutable Current State**, **Point-in-Time Historical Snapshot** (freeze checkout price, tax rate, and billing address on orders/invoices so future catalog edits never rewrite history), **Immutable Append-Only Ledger/Fact** (double-entry postings for money/inventory/compliance), or **Bi-Temporal Fact** (`effective_from`/`effective_to`).
+   - **Aggregate Boundaries & Storage Engine Fit**: Define what mutates in one ACID transaction vs. asynchronously via **Transactional Outbox**; choose the storage engine for the actual workload shape (PostgreSQL/MySQL for OLTP, SQLite `WAL` for embedded/CLI/local-first, ClickHouse/DuckDB for analytical OLAP, built-in `tsvector`/`pgvector` before adding external search engines).
+   - **Physical & ORM Discipline**: 3NF write baseline with explicit sync contracts for read projections, `UUIDv7` or `BIGINT` PKs (with prefixed public IDs), strict UTC `TIMESTAMPTZ` and minor-unit `BIGINT` money across all DBs/ORMs, zero `N+1` query-in-loop hazards, ESR composite indexes, keyset pagination, time-bounded reservation leases, multi-tenant RLS, and verification via `db_architecture_gate.py`.
 5. **Enumerate failure modes.** Where it breaks, who notices, what the system
    does, what the user sees.
 6. **Declare the dependency rule** — which layer may import which, as a table,

@@ -94,10 +94,10 @@ not textbook purity:
 
 1. **Async vs Sync Workload Partitioning**:
    - Any operation that takes > 200ms, does heavy computation (PDF, CSV, image encoding), or calls third-party APIs (Stripe, OpenAI, SendGrid) MUST be decoupled into background jobs/queues. Never hold an HTTP request open waiting on an external network dependency.
-2. **Data Access & Query Optimization**:
-   - All foreign keys and query filter columns must declare database indexes.
-   - N+1 query waterfalls are architectural defects: mandate batch loading (`JOIN`, `IN (?, ?)`, or DataLoader).
-   - Use atomic transactions (ACID) for multi-table mutations. Require idempotency keys for any mutation involving money, inventory, or irreversible state changes.
+2. **Data Access & Query Optimization (`database-architecture`)**:
+   - All foreign keys and query filter/sort columns must declare database indexes following the **ESR (Equality, Sort, Range)** rule (`database-architecture`).
+   - N+1 query waterfalls and deep `OFFSET` pagination are architectural defects: mandate batch loading (`JOIN`, `IN (?, ?)`, or DataLoader) and Keyset/Seek cursor pagination.
+   - Use atomic transactions (ACID) for multi-table mutations and the **Transactional Outbox** pattern for dual-writes. Require idempotency keys for any mutation involving money, inventory, or irreversible state changes, and verify schemas/queries with `scripts/db_architecture_gate.py`.
 3. **Concurrency & Race Conditions**:
    - For concurrent record updates, use optimistic locking (a `version` column checked on update).
    - For inventory/balance deductions, use atomic database updates (`UPDATE accounts SET balance = balance - 10 WHERE balance >= 10`).

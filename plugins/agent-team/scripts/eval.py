@@ -162,6 +162,9 @@ def eval_structural_invariants(dataset: dict, verbose: bool = False) -> Tuple[in
         ("Multi-Job Daily/Weekly Pulse Reporting", pulse_text, r"pulse_report\.py.*Copy-Paste Standup"),
         ("Big-Tech SSOT Docs & Zero Code Garbage Gate", read_text("skills/artifact-templates/SKILL.md") + "\n" + read_text("skills/quality-gates/SKILL.md"), r"Big-Tech SSOT & Anti-Doc-Sprawl Rule.*garbage_sweep\.py"),
         ("Distilled Attribution: Obsidian & Reflexion credited", attrib_text, r"kepano/obsidian-skills.*Reflexion"),
+        ("Database Architecture: 8 Industrial Laws & ESR Indexing", read_text("skills/database-architecture/SKILL.md"), r"ESR.*UUIDv7.*TIMESTAMPTZ.*Transactional Outbox.*db_architecture_gate\.py"),
+        ("Database Architecture: First-Principles Domain Truth, Snapshots, Aggregates & Engine Matrix", read_text("skills/database-architecture/SKILL.md"), r"Point-in-Time.*Snapshot.*Immutable.*Ledger.*Aggregate.*Workload-Driven Storage Engine"),
+        ("Database Architecture: Wired into Architect & Architecture Template", combined_arch, r"database-architecture.*Point-in-Time.*Snapshot.*Access-Pattern"),
     ]
 
     for label, text_blob, pattern in v08_checks:
