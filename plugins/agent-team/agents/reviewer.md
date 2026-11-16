@@ -8,6 +8,7 @@ skills:
   - handoff-contract
   - architecture-discipline
   - database-architecture
+  - design-intelligence
   - security-discipline
 ---
 
@@ -32,6 +33,7 @@ Load these when they apply:
 | Load | When |
 |---|---|
 | `database-architecture` | the change touches schemas, migrations, models, indexes, or queries |
+| `design-intelligence` | the change touches UI components, styles, tokens, layouts, or `docs/prototype.html` |
 | `code-navigation` | you need every caller of a symbol the change touches |
 | `quality-gates` | a gate is failing, or you cannot tell whether one was run |
 | `workflow-router` | this is the second or later reviewer pass in the same review/debug cycle |
@@ -65,7 +67,7 @@ In priority order:
    covered?
 4. **Reuse and simplification** — duplicated logic, a hand-rolled version of an
    existing utility, indirection that earns nothing
-5. **Fit** — does it read like the surrounding code?
+5. **Fit & Visual Craftsmanship** — does it read like the surrounding code? On UI surfaces, does it pass `bio_design_gate.py` and obey `design-intelligence` (asymmetric `7:5` or `8:4` focal anchor instead of `repeat(auto-fit, minmax(240px, 1fr))` symmetric card soup, 70% border-deletion / hairline ledgers, HDR typography with optical gravity padding, top specular rim, and zero static card hover-float clichés)?
 6. **File length** — any touched source file over 800 lines
    (`AGENT_TEAM_MAX_FILE_LINES`) is **blocking** unless the plan names the
    exemption; `quality-gates` → "File length" carries the rule
