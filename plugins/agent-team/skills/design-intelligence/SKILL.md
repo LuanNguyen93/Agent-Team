@@ -23,7 +23,7 @@ hierarchy, and the user has to do the sorting.
 
 ### 2. Pick a style direction, once
 Choose one and commit. Mixing directions is what makes a UI feel unresolved.
-See `references/styles.md` for the catalogue and when each fits.
+See `references/styles.md` and `references/art-direction-and-composition.md` for the 5 bespoke Art Direction Archetypes (`swiss-editorial`, `monolithic-precision`, `rams-industrial`, `shibui-organic`, `kinetic-atelier`) and when each fits.
 
 ### 3. Build the token set before any component
 Colour, type scale, spacing scale, radius, shadow, border. Components consume
@@ -42,6 +42,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/contrast.py" "
 ```
 
 Exit code `1` (any AA failure: `< 4.5:1` normal text, `< 3.0:1` large text or UI boundaries) blocks handoff and must be fixed in the tokens, never per-component.
+
 ### 3b. Design System Architecture: Primitives, CVA & Composition
 Expert frontend engineering treats UI as a composable Design System, never as ad-hoc utility strings:
 
@@ -82,6 +83,16 @@ Cold, hospital-grey interfaces (`#0f172a`), dystopian blue-black dark modes, and
 3. **Pillar 3 — Virtue & Prosocial Sharing of Positivity (`data-eudaimonia="share-joy"`)**:
    - Happiness expands when shared. Every primary product surface and prototype MUST include a built-in **Shared Positivity / Gratitude / Milestone Celebration affordance** (`data-eudaimonia="share-joy"`) allowing humans to celebrate wins, send kudos/gratitude, or share positive progress with teammates or their community.
 
+### 3e. The 6 Supreme Artistic & Design Engineering Philosophies
+To transcend generic "Bootstrap-in-Tailwind" layouts and achieve masterwork craft (**Dieter Rams**, **Josef Müller-Brockmann**, **Kenya Hara**, **Edward Tufte**, **Jony Ive**, **Rauno Freiberg**), enforce all 6 laws in `references/art-direction-and-composition.md`:
+
+1. **Bespoke Domain-Driven Art Direction Archetypes**: Commit every surface to a domain-matched archetype (`swiss-editorial`, `monolithic-precision`, `rams-industrial`, `shibui-organic`, or `kinetic-atelier`) rather than a one-size-fits-all SaaS card theme.
+2. **Swiss Asymmetric Composition & Single Dominant Focal Anchor (`7:5` / `8:4`)**: Ban equal-weight 3-card hero soup (`repeat(auto-fit, minmax(240px, 1fr))`). Anchor every primary view with ONE dominant focal canvas (`60–65%` visual weight) balanced by a quiet `5fr`/`4fr` secondary ledger.
+3. **Japanese *Ma* (間), De-Boxification & Tufte's Data-Ink Ratio (70% Border-Deletion Rule)**: Eliminate "Boxification Disease". Delete `>= 70%` of 4-sided card borders; separate secondary metrics and rows using `48px–96px` structural negative space (*Ma*) and single `1px solid var(--border)` top hairlines (`.hairline-ledger`).
+4. **High-Dynamic-Range (HDR) Typography, Tri-Voice Pairing & Optical Gravity**: Pair `11px` uppercase tracked tabular-mono index labels (`letter-spacing: 0.09em`) directly against monumental `44px–72px` display figures (`letter-spacing: -0.035em`, `line-height: 1.02`), and apply **Optical Gravity Padding** (`padding: 20px 28px 26px`, bottom padding ~15–20% larger than top).
+5. **Physical Light, Top Specular Rim & Tactile Materiality**: Simulate overhead studio light using a `1px` top inner specular highlight (`--specular-rim: inset 0 1px 0 0 rgba(255,255,255,0.12)`) and dual-layer ambient shadow instead of flat borders or muddy drop shadows.
+6. **Purposeful Kinetic Choreography & Anti-Cliché Motion**: Ban levitating non-interactive static cards on hover (`.card:hover { transform: translateY(-4px) }` / `hover:-translate-y-1`). Reserve physical press compression (`:active { transform: scale(0.985) }`) for real interactive controls and stagger entrance cascades (`calc(var(--i, 0) * 35ms)`).
+
 ### 4. Lay out with a spacing scale
 Use a geometric scale (4, 8, 12, 16, 24, 32, 48, 64). Space is how grouping is
 communicated. Related things sit closer than unrelated things. Uniform padding
@@ -91,11 +102,12 @@ everywhere destroys that signal.
 Humans cannot judge visual rhythm, biological comfort, or state transitions from a Markdown text file (`docs/ui-spec.md`). Before writing production framework code (`React`, `Next.js`, `Vue`), generate and customize a self-contained, clickable HTML prototype at `docs/prototype.html` and run the deterministic Bio-Design & Anti-Slop gate:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" . --init-prototype docs/prototype.html --tokens docs/tokens.json --title "Screen Prototype"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" . --init-prototype docs/prototype.html --archetype shibui-organic --tokens docs/tokens.json --title "Screen Prototype"
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" . --require-prototype
 ```
 
 The interactive prototype MUST expose a sticky **Human Review HUD** allowing the user to toggle live between:
+- **All 5 Art Direction Archetypes**: `Swiss Editorial`, `Monolithic Precision`, `Rams Industrial`, `Shibui Organic`, `Kinetic Atelier`
 - **All 4 UX States**: `1. Populated`, `2. Loading (Shaped Skeleton)`, `3. Empty (Actionable)`, `4. Error (Recovery)`
 - **All 3 Bio-Environments**: `Daylight`, `Studio`, `Circadian Night`
 - **Bio-Guides Overlay**: `65ch` foveal reading boundary and `44px` Fitts's Law hit-target outlines.
@@ -118,29 +130,25 @@ to verify hierarchy, spacing, and states side by side.
 Run this before showing UI to the user. It catches the generic-look failure
 modes directly:
 
-- [ ] **Hierarchy** - squint at it. Does the primary action still stand out?
-- [ ] **Type scale** - at most 3-4 sizes, and weight carries as much of the
-      hierarchy as size does
+- [ ] **Hierarchy & Asymmetric Anchor** - squint at it. Is there ONE dominant `7:5` or `8:4` focal anchor instead of equal-weight 3-card soup?
+- [ ] **De-Boxification (*Ma*)** - are `>= 70%` of secondary items separated by whitespace and `1px` top hairlines instead of 4-sided card boxes?
+- [ ] **HDR Type & Optical Gravity** - `11px` tracked mono labels paired with `44px–72px` display figures, and bottom padding ~15–20% larger than top?
 - [ ] **Spacing** - every value from the scale; no arbitrary 13px
-- [ ] **Colour** - from tokens; accent used sparingly enough to mean something
-- [ ] **Alignment** - elements share edges; nothing is off by 2px
-- [ ] **States** - hover, focus, active, disabled, loading, empty, error all exist
-- [ ] **Empty state** - says what to do next, not just "No data"
-- [ ] **Contrast** - 4.5:1 body, 3:1 large text and UI boundaries (`contrast.py` exit 0)
-- [ ] **Focus visible** - keyboard focus ring on every interactive element
-- [ ] **Narrow viewport** - holds at 375px without horizontal scroll
-- [ ] **Dark mode** - if supported, tokens redefined, nothing hardcoded
-- [ ] **Real content** - a long name, a missing avatar, 0 rows, 500 rows
+- [ ] **Colour & Specular Rim** - from tokens; top `1px` specular highlight on elevated surfaces; accent scarce enough to mean something
+- [ ] **Anti-Cliché Motion** - static cards do NOT float on hover; buttons compress on `:active`
+- [ ] **States & Empty State** - hover, focus, active, disabled, loading, Fresh Canvas empty, and Safe Pause error all exist
+- [ ] **Contrast** - 4.5:1 body (`<= 19.5:1` anti-halation), 3:1 large text and UI boundaries (`contrast.py` & `bio_design_gate.py` exit 0)
+- [ ] **Focus visible & Narrow viewport** - keyboard focus ring on every control; holds at 375px without horizontal scroll
+- [ ] **Dark mode & Real content** - tokens redefined, nothing hardcoded; tested with long names, 0 rows, and 500 rows
 
 ## Things to avoid
 
 These read as "AI made this" or violate clean-room rules:
 
 - Purple-to-blue gradient as the primary brand device
-- Every card with the same shadow and the same emphasis
+- Equal-weight 3-card symmetric grids (`repeat(auto-fit, minmax(240px, 1fr))`) and every card with the same border/shadow
+- Floating non-interactive static cards on hover (`.card:hover { transform: translateY(-4px) }`)
 - Emoji as iconography in a professional interface
-- Centred text in long-form content
-- Placeholder text used as a label - it disappears on focus, and fails a11y
-- Pure black on pure white
-- Uniform 16px padding on everything regardless of relationship
+- Centred text in long-form content or placeholder text used as a label
+- Pure black on pure white (`21:1` halation) or uniform 16px padding on everything regardless of relationship
 - Copying a reference app's proprietary logos, icons, illustrations, licensed font files, verbatim UI copy, or signature brand hex values (use open icon sets like Lucide, Phosphor, Heroicons, or Tabler, and open fonts like Inter, Geist, IBM Plex, Manrope, or Source Serif)

@@ -30,6 +30,38 @@ class TestBioDesignGate(unittest.TestCase):
             findings = bio_design_gate.audit_prototype_file(proto)
             self.assertEqual(findings, [])
 
+    def test_archetype_prototype_generation_and_audit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp)
+            proto = ws / "docs" / "prototype.html"
+            rc_init = bio_design_gate.main(
+                [
+                    str(ws),
+                    "--init-prototype",
+                    str(proto),
+                    "--archetype",
+                    "monolithic-precision",
+                    "--title",
+                    "Precision Terminal",
+                ]
+            )
+            self.assertEqual(rc_init, 0)
+            html = proto.read_text(encoding="utf-8")
+            self.assertIn('data-archetype="monolithic-precision"', html)
+            for arch in (
+                "swiss-editorial",
+                "monolithic-precision",
+                "rams-industrial",
+                "shibui-organic",
+                "kinetic-atelier",
+            ):
+                self.assertIn(f'data-set-archetype="{arch}"', html)
+            self.assertIn("asymmetric-stage", html)
+            self.assertIn("7fr 5fr", html)
+            self.assertIn("hairline-ledger", html)
+            self.assertIn("--specular-rim", html)
+            self.assertEqual(bio_design_gate.audit_prototype_file(proto), [])
+
     def test_detects_halation_risk_in_tokens(self):
         with tempfile.TemporaryDirectory() as tmp:
             tok = Path(tmp) / "tokens.json"
@@ -53,6 +85,41 @@ class TestBioDesignGate(unittest.TestCase):
             kinds = [f["kind"] for f in findings]
             self.assertIn("ai_slop_purple_neon_gradient", kinds)
             self.assertIn("robotic_linear_motion", kinds)
+
+    def test_detects_static_card_hover_float_cliche(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp)
+            bad_css = ws / "styles.css"
+            bad_css.write_text(
+                ".card:hover { transform: translateY(-4px); }\n"
+                ". interactive-btn:hover { transform: translateY(-2px); /* allow-hover-lift */ }\n",
+                encoding="utf-8",
+            )
+            bad_tsx = ws / "Panel.tsx"
+            bad_tsx.write_text(
+                'export const Panel = () => <div className="card rounded-xl border p-6 hover:-translate-y-1">Static</div>;\n',
+                encoding="utf-8",
+            )
+            findings = bio_design_gate.scan_ui_files_for_slop(ws)
+            float_findings = [
+                f for f in findings if f["kind"] == "static_card_hover_float_cliche"
+            ]
+            self.assertEqual(len(float_findings), 2)
+
+    def test_detects_symmetric_card_soup_slop(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp)
+            bad_grid = ws / "dashboard.css"
+            bad_grid.write_text(
+                ".kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }\n"
+                ".gallery-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* allow-uniform-grid */ }\n",
+                encoding="utf-8",
+            )
+            findings = bio_design_gate.scan_ui_files_for_slop(ws)
+            soup_findings = [
+                f for f in findings if f["kind"] == "symmetric_card_soup_slop"
+            ]
+            self.assertEqual(len(soup_findings), 1)
 
     def test_detects_negative_energy_copy_and_missing_share_joy(self):
         with tempfile.TemporaryDirectory() as tmp:

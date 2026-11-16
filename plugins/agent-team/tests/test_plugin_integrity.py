@@ -183,6 +183,36 @@ class PluginIntegrity(unittest.TestCase):
         self.assertIn("Access-Pattern & Composite Index Matrix", arch_tmpl)
         self.assertIn("Schema & Table Contract", arch_tmpl)
 
+    def test_package_7_supreme_art_direction_and_bio_design_wired(self):
+        for rel in (
+            ("skills", "design-intelligence", "SKILL.md"),
+            ("skills", "design-intelligence", "references", "art-direction-and-composition.md"),
+            ("skills", "design-intelligence", "references", "styles.md"),
+            ("skills", "design-intelligence", "references", "palettes.md"),
+            ("skills", "design-intelligence", "references", "typography.md"),
+            ("skills", "design-intelligence", "scripts", "bio_design_gate.py"),
+        ):
+            self.assertTrue(os.path.isfile(os.path.join(ROOT, *rel)), "/".join(rel))
+        _, di_text = frontmatter(
+            os.path.join(ROOT, "skills", "design-intelligence", "SKILL.md")
+        )
+        self.assertLessEqual(len(di_text.splitlines()), 200)
+        for token in (
+            "art-direction-and-composition.md",
+            "swiss-editorial",
+            "monolithic-precision",
+            "rams-industrial",
+            "shibui-organic",
+            "kinetic-atelier",
+            "70% Border-Deletion Rule",
+            "Optical Gravity",
+        ):
+            self.assertIn(token, di_text)
+        for agent_fn in ("ux-designer.md", "frontend-implementer.md", "reviewer.md"):
+            fm, a_text = frontmatter(os.path.join(ROOT, "agents", agent_fn))
+            self.assertIn("design-intelligence", fm, agent_fn)
+            self.assertIn("bio_design_gate.py", a_text, agent_fn)
+
 
 if __name__ == "__main__":
     unittest.main()

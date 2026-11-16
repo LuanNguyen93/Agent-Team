@@ -99,13 +99,23 @@ echo ""
 echo "--- Synchronizing Codex Platform ---"
 bash "$PLUGIN_ROOT/scripts/build-codex.sh" --force
 
+# 5. Synchronize Claude Code Plugin Cache
+echo ""
+echo "--- Synchronizing Claude Code Platform ---"
+if command -v claude >/dev/null 2>&1; then
+  claude plugin validate "$PLUGIN_ROOT" || true
+  claude plugin update agent-team@agent-team || true
+else
+  echo "claude CLI not found on PATH; skipping claude plugin cache refresh."
+fi
+
 echo ""
 echo "=================================================="
 echo "       Upgrade & Synchronization Complete         "
 echo "=================================================="
 echo "Version:     $VERSION"
-echo "Claude Code: Ready (source at plugins/agent-team)"
+echo "Claude Code: Installed & Updated (agent-team@agent-team)"
 echo "Antigravity: Installed (~/.gemini/config/plugins/agent-team)"
 echo "Codex:       Installed (~/.agents/skills)"
 echo ""
-echo "Note: If running Antigravity, restart it to load any new skills or agents."
+echo "Note: Restart Claude Code or Antigravity to load any new skills or agents."
