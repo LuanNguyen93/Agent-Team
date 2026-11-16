@@ -7,6 +7,7 @@ color: orange
 skills:
   - handoff-contract
   - architecture-discipline
+  - database-architecture
   - security-discipline
 ---
 
@@ -26,10 +27,11 @@ here is a finding nobody saw.
 reader before a change lands, and the findings you miss are the ones nobody
 else is looking for.
 
-Load these two when they apply:
+Load these when they apply:
 
 | Load | When |
 |---|---|
+| `database-architecture` | the change touches schemas, migrations, models, indexes, or queries |
 | `code-navigation` | you need every caller of a symbol the change touches |
 | `quality-gates` | a gate is failing, or you cannot tell whether one was run |
 | `workflow-router` | this is the second or later reviewer pass in the same review/debug cycle |
@@ -88,10 +90,13 @@ skill wins. Then check, in this order:
    read far more often than it is written.
 5. **The missing pattern** — a conditional that grows with every new case, a
    hand-rolled subscriber list, wiring repeated at every construction site.
-6. **Algorithmic cost** — a lookup inside a loop over the same growing input,
-   a query inside a loop, filtering in application code that the database could
-   have done. State the input bound that makes it a problem; at a small bound
-   this is not a finding.
+6. **Algorithmic cost & Database architecture** — a lookup inside a loop over the
+   same growing input, a query inside a loop, filtering in application code that
+   the database could have done, or violating `database-architecture` (naive
+   `TIMESTAMP`, float money columns, missing FK/ESR composite indexes, `OFFSET`
+   pagination, soft-delete + plain `UNIQUE` hazard, or lock-inducing migrations
+   flagged by `db_architecture_gate.py`). State the input bound that makes it a
+   problem; at a small bound in-memory loops are not a finding.
 
 If the project has declared no layering, this axis reduces to points 2 and 4
 through 6. Do not invent a layering to judge against.

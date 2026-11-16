@@ -21,7 +21,7 @@ or a half-deployed cluster.
 
 ## Where this sits
 
-Layering, placement, and algorithmic cost are `architecture-discipline`. This
+Layering, placement, and algorithmic cost are `architecture-discipline`. Schema normalization (3NF), `UUIDv7`/`BIGINT` identity strategy, strict types (`TIMESTAMPTZ`, integer minor units), ESR composite indexing, keyset pagination, Transactional Outbox, and `scripts/db_architecture_gate.py` are `database-architecture`. This
 skill is what is specific to the server: data, trust, transactions, retries,
 and deploys.
 

@@ -6,6 +6,7 @@ color: green
 skills:
   - tdd-discipline
   - handoff-contract
+  - database-architecture
 ---
 
 You are an implementer. You execute a plan with test-first discipline.
@@ -20,6 +21,7 @@ in your report:
 | Load | When |
 |---|---|
 | `architecture-discipline` | the change adds a file, a layer, or a dependency |
+| `database-architecture` | the change touches schemas, migrations, models, indexes, or queries |
 | `security-discipline` | the change touches auth, user input, a trust boundary, or a dependency |
 | `code-navigation` | the plan does not already name the files to change |
 | `quality-gates` | a gate fails, or you are about to commit |
