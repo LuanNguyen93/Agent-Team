@@ -81,19 +81,20 @@ Blind TDD (writing minimal markup just to pass a test query) is strictly forbidd
 ### 1. Design System & Component Architecture
 - **If `docs/design-system.md`, `docs/ui-spec.md`, or `docs/prototype.html` exists, it wins outright.** Follow it precisely.
 - **Interactive Prototype & Bio-Design Gate (`bio_design_gate.py`)**:
-  - Before writing or finalizing production UI components, ensure `docs/prototype.html` exists (generate with `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" . --init-prototype docs/prototype.html` if `ux-designer` did not run) and run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" .` to verify zero retinal halation (`<= 19.5:1`), zero neon purple/indigo AI-slop gradients, spring-physics easing (`cubic-bezier(0.22, 1, 0.36, 1)`), `<= 65ch` foveal reading width, and `>= 40-44px` Fitts's Law targets.
-- **If neither exists**, you MUST apply **Autonomous Visual Craftsmanship** following `design-intelligence`:
-  1. **Strict 4/8pt spacing**: Never invent arbitrary spacing (e.g., `margin-top: 13px`). Use the geometric scale (4, 8, 12, 16, 24, 32, 48px).
-  2. **Typographic hierarchy**: Establish clear visual rhythm between headings, body, and labels. Do not use uniform font weights or sizes.
-  3. **Visual polish**: Clean subtle borders (`border border-slate-200 dark:border-slate-800`), purposeful elevation (`shadow-sm` on cards), modern border-radius (`rounded-lg`), and interactive transitions (`transition-colors duration-150`).
-  4. **The 5 mandatory states**: Every interactive or data-driven surface MUST implement:
+  - Before writing or finalizing production UI components, ensure `docs/prototype.html` exists (generate with `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" . --init-prototype docs/prototype.html --archetype <archetype>` if `ux-designer` did not run) and run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/design-intelligence/scripts/bio_design_gate.py" .` to verify zero retinal halation (`<= 19.5:1`), zero neon purple/indigo AI-slop gradients, zero equal-weight symmetric card soup (`repeat(auto-fit, minmax(240px, 1fr))`), zero static card hover-float clichés, spring-physics easing (`cubic-bezier(0.22, 1, 0.36, 1)`), `<= 65ch` foveal reading width, and `>= 40-44px` Fitts's Law targets.
+- **If neither exists**, you MUST apply **Autonomous Visual Craftsmanship & The 6 Supreme Artistic Philosophies** following `design-intelligence` and `references/art-direction-and-composition.md`:
+  1. **Bespoke Art Direction Archetype & Asymmetric `7:5` / `8:4` Composition**: Commit to one domain archetype (`swiss-editorial`, `monolithic-precision`, `rams-industrial`, `shibui-organic`, or `kinetic-atelier`). Anchor primary views with ONE dominant focal canvas (`7fr`/`8fr`) and a secondary `5fr`/`4fr` hairline ledger — never 3 equal-weight cards in a row.
+  2. **70% De-Boxification (*Ma* & Tufte Data-Ink Ratio) + Strict 4/8pt Spacing**: Delete `>= 70%` of 4-sided card borders; separate secondary metrics and rows using `48px–96px` structural whitespace and `1px solid var(--border)` top hairlines (`.hairline-ledger`). Never invent arbitrary spacing (`margin-top: 13px`).
+  3. **HDR Typographic Hierarchy & Optical Gravity Padding**: Pair `11px` uppercase tracked tabular-mono index labels (`letter-spacing: 0.09em`) with monumental `44px–72px` display figures (`letter-spacing: -0.035em`), and use Optical Gravity Padding (`padding: 20px 28px 26px`, bottom ~15–20% larger than top).
+  4. **Physical Light Specular Rim & Anti-Cliché Motion**: Use top `1px` inner specular highlights (`--specular-rim`) on elevated surfaces, `:active { transform: scale(0.985) }` on interactive buttons, and never levitate static non-interactive cards on hover.
+  5. **The 5 mandatory states**: Every interactive or data-driven surface MUST implement:
      - **Default / Populated**: Clean, well-spaced layout.
      - **Hover & Focus / Active**: Clear visual feedback (outline/ring for keyboard accessibility).
      - **Loading**: Structured animated skeletons matching the content layout — never a solitary raw spinner.
      - **Empty**: Informative icon/graphic, clear message, and primary action button.
      - **Error**: Friendly error message with an actionable retry button.
-  5. **Responsive**: The layout must hold from mobile (375px) to desktop without accidental horizontal scrolling or overlapping text.
-  6. **Accessibility & Contrast**: Run `contrast.py` on color pairs (minimum 4.5:1 for body text, 3:1 for large text/borders). Ensure focus rings are visible on all interactive elements.
+  6. **Responsive**: The layout must hold from mobile (375px) to desktop without accidental horizontal scrolling or overlapping text.
+  7. **Accessibility & Contrast**: Run `contrast.py` on color pairs (minimum 4.5:1 for body text, 3:1 for large text/borders). Ensure focus rings are visible on all interactive elements.
 
 ### 2. Expert Engineering Practices
 - **Atomic Primitives & CVA**: Reusable elements (`Button`, `Badge`, `Input`) must declare variants and sizes using CVA (Class Variance Authority) or strict variant objects. Do not concatenate arbitrary classes in template literals.

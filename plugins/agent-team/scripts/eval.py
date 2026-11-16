@@ -94,8 +94,10 @@ def eval_structural_invariants(dataset: dict, verbose: bool = False) -> Tuple[in
 
     # 3. Frontend Craftsmanship & Design System Invariants
     frontend_text = read_text("agents/frontend-implementer.md")
+    ux_text = read_text("agents/ux-designer.md")
     design_intel_text = read_text("skills/design-intelligence/SKILL.md")
-    combined_fe = frontend_text + "\n" + design_intel_text
+    art_dir_text = read_text("skills/design-intelligence/references/art-direction-and-composition.md")
+    combined_fe = frontend_text + "\n" + ux_text + "\n" + design_intel_text + "\n" + art_dir_text
 
     frontend_checks = [
         ("Frontend: 5 Mandatory States (Populated, Hover/Focus, Loading, Empty, Error)", r"5 mandatory states|Default / Populated.*Hover.*Loading.*Empty.*Error"),
@@ -104,11 +106,14 @@ def eval_structural_invariants(dataset: dict, verbose: bool = False) -> Tuple[in
         ("Frontend: Defensive Runtime Validation (Zod)", r"Zod|validation|trust boundaries"),
         ("Frontend: WAI-ARIA & Keyboard Navigation", r"WAI-ARIA|keyboard|focus ring|accessibility"),
         ("Frontend: Zero Garbage / Anti-Patching Rule", r"Zero Garbage|Dead-Code Elimination"),
+        ("Frontend: 5 Bespoke Art Direction Archetypes (Swiss, Monolithic, Rams, Shibui, Kinetic)", r"swiss-editorial.*monolithic-precision.*rams-industrial.*shibui-organic.*kinetic-atelier"),
+        ("Frontend: Swiss Asymmetric Focal Split (7:5 / 8:4) & 70% De-Boxification (Ma / Tufte)", r"7fr 5fr.*70% Border-Deletion Rule.*hairline-ledger"),
+        ("Frontend: HDR Typography, Optical Gravity Padding & Top Specular Rim", r"Optical Gravity.*--specular-rim.*tabular-nums"),
     ]
 
     for label, pattern in frontend_checks:
         total += 1
-        if re.search(pattern, combined_fe, re.IGNORECASE):
+        if re.search(pattern, combined_fe, re.IGNORECASE | re.DOTALL):
             passed += 1
             if verbose:
                 print(f"  [PASS] {label}")
